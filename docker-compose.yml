@@ -1,0 +1,29 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ultraball
+      POSTGRES_PASSWORD: ultraball
+      POSTGRES_DB: ultraball
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ultraball -d ultraball"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+asyncpg://ultraball:ultraball@db:5432/ultraball
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
