@@ -1,3 +1,4 @@
+from app.clients.catalog_client import CatalogClient, SetSnapshot
 from app.clients.embedding_client import EMBEDDING_DIM, EmbeddingClient
 from app.clients.parse_client import ParseClient, ParseResult
 
@@ -23,3 +24,13 @@ class StubEmbeddingClient(EmbeddingClient):
 
     async def embed_documents(self, texts: list[str]) -> list[list[float]]:
         return [[0.0] * self._dim for _ in texts]
+
+
+class StubCatalogClient(CatalogClient):
+    """Returns a canned SetSnapshot instead of crawling TCGdex."""
+
+    def __init__(self, snapshots: dict[str, SetSnapshot]) -> None:
+        self._snapshots = snapshots
+
+    async def fetch_set(self, set_id: str) -> SetSnapshot:
+        return self._snapshots[set_id]

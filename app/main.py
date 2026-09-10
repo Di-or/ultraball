@@ -5,6 +5,7 @@ from fastapi import Depends, FastAPI
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.models import Base as CatalogBase
 from app.config import Settings
 from app.db import make_engine, make_session_factory
 
@@ -18,10 +19,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         async with engine.begin() as conn:
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            await conn.run_sync(CatalogBase.metadata.create_all)
         yield
         await engine.dispose()
 
     app = FastAPI(title="Ultraball", lifespan=lifespan)
+    app.state.session_factory = session_factory
 
     async def get_session() -> AsyncIterator[AsyncSession]:
         async with session_factory() as session:
