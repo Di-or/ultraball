@@ -9,6 +9,8 @@ from app.catalog.models import Base as CatalogBase
 from app.config import Settings
 from app.db import make_engine, make_session_factory
 from app.enrichment.models import Base as EnrichmentBase
+from app.search.models import SearchRequest, SearchResponse, SearchResult
+from app.search.queries import run_search
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -36,6 +38,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def health(session: AsyncSession = Depends(get_session)) -> dict:
         await session.execute(text("SELECT 1"))
         return {"status": "ok"}
+
+    @app.post("/search")
+    async def search(
+        request: SearchRequest, session: AsyncSession = Depends(get_session)
+    ) -> SearchResponse:
+        cards, total = await run_search(
+            session, request.filters, request.facets, limit=request.limit, offset=request.offset
+        )
+        return SearchResponse(
+            results=[SearchResult.from_card(card) for card in cards],
+            total=total,
+            limit=request.limit,
+            offset=request.offset,
+        )
 
     return app
 
