@@ -44,6 +44,7 @@ class Card(Base):
     attacks: Mapped[list[dict]] = mapped_column(JSONB, default=list)
     abilities: Mapped[list[dict]] = mapped_column(JSONB, default=list)
     attack_costs: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list)
+    sub_category: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
 
     dedupe_key: Mapped[str] = mapped_column(String, index=True)
     canonical_card_text: Mapped[str] = mapped_column(String)

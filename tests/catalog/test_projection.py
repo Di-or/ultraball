@@ -96,6 +96,18 @@ def test_basic_energy_projection_is_always_legal() -> None:
     assert card.attack_costs == []
 
 
+def test_sub_category_is_derived_from_name_and_rarity() -> None:
+    card = project_card(
+        _raw_pokemon(name="Mega Charizard ex", rarity="Special Illustration Rare"),
+        set_id="swsh1",
+        release_date=date(2020, 2, 7),
+        standard_legal_marks=frozenset({"D"}),
+        banned_dedupe_keys=frozenset(),
+    )
+
+    assert card.sub_category == ["ex", "mega"]
+
+
 def test_dedupe_key_and_canonical_text_flow_from_the_shared_identity_assembly() -> None:
     card = project_card(
         _raw_pokemon(),

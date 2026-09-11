@@ -4,6 +4,7 @@ from datetime import date
 
 from app.catalog.identity import build_card_identity
 from app.catalog.legality import derive_is_standard_legal
+from app.catalog.sub_category import derive_sub_category
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class CardProjection:
     attacks: list[dict]
     abilities: list[dict]
     attack_costs: list[int]
+    sub_category: list[str]
     dedupe_key: str
     canonical_card_text: str
     is_standard_legal: bool
@@ -62,6 +64,7 @@ def project_card(
         attacks=attacks,
         abilities=raw.get("abilities") or [],
         attack_costs=[len(attack.get("cost") or []) for attack in attacks],
+        sub_category=derive_sub_category(name=raw["name"], rarity=raw.get("rarity")),
         dedupe_key=identity.dedupe_key,
         canonical_card_text=identity.canonical_card_text,
         is_standard_legal=derive_is_standard_legal(
