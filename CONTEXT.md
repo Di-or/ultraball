@@ -34,6 +34,10 @@ _Avoid_: data layer, TCGdex client, importer.
 A curated mapping that unifies printings whose *text* diverges but which the game treats as one card (mostly Trainers corrected by official errata), so they resolve to a single card entity rather than being mistaken for distinct cards.
 _Avoid_: errata table, corrections.
 
+**`sub_category`**:
+The `{ex, mega, ace-spec}` array derived at ingest from a printing's name and rarity. Encodes **mega ⊂ ex in the data itself** — a Mega card carries `["ex", "mega"]` — so the gate filters it with plain array overlap (§ Candidate pool) and never needs special-case logic to make "ex" also match Mega cards.
+_Avoid_: subtype, card tier.
+
 ### Legality
 
 **Regulation mark**:

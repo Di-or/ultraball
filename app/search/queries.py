@@ -1,4 +1,4 @@
-from sqlalchemy import ColumnElement, and_, exists, func, select
+from sqlalchemy import ColumnElement, and_, exists, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -22,7 +22,7 @@ def _range_predicate(column: ColumnElement, rng: IntRange) -> ColumnElement:
         conditions.append(column >= rng.gte)
     if rng.lte is not None:
         conditions.append(column <= rng.lte)
-    return and_(*conditions)
+    return and_(*conditions) if conditions else true()
 
 
 def _attack_cost_predicate(rep: type[Card], rng: IntRange) -> ColumnElement:
