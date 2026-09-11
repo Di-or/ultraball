@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.catalog.models import Base as CatalogBase
 from app.config import Settings
 from app.db import make_engine, make_session_factory
+from app.enrichment.models import Base as EnrichmentBase
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -20,6 +21,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         async with engine.begin() as conn:
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await conn.run_sync(CatalogBase.metadata.create_all)
+            await conn.run_sync(EnrichmentBase.metadata.create_all)
         yield
         await engine.dispose()
 
