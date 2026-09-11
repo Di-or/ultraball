@@ -1,7 +1,10 @@
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import ARRAY, DateTime, String, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from app.clients.embedding_client import EMBEDDING_DIM
 
 
 class Base(DeclarativeBase):
@@ -23,6 +26,7 @@ class CardEnrichment(Base):
     tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
     suggested_new_tag: Mapped[str | None] = mapped_column(String)
     rationale: Mapped[str | None] = mapped_column(String)
+    vector: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIM))
 
     taxonomy_version: Mapped[str] = mapped_column(String, index=True)
     prompt_version: Mapped[str] = mapped_column(String, index=True)

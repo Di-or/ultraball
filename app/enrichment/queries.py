@@ -41,3 +41,19 @@ async def get_cards_pending_enrichment(
 
     result = await session.execute(stmt)
     return [(row.dedupe_key, row.canonical_card_text) for row in result]
+
+
+async def get_cards_pending_embedding(session: AsyncSession) -> list[tuple[str, str]]:
+    """(dedupe_key, normalized_description) pairs that have a description but no vector yet.
+
+    Decoupled from the tagging pass's own resumability bookkeeping (status,
+    batch_id, version stamps): any row with a description and no vector is
+    eligible, so this runs and resumes independently of #21.
+    """
+    stmt = select(CardEnrichment.dedupe_key, CardEnrichment.normalized_description).where(
+        CardEnrichment.normalized_description.is_not(None),
+        CardEnrichment.vector.is_(None),
+    )
+
+    result = await session.execute(stmt)
+    return [(row.dedupe_key, row.normalized_description) for row in result]
