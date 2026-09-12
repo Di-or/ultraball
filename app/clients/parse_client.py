@@ -105,6 +105,11 @@ class ParseClient(ABC):
     async def parse(self, query: str) -> ParseResult: ...
 
 
+def _drop_nulls(obj: dict) -> dict:
+    """Strips strict-JSON-mode's required-but-unset `null`s back to "absent"."""
+    return {key: value for key, value in obj.items() if value is not None}
+
+
 class HostedParseClient(ParseClient):
     """Calls the hosted parse/rewrite model (GPT-5-mini, strict JSON, temp 0)."""
 
@@ -138,10 +143,10 @@ class HostedParseClient(ParseClient):
         payload = response.json()
         parsed = json.loads(payload["choices"][0]["message"]["content"])
 
-        filters = {name: value for name, value in parsed["filters"].items() if value is not None}
+        filters = _drop_nulls(parsed["filters"])
         for range_field in ("hp", "retreat", "attack_cost"):
             if range_field in filters:
-                filters[range_field] = {k: v for k, v in filters[range_field].items() if v is not None}
+                filters[range_field] = _drop_nulls(filters[range_field])
 
         return ParseResult(
             filters=filters,
