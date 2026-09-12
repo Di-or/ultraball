@@ -54,6 +54,7 @@ class Matched(BaseModel):
     """Per-result structural provenance (CONTEXT.md: Matched signals)."""
 
     tags: list[str] = Field(default_factory=list)
+    semantic: bool = False
 
 
 class SearchResult(BaseModel):

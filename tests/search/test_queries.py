@@ -3,10 +3,11 @@ from datetime import date
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import Card
+from app.clients.embedding_client import EMBEDDING_DIM
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
 from app.search.models import Facets, Filters, IntRange
-from app.search.queries import run_search, run_tag_match_search
+from app.search.queries import run_search, run_semantic_search, run_tag_match_search
 from tests.factories import make_card as _card
 from tests.factories import make_enrichment as _enrichment
 
@@ -14,6 +15,11 @@ from tests.factories import make_enrichment as _enrichment
 async def _seed(session: AsyncSession, *rows: Card | CardEnrichment) -> None:
     session.add_all(rows)
     await session.commit()
+
+
+def _vector(*leading: float) -> list[float]:
+    """A unit-ish 1024-dim vector with `leading` in its first components, zero elsewhere."""
+    return [*leading, *([0.0] * (EMBEDDING_DIM - len(leading)))]
 
 
 async def test_empty_filters_return_the_full_standard_legal_gate(db_session: AsyncSession) -> None:
@@ -330,6 +336,110 @@ async def test_tag_match_pool_is_capped_at_200(db_session: AsyncSession) -> None
 
     results, total = await run_tag_match_search(
         db_session, Filters(), Facets(), ["draw"], limit=250, offset=0
+    )
+
+    assert total == 200
+    assert len(results) == 200
+
+
+async def test_semantic_ranks_by_cosine_distance_ascending(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Exact"),
+        _enrichment(dedupe_key="a", vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="Orthogonal"),
+        _enrichment(dedupe_key="b", vector=_vector(0.0, 1.0)),
+        _card(id="c", dedupe_key="c", name="Opposite"),
+        _enrichment(dedupe_key="c", vector=_vector(-1.0, 0.0)),
+    )
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 3
+    assert [card.name for card in results] == ["Exact", "Orthogonal", "Opposite"]
+
+
+async def test_semantic_excludes_rows_without_a_vector(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Embedded"),
+        _enrichment(dedupe_key="a", vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="NotEmbedded"),
+        _enrichment(dedupe_key="b", vector=None),
+    )
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 1
+    assert [card.name for card in results] == ["Embedded"]
+
+
+async def test_semantic_respects_the_gate_filters(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Charizard", is_standard_legal=True),
+        _enrichment(dedupe_key="a", vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="Rotated", is_standard_legal=False),
+        _enrichment(dedupe_key="b", vector=_vector(1.0, 0.0)),
+    )
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 1
+    assert results[0].name == "Charizard"
+
+
+async def test_semantic_only_the_representative_printing_is_ranked(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="old", dedupe_key="shared", release_date=date(1999, 1, 1), regulation_mark="D"),
+        _card(id="new", dedupe_key="shared", release_date=date(2023, 1, 1), regulation_mark="H"),
+        _enrichment(dedupe_key="shared", vector=_vector(1.0, 0.0)),
+    )
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 1
+    assert results[0].id == "new"
+
+
+async def test_semantic_pagination_limits_page_but_total_reflects_full_pool(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Abra"),
+        _enrichment(dedupe_key="a", vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="Bulbasaur"),
+        _enrichment(dedupe_key="b", vector=_vector(1.0, 0.0)),
+        _card(id="c", dedupe_key="c", name="Charizard2"),
+        _enrichment(dedupe_key="c", vector=_vector(1.0, 0.0)),
+    )
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=2, offset=1
+    )
+
+    assert total == 3
+    assert len(results) == 2
+
+
+async def test_semantic_pool_is_capped_at_200(db_session: AsyncSession) -> None:
+    rows: list[Card | CardEnrichment] = []
+    for i in range(210):
+        dedupe_key = f"card-{i:03d}"
+        rows.append(_card(id=dedupe_key, dedupe_key=dedupe_key, name=f"Card {i:03d}"))
+        rows.append(_enrichment(dedupe_key=dedupe_key, vector=_vector(1.0, 0.0)))
+    await _seed(db_session, *rows)
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=250, offset=0
     )
 
     assert total == 200
