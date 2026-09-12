@@ -3,7 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.catalog.models import Card
+from app.enrichment import status
+from app.enrichment.models import CardEnrichment
 from app.search.models import Facets, Filters, IntRange
+
+# Tag-match pool cap (CONTEXT.md: Tag-match path / Candidate pool).
+_TAG_MATCH_POOL_CAP = 200
 
 
 def _representative_printings():
@@ -98,5 +103,78 @@ async def run_search(
 
     paged = gated.order_by(rep.name.asc(), rep.dedupe_key.asc()).limit(limit).offset(offset)
     results = list(await session.scalars(paged))
+
+    return results, total or 0
+
+
+def _tag_overlap_count(tags_col: ColumnElement, query_tags: list[str]) -> ColumnElement:
+    """Query-tag overlap count: any-of, require ≥ 1 — not Jaccard, which would
+    penalize richly-tagged staples (CONTEXT.md: Tag-match path)."""
+    unnested = func.unnest(tags_col).table_valued("tag").render_derived()
+    return (
+        select(func.count()).select_from(unnested).where(unnested.c.tag.in_(query_tags)).scalar_subquery()
+    )
+
+
+def _tag_match_order(overlap: ColumnElement, release_date: ColumnElement, dedupe_key: ColumnElement):
+    """Tag-match rank order: overlap desc; equal-overlap cards share rank, broken
+    by release-date desc, then `dedupe_key` for a fully deterministic page."""
+    return overlap.desc(), release_date.desc(), dedupe_key.asc()
+
+
+async def run_tag_match_search(
+    session: AsyncSession,
+    filters: Filters,
+    facets: Facets,
+    tags: list[str],
+    *,
+    limit: int,
+    offset: int,
+) -> tuple[list[tuple[Card, list[str]]], int]:
+    """The tag-match retrieval path (CONTEXT.md: Tag-match path).
+
+    Ranks the same gated pool `run_search` would return by query-tag overlap
+    count (any-of, require ≥ 1). Equal-overlap cards share rank, broken by
+    release-date desc. The ranked pool is capped at `_TAG_MATCH_POOL_CAP`
+    before pagination. Each result carries the subset of `tags` the card's
+    enrichment row actually has (CONTEXT.md: Matched signals). Only `COMPLETED`
+    enrichment rows are ranked — a `pending`/`failed` row's tags haven't passed
+    the post-validator, so they're not trustworthy match provenance yet
+    (CONTEXT.md: card_enrichment).
+    """
+    rep = aliased(Card, _representative_printings())
+    predicates = _build_predicates(rep, filters, facets)
+
+    overlap = _tag_overlap_count(CardEnrichment.tags, tags)
+    scored = (
+        select(rep, CardEnrichment.tags.label("enrichment_tags"), overlap.label("overlap"))
+        .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
+        .where(*predicates, CardEnrichment.status == status.COMPLETED)
+    ).subquery()
+
+    ranked = (
+        select(scored)
+        .where(scored.c.overlap >= 1)
+        .order_by(*_tag_match_order(scored.c.overlap, scored.c.release_date, scored.c.dedupe_key))
+        .limit(_TAG_MATCH_POOL_CAP)
+        .cte("tag_ranked_pool")
+    )
+    pool_card = aliased(Card, ranked)
+
+    total = await session.scalar(select(func.count()).select_from(ranked))
+
+    paged = (
+        select(pool_card, ranked.c.enrichment_tags)
+        .order_by(*_tag_match_order(ranked.c.overlap, pool_card.release_date, pool_card.dedupe_key))
+        .limit(limit)
+        .offset(offset)
+    )
+    rows = (await session.execute(paged)).all()
+
+    query_rank = {tag: index for index, tag in enumerate(tags)}
+    results = [
+        (card, sorted((t for t in tags if t in enrichment_tags), key=query_rank.__getitem__))
+        for card, enrichment_tags in rows
+    ]
 
     return results, total or 0

@@ -11,9 +11,9 @@ from app.config import Settings
 from app.db import make_engine, make_session_factory
 from app.enrichment.models import Base as EnrichmentBase
 from app.search.gate import resolve_search_gate
-from app.search.models import SearchRequest, SearchResponse, SearchResult
+from app.search.models import Matched, SearchRequest, SearchResponse, SearchResult
 from app.search.parse_cache import Base as ParseCacheBase
-from app.search.queries import run_search
+from app.search.queries import run_search, run_tag_match_search
 
 
 def create_app(settings: Settings | None = None, *, parse_client: ParseClient | None = None) -> FastAPI:
@@ -49,16 +49,33 @@ def create_app(settings: Settings | None = None, *, parse_client: ParseClient | 
         request: SearchRequest, session: AsyncSession = Depends(get_session)
     ) -> SearchResponse:
         gate = await resolve_search_gate(session, parse_client, request.query, request.filters)
-        cards, total = await run_search(
-            session,
-            gate.filters,
-            request.facets,
-            limit=request.limit,
-            offset=request.offset,
-            keyword=gate.keyword,
-        )
+
+        if gate.tags:
+            ranked, total = await run_tag_match_search(
+                session,
+                gate.filters,
+                request.facets,
+                gate.tags,
+                limit=request.limit,
+                offset=request.offset,
+            )
+            results = [
+                SearchResult.from_card(card, matched=Matched(tags=matched_tags))
+                for card, matched_tags in ranked
+            ]
+        else:
+            cards, total = await run_search(
+                session,
+                gate.filters,
+                request.facets,
+                limit=request.limit,
+                offset=request.offset,
+                keyword=gate.keyword,
+            )
+            results = [SearchResult.from_card(card) for card in cards]
+
         return SearchResponse(
-            results=[SearchResult.from_card(card) for card in cards],
+            results=results,
             total=total,
             limit=request.limit,
             offset=request.offset,

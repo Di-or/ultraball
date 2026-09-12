@@ -50,6 +50,12 @@ class SearchRequest(BaseModel):
     offset: int = Field(default=0, ge=0)
 
 
+class Matched(BaseModel):
+    """Per-result structural provenance (CONTEXT.md: Matched signals)."""
+
+    tags: list[str] = Field(default_factory=list)
+
+
 class SearchResult(BaseModel):
     """One representative printing in the gated set (CONTEXT.md: Representative printing)."""
 
@@ -67,9 +73,10 @@ class SearchResult(BaseModel):
     rarity: str | None
     set_id: str
     is_standard_legal: bool
+    matched: Matched | None = None
 
     @classmethod
-    def from_card(cls, card: Card) -> "SearchResult":
+    def from_card(cls, card: Card, *, matched: Matched | None = None) -> "SearchResult":
         return cls(
             entity_id=card.dedupe_key,
             printing_id=card.id,
@@ -83,6 +90,7 @@ class SearchResult(BaseModel):
             rarity=card.rarity,
             set_id=card.set_id,
             is_standard_legal=card.is_standard_legal,
+            matched=matched,
         )
 
 
