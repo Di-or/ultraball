@@ -10,6 +10,9 @@ from app.search.models import Facets, Filters, IntRange
 # Tag-match pool cap (CONTEXT.md: Tag-match path / Candidate pool).
 _TAG_MATCH_POOL_CAP = 200
 
+# Semantic pool cap (CONTEXT.md: Candidate pool) — exact/flat cosine scan, no ANN index.
+_SEMANTIC_POOL_CAP = 200
+
 
 def _representative_printings():
     """One row per `dedupe_key` — the newest printing (CONTEXT.md: Representative printing)."""
@@ -176,5 +179,53 @@ async def run_tag_match_search(
         (card, sorted((t for t in tags if t in enrichment_tags), key=query_rank.__getitem__))
         for card, enrichment_tags in rows
     ]
+
+    return results, total or 0
+
+
+async def run_semantic_search(
+    session: AsyncSession,
+    filters: Filters,
+    facets: Facets,
+    query_vector: list[float],
+    *,
+    limit: int,
+    offset: int,
+) -> tuple[list[Card], int]:
+    """The semantic retrieval path (CONTEXT.md: Semantic search).
+
+    Ranks the same gated pool `run_search` would return by cosine distance
+    (`<=>`) between `query_vector` and each card's `card_enrichment.vector` —
+    an exact/flat scan (no ANN index), cheap at this corpus size. Only rows
+    with a vector are ranked; the ranked pool is capped at
+    `_SEMANTIC_POOL_CAP` before pagination.
+    """
+    rep = aliased(Card, _representative_printings())
+    predicates = _build_predicates(rep, filters, facets)
+
+    distance = CardEnrichment.vector.cosine_distance(query_vector)
+    scored = (
+        select(rep, distance.label("distance"))
+        .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
+        .where(*predicates, CardEnrichment.vector.is_not(None))
+    ).subquery()
+
+    ranked = (
+        select(scored)
+        .order_by(scored.c.distance.asc(), scored.c.dedupe_key.asc())
+        .limit(_SEMANTIC_POOL_CAP)
+        .cte("semantic_ranked_pool")
+    )
+    pool_card = aliased(Card, ranked)
+
+    total = await session.scalar(select(func.count()).select_from(ranked))
+
+    paged = (
+        select(pool_card)
+        .order_by(ranked.c.distance.asc(), pool_card.dedupe_key.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+    results = list(await session.scalars(paged))
 
     return results, total or 0

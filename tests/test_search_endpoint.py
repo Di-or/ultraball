@@ -6,13 +6,15 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.community.postgres import PostgresContainer
 
+from app.clients.embedding_client import EmbeddingClient
 from app.clients.parse_client import ParseClient, ParseResult
 from app.config import Settings
 from app.main import create_app
+from app.search.embedding_cache import QueryEmbeddingCacheEntry
 from app.search.parse_cache import ParseCacheEntry
 from tests.factories import make_card as _card
 from tests.factories import make_enrichment as _enrichment
-from tests.stubs import StubParseClient
+from tests.stubs import StubEmbeddingClient, StubParseClient
 
 
 class _CountingParseClient(ParseClient):
@@ -32,12 +34,50 @@ class _FailingParseClient(ParseClient):
         raise RuntimeError("hosted parse model unavailable")
 
 
+class _CountingEmbeddingClient(EmbeddingClient):
+    """Wraps a stub and counts how many times the hosted embedding model would be invoked."""
+
+    def __init__(self) -> None:
+        self._stub = StubEmbeddingClient()
+        self.call_count = 0
+
+    async def embed_query(self, text: str) -> list[float]:
+        self.call_count += 1
+        return await self._stub.embed_query(text)
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return await self._stub.embed_documents(texts)
+
+
+class _FailingEmbeddingClient(EmbeddingClient):
+    async def embed_query(self, text: str) -> list[float]:
+        raise RuntimeError("hosted embedding model unavailable")
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        raise RuntimeError("hosted embedding model unavailable")
+
+
 @asynccontextmanager
 async def _client_with_parse_client(
     postgres_container: PostgresContainer, parse_client: ParseClient
 ) -> AsyncIterator[AsyncClient]:
     settings = Settings(database_url=postgres_container.get_connection_url())
     app = create_app(settings, parse_client=parse_client)
+
+    async with app.router.lifespan_context(app):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            yield ac
+
+
+@asynccontextmanager
+async def _client_with_clients(
+    postgres_container: PostgresContainer,
+    parse_client: ParseClient,
+    embedding_client: EmbeddingClient,
+) -> AsyncIterator[AsyncClient]:
+    settings = Settings(database_url=postgres_container.get_connection_url())
+    app = create_app(settings, parse_client=parse_client, embedding_client=embedding_client)
 
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
@@ -182,4 +222,73 @@ async def test_search_without_tags_carries_no_matched_signals(client: AsyncClien
     response = await client.post("/search", json={})
 
     body = response.json()
+    assert body["results"][0]["matched"] is None
+
+
+async def test_search_concept_only_query_routes_to_semantic_ranking(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="a", dedupe_key="a", name="Charizard"),
+            _enrichment(dedupe_key="a", vector=[0.0] * 1024),
+        ]
+    )
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="acceleration", concept_rewritten="attach extra energy", tags=[])
+    async with _client_with_clients(postgres_container, StubParseClient(canned), StubEmbeddingClient()) as client:
+        response = await client.post("/search", json={"query": "energy accel"})
+
+    body = response.json()
+    assert body["total"] == 1
+    assert body["results"][0]["name"] == "Charizard"
+    assert body["results"][0]["matched"]["semantic"] is True
+    assert body["results"][0]["matched"]["tags"] == []
+
+
+async def test_search_empty_concept_skips_the_semantic_path(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all([_card(id="a", dedupe_key="a", name="Charizard")])
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="", concept_rewritten="", tags=[])
+    embedding_client = _CountingEmbeddingClient()
+    async with _client_with_clients(postgres_container, StubParseClient(canned), embedding_client) as client:
+        response = await client.post("/search", json={"query": "charizard"})
+
+    body = response.json()
+    assert embedding_client.call_count == 0
+    assert body["results"][0]["matched"] is None
+
+
+async def test_search_a_repeat_concept_does_not_re_invoke_the_embedding_model(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    canned = ParseResult(filters={}, concept="acceleration", concept_rewritten="attach extra energy", tags=[])
+    embedding_client = _CountingEmbeddingClient()
+
+    async with _client_with_clients(postgres_container, StubParseClient(canned), embedding_client) as client:
+        await client.post("/search", json={"query": "energy accel"})
+        await client.post("/search", json={"query": "energy accel again"})
+
+    assert embedding_client.call_count == 1
+    cached = await db_session.scalars(select(QueryEmbeddingCacheEntry))
+    assert len(list(cached)) == 1
+
+
+async def test_search_an_embedding_failure_degrades_to_the_plain_gate(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all([_card(id="a", dedupe_key="a", name="Charizard")])
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="acceleration", concept_rewritten="attach extra energy", tags=[])
+    async with _client_with_clients(postgres_container, StubParseClient(canned), _FailingEmbeddingClient()) as client:
+        response = await client.post("/search", json={"query": "energy accel"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
     assert body["results"][0]["matched"] is None

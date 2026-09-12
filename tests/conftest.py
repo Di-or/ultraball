@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.community.postgres import PostgresContainer
 
 from app.catalog.models import Base as CatalogBase
+from app.clients.embedding_client import EmbeddingClient
 from app.clients.parse_client import ParseClient
 from app.config import Settings
 from app.enrichment.models import Base as EnrichmentBase
 from app.main import create_app
+from app.search.embedding_cache import Base as QueryEmbeddingCacheBase
 from app.search.parse_cache import Base as ParseCacheBase
-from tests.stubs import StubParseClient
+from tests.stubs import StubEmbeddingClient, StubParseClient
 
 _ALL_TABLE_NAMES = [
     table.name
@@ -21,6 +23,7 @@ _ALL_TABLE_NAMES = [
         *CatalogBase.metadata.sorted_tables,
         *EnrichmentBase.metadata.sorted_tables,
         *ParseCacheBase.metadata.sorted_tables,
+        *QueryEmbeddingCacheBase.metadata.sorted_tables,
     )
 ]
 
@@ -37,10 +40,18 @@ def parse_client() -> ParseClient:
     return StubParseClient()
 
 
+@pytest.fixture
+def embedding_client() -> EmbeddingClient:
+    """Default stub — tests that need canned embedding output override this fixture."""
+    return StubEmbeddingClient()
+
+
 @pytest_asyncio.fixture
-async def client(postgres_container: PostgresContainer, parse_client: ParseClient) -> AsyncIterator[AsyncClient]:
+async def client(
+    postgres_container: PostgresContainer, parse_client: ParseClient, embedding_client: EmbeddingClient
+) -> AsyncIterator[AsyncClient]:
     settings = Settings(database_url=postgres_container.get_connection_url())
-    app = create_app(settings, parse_client=parse_client)
+    app = create_app(settings, parse_client=parse_client, embedding_client=embedding_client)
 
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)

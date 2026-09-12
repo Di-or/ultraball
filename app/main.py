@@ -6,19 +6,27 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import Base as CatalogBase
+from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
 from app.db import make_engine, make_session_factory
 from app.enrichment.models import Base as EnrichmentBase
+from app.search.embedding_cache import Base as QueryEmbeddingCacheBase
 from app.search.gate import resolve_search_gate
 from app.search.models import Matched, SearchRequest, SearchResponse, SearchResult
 from app.search.parse_cache import Base as ParseCacheBase
-from app.search.queries import run_search, run_tag_match_search
+from app.search.queries import run_search, run_semantic_search, run_tag_match_search
 
 
-def create_app(settings: Settings | None = None, *, parse_client: ParseClient | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    *,
+    parse_client: ParseClient | None = None,
+    embedding_client: EmbeddingClient | None = None,
+) -> FastAPI:
     settings = settings or Settings()
     parse_client = parse_client or HostedParseClient(api_key=settings.openai_api_key or "")
+    embedding_client = embedding_client or HostedEmbeddingClient(api_key=settings.voyage_api_key or "")
     engine = make_engine(settings.database_url)
     session_factory = make_session_factory(engine)
 
@@ -29,6 +37,7 @@ def create_app(settings: Settings | None = None, *, parse_client: ParseClient | 
             await conn.run_sync(CatalogBase.metadata.create_all)
             await conn.run_sync(EnrichmentBase.metadata.create_all)
             await conn.run_sync(ParseCacheBase.metadata.create_all)
+            await conn.run_sync(QueryEmbeddingCacheBase.metadata.create_all)
         yield
         await engine.dispose()
 
@@ -48,7 +57,9 @@ def create_app(settings: Settings | None = None, *, parse_client: ParseClient | 
     async def search(
         request: SearchRequest, session: AsyncSession = Depends(get_session)
     ) -> SearchResponse:
-        gate = await resolve_search_gate(session, parse_client, request.query, request.filters)
+        gate = await resolve_search_gate(
+            session, parse_client, embedding_client, request.query, request.filters
+        )
 
         if gate.tags:
             ranked, total = await run_tag_match_search(
@@ -63,6 +74,16 @@ def create_app(settings: Settings | None = None, *, parse_client: ParseClient | 
                 SearchResult.from_card(card, matched=Matched(tags=matched_tags))
                 for card, matched_tags in ranked
             ]
+        elif gate.query_vector is not None:
+            cards, total = await run_semantic_search(
+                session,
+                gate.filters,
+                request.facets,
+                gate.query_vector,
+                limit=request.limit,
+                offset=request.offset,
+            )
+            results = [SearchResult.from_card(card, matched=Matched(semantic=True)) for card in cards]
         else:
             cards, total = await run_search(
                 session,
