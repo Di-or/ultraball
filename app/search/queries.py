@@ -13,6 +13,9 @@ _TAG_MATCH_POOL_CAP = 200
 # Semantic pool cap (CONTEXT.md: Candidate pool) — exact/flat cosine scan, no ANN index.
 _SEMANTIC_POOL_CAP = 200
 
+# RRF merge constant (CONTEXT.md: RRF merge) — score = Σ 1/(60 + rank).
+_RRF_K = 60
+
 
 def _representative_printings():
     """One row per `dedupe_key` — the newest printing (CONTEXT.md: Representative printing)."""
@@ -125,6 +128,32 @@ def _tag_match_order(overlap: ColumnElement, release_date: ColumnElement, dedupe
     return overlap.desc(), release_date.desc(), dedupe_key.asc()
 
 
+def _tag_ranked_pool(rep: type[Card], predicates: list[ColumnElement], tags: list[str]):
+    """The tag-match path's ranked pool (CONTEXT.md: Tag-match path), capped and
+    row-numbered so it can be paginated on its own or fed into `run_rrf_search`.
+
+    Only `COMPLETED` enrichment rows are ranked — a `pending`/`failed` row's tags
+    haven't passed the post-validator, so they're not trustworthy match provenance
+    yet (CONTEXT.md: card_enrichment).
+    """
+    overlap = _tag_overlap_count(CardEnrichment.tags, tags)
+    scored = (
+        select(rep, CardEnrichment.tags.label("enrichment_tags"), overlap.label("overlap"))
+        .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
+        .where(*predicates, CardEnrichment.status == status.COMPLETED)
+    ).subquery()
+
+    order = _tag_match_order(scored.c.overlap, scored.c.release_date, scored.c.dedupe_key)
+    rank = func.row_number().over(order_by=order)
+    return (
+        select(scored, rank.label("rank"))
+        .where(scored.c.overlap >= 1)
+        .order_by(*order)
+        .limit(_TAG_MATCH_POOL_CAP)
+        .cte("tag_ranked_pool")
+    )
+
+
 async def run_tag_match_search(
     session: AsyncSession,
     filters: Filters,
@@ -140,28 +169,12 @@ async def run_tag_match_search(
     count (any-of, require ≥ 1). Equal-overlap cards share rank, broken by
     release-date desc. The ranked pool is capped at `_TAG_MATCH_POOL_CAP`
     before pagination. Each result carries the subset of `tags` the card's
-    enrichment row actually has (CONTEXT.md: Matched signals). Only `COMPLETED`
-    enrichment rows are ranked — a `pending`/`failed` row's tags haven't passed
-    the post-validator, so they're not trustworthy match provenance yet
-    (CONTEXT.md: card_enrichment).
+    enrichment row actually has (CONTEXT.md: Matched signals).
     """
     rep = aliased(Card, _representative_printings())
     predicates = _build_predicates(rep, filters, facets)
 
-    overlap = _tag_overlap_count(CardEnrichment.tags, tags)
-    scored = (
-        select(rep, CardEnrichment.tags.label("enrichment_tags"), overlap.label("overlap"))
-        .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
-        .where(*predicates, CardEnrichment.status == status.COMPLETED)
-    ).subquery()
-
-    ranked = (
-        select(scored)
-        .where(scored.c.overlap >= 1)
-        .order_by(*_tag_match_order(scored.c.overlap, scored.c.release_date, scored.c.dedupe_key))
-        .limit(_TAG_MATCH_POOL_CAP)
-        .cte("tag_ranked_pool")
-    )
+    ranked = _tag_ranked_pool(rep, predicates, tags)
     pool_card = aliased(Card, ranked)
 
     total = await session.scalar(select(func.count()).select_from(ranked))
@@ -181,6 +194,30 @@ async def run_tag_match_search(
     ]
 
     return results, total or 0
+
+
+def _semantic_ranked_pool(rep: type[Card], predicates: list[ColumnElement], query_vector: list[float]):
+    """The semantic path's ranked pool (CONTEXT.md: Semantic search), capped and
+    row-numbered so it can be paginated on its own or fed into `run_rrf_search`.
+
+    Only rows with a vector are ranked — an exact/flat cosine scan (`<=>`,
+    no ANN index), cheap at this corpus size.
+    """
+    distance = CardEnrichment.vector.cosine_distance(query_vector)
+    scored = (
+        select(rep, distance.label("distance"))
+        .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
+        .where(*predicates, CardEnrichment.vector.is_not(None))
+    ).subquery()
+
+    order = (scored.c.distance.asc(), scored.c.dedupe_key.asc())
+    rank = func.row_number().over(order_by=order)
+    return (
+        select(scored, rank.label("rank"))
+        .order_by(*order)
+        .limit(_SEMANTIC_POOL_CAP)
+        .cte("semantic_ranked_pool")
+    )
 
 
 async def run_semantic_search(
@@ -203,19 +240,7 @@ async def run_semantic_search(
     rep = aliased(Card, _representative_printings())
     predicates = _build_predicates(rep, filters, facets)
 
-    distance = CardEnrichment.vector.cosine_distance(query_vector)
-    scored = (
-        select(rep, distance.label("distance"))
-        .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
-        .where(*predicates, CardEnrichment.vector.is_not(None))
-    ).subquery()
-
-    ranked = (
-        select(scored)
-        .order_by(scored.c.distance.asc(), scored.c.dedupe_key.asc())
-        .limit(_SEMANTIC_POOL_CAP)
-        .cte("semantic_ranked_pool")
-    )
+    ranked = _semantic_ranked_pool(rep, predicates, query_vector)
     pool_card = aliased(Card, ranked)
 
     total = await session.scalar(select(func.count()).select_from(ranked))
@@ -229,3 +254,82 @@ async def run_semantic_search(
     results = list(await session.scalars(paged))
 
     return results, total or 0
+
+
+async def run_rrf_search(
+    session: AsyncSession,
+    filters: Filters,
+    facets: Facets,
+    tags: list[str],
+    query_vector: list[float],
+    *,
+    limit: int,
+    offset: int,
+) -> tuple[list[tuple[Card, list[str], bool]], int]:
+    """The RRF-merge path (CONTEXT.md: RRF merge) — routed when both the
+    tag-match and semantic paths have something to rank (full routing table:
+    both→RRF · concept-only→cosine · tags-only→overlap · neither→faceted).
+
+    Equal-weight Reciprocal Rank Fusion (`score = Σ 1/(60 + rank)`) over each
+    path's already-capped ranked pool (CONTEXT.md: Candidate pool) — rank
+    position only, no cross-path score normalization, so a card ranked by
+    only one path is un-penalized. Ties are broken by cosine distance
+    ascending — a tag-only card carries no distance, so it tie-breaks after
+    any semantic-ranked card at the same score — then `dedupe_key`. `total`
+    is the ranked-union size, since fusion happens over both pools together
+    rather than within one SQL query.
+    """
+    rep = aliased(Card, _representative_printings())
+    predicates = _build_predicates(rep, filters, facets)
+
+    tag_pool = _tag_ranked_pool(rep, predicates, tags)
+    tag_rows = (
+        await session.execute(select(tag_pool.c.dedupe_key, tag_pool.c.enrichment_tags, tag_pool.c.rank))
+    ).all()
+
+    sem_pool = _semantic_ranked_pool(rep, predicates, query_vector)
+    sem_rows = (
+        await session.execute(select(sem_pool.c.dedupe_key, sem_pool.c.distance, sem_pool.c.rank))
+    ).all()
+
+    tag_rank = {row.dedupe_key: row.rank for row in tag_rows}
+    tag_enrichment_tags = {row.dedupe_key: row.enrichment_tags for row in tag_rows}
+    sem_rank = {row.dedupe_key: row.rank for row in sem_rows}
+    sem_distance = {row.dedupe_key: row.distance for row in sem_rows}
+
+    def _rrf_score(dedupe_key: str) -> float:
+        contribution = 0.0
+        if dedupe_key in tag_rank:
+            contribution += 1 / (_RRF_K + tag_rank[dedupe_key])
+        if dedupe_key in sem_rank:
+            contribution += 1 / (_RRF_K + sem_rank[dedupe_key])
+        return contribution
+
+    dedupe_keys = tag_rank.keys() | sem_rank.keys()
+    ordered = sorted(
+        dedupe_keys,
+        key=lambda dedupe_key: (-_rrf_score(dedupe_key), sem_distance.get(dedupe_key, float("inf")), dedupe_key),
+    )
+
+    total = len(ordered)
+    page_keys = ordered[offset : offset + limit]
+    if not page_keys:
+        return [], total
+
+    cards = list(await session.scalars(select(rep).where(rep.dedupe_key.in_(page_keys))))
+    cards_by_key = {card.dedupe_key: card for card in cards}
+
+    query_rank = {tag: index for index, tag in enumerate(tags)}
+    results = [
+        (
+            cards_by_key[dedupe_key],
+            sorted(
+                (t for t in tags if t in tag_enrichment_tags.get(dedupe_key, [])),
+                key=query_rank.__getitem__,
+            ),
+            dedupe_key in sem_rank,
+        )
+        for dedupe_key in page_keys
+    ]
+
+    return results, total
