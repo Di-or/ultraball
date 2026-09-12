@@ -72,15 +72,25 @@ def _build_predicates(rep: type[Card], filters: Filters, facets: Facets) -> list
 
 
 async def run_search(
-    session: AsyncSession, filters: Filters, facets: Facets, *, limit: int, offset: int
+    session: AsyncSession,
+    filters: Filters,
+    facets: Facets,
+    *,
+    limit: int,
+    offset: int,
+    keyword: str | None = None,
 ) -> tuple[list[Card], int]:
     """The gated candidate pool (CONTEXT.md: Candidate pool), name-sorted (Faceted mode).
 
+    `keyword` is set only on a degraded parse (CONTEXT.md: Parse object) — a plain
+    substring match on `name`, layered onto the gate rather than replacing it.
     No concept/tags ranking here — this is the plain conventional gate; the
-    semantic/tag-match ranking paths (#20) rank *within* this same pool.
+    semantic/tag-match ranking paths (#23/#24/#25) rank *within* this same pool.
     """
     rep = aliased(Card, _representative_printings())
     predicates = _build_predicates(rep, filters, facets)
+    if keyword:
+        predicates.append(rep.name.ilike(f"%{keyword}%"))
 
     gated = select(rep).where(*predicates)
 

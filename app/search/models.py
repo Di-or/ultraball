@@ -43,6 +43,7 @@ class Facets(BaseModel):
 
 
 class SearchRequest(BaseModel):
+    query: str | None = None
     filters: Filters = Field(default_factory=Filters)
     facets: Facets = Field(default_factory=Facets)
     limit: int = Field(default=_DEFAULT_LIMIT, ge=1, le=_MAX_LIMIT)
@@ -90,3 +91,4 @@ class SearchResponse(BaseModel):
     total: int
     limit: int
     offset: int
+    filters: Filters  # the gate actually run, so the filter panel can tick on what `query` set
