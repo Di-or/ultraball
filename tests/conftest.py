@@ -8,11 +8,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.community.postgres import PostgresContainer
 
 from app.catalog.models import Base as CatalogBase
+from app.clients.parse_client import ParseClient
 from app.config import Settings
 from app.enrichment.models import Base as EnrichmentBase
 from app.main import create_app
+from app.search.parse_cache import Base as ParseCacheBase
+from tests.stubs import StubParseClient
 
-_ALL_TABLE_NAMES = [table.name for table in (*CatalogBase.metadata.sorted_tables, *EnrichmentBase.metadata.sorted_tables)]
+_ALL_TABLE_NAMES = [
+    table.name
+    for table in (
+        *CatalogBase.metadata.sorted_tables,
+        *EnrichmentBase.metadata.sorted_tables,
+        *ParseCacheBase.metadata.sorted_tables,
+    )
+]
 
 
 @pytest.fixture(scope="session")
@@ -21,10 +31,16 @@ def postgres_container() -> AsyncIterator[PostgresContainer]:
         yield container
 
 
+@pytest.fixture
+def parse_client() -> ParseClient:
+    """Default stub — tests that need canned parse output override this fixture."""
+    return StubParseClient()
+
+
 @pytest_asyncio.fixture
-async def client(postgres_container: PostgresContainer) -> AsyncIterator[AsyncClient]:
+async def client(postgres_container: PostgresContainer, parse_client: ParseClient) -> AsyncIterator[AsyncClient]:
     settings = Settings(database_url=postgres_container.get_connection_url())
-    app = create_app(settings)
+    app = create_app(settings, parse_client=parse_client)
 
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
