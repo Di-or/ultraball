@@ -278,6 +278,32 @@ async def test_search_a_repeat_concept_does_not_re_invoke_the_embedding_model(
     assert len(list(cached)) == 1
 
 
+async def test_search_mixed_query_routes_to_rrf_merge(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="a", dedupe_key="a", name="Both"),
+            _enrichment(dedupe_key="a", tags=["draw", "search"], vector=[0.0] * 1024),
+            _card(id="b", dedupe_key="b", name="TagOnly"),
+            _enrichment(dedupe_key="b", tags=["draw"], vector=None),
+        ]
+    )
+    await db_session.commit()
+
+    canned = ParseResult(
+        filters={}, concept="draw power", concept_rewritten="draw a card", tags=["draw", "search"]
+    )
+    async with _client_with_clients(postgres_container, StubParseClient(canned), StubEmbeddingClient()) as client:
+        response = await client.post("/search", json={"query": "cards that draw and search"})
+
+    body = response.json()
+    assert body["total"] == 2
+    assert [r["name"] for r in body["results"]] == ["Both", "TagOnly"]
+    assert body["results"][0]["matched"] == {"tags": ["draw", "search"], "semantic": True}
+    assert body["results"][1]["matched"] == {"tags": ["draw"], "semantic": False}
+
+
 async def test_search_an_embedding_failure_degrades_to_the_plain_gate(
     postgres_container: PostgresContainer, db_session: AsyncSession
 ) -> None:

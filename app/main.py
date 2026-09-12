@@ -15,7 +15,7 @@ from app.search.embedding_cache import Base as QueryEmbeddingCacheBase
 from app.search.gate import resolve_search_gate
 from app.search.models import Matched, SearchRequest, SearchResponse, SearchResult
 from app.search.parse_cache import Base as ParseCacheBase
-from app.search.queries import run_search, run_semantic_search, run_tag_match_search
+from app.search.queries import run_rrf_search, run_search, run_semantic_search, run_tag_match_search
 
 
 def create_app(
@@ -61,7 +61,21 @@ def create_app(
             session, parse_client, embedding_client, request.query, request.filters
         )
 
-        if gate.tags:
+        if gate.tags and gate.query_vector is not None:
+            ranked, total = await run_rrf_search(
+                session,
+                gate.filters,
+                request.facets,
+                gate.tags,
+                gate.query_vector,
+                limit=request.limit,
+                offset=request.offset,
+            )
+            results = [
+                SearchResult.from_card(card, matched=Matched(tags=matched_tags, semantic=matched_semantic))
+                for card, matched_tags, matched_semantic in ranked
+            ]
+        elif gate.tags:
             ranked, total = await run_tag_match_search(
                 session,
                 gate.filters,

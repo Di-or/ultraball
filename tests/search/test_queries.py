@@ -7,7 +7,7 @@ from app.clients.embedding_client import EMBEDDING_DIM
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
 from app.search.models import Facets, Filters, IntRange
-from app.search.queries import run_search, run_semantic_search, run_tag_match_search
+from app.search.queries import run_rrf_search, run_search, run_semantic_search, run_tag_match_search
 from tests.factories import make_card as _card
 from tests.factories import make_enrichment as _enrichment
 
@@ -444,3 +444,69 @@ async def test_semantic_pool_is_capped_at_200(db_session: AsyncSession) -> None:
 
     assert total == 200
     assert len(results) == 200
+
+
+async def test_rrf_fuses_both_paths_and_un_penalizes_a_single_path_term(db_session: AsyncSession) -> None:
+    """A→ tag rank 1 + semantic rank 1 (top score); B→ tag rank 2 only; C→ semantic
+    rank 2 only. B and C tie at the same single-path score, broken by cosine asc
+    (C has a distance, B has none, so C sorts first)."""
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Both"),
+        _enrichment(dedupe_key="a", tags=["draw", "search"], vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="TagOnly"),
+        _enrichment(dedupe_key="b", tags=["draw"], vector=None),
+        _card(id="c", dedupe_key="c", name="SemanticOnly"),
+        _enrichment(dedupe_key="c", tags=[], vector=_vector(0.0, 1.0)),
+    )
+
+    results, total = await run_rrf_search(
+        db_session, Filters(), Facets(), ["draw", "search"], _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 3
+    assert [card.name for card, _tags, _semantic in results] == ["Both", "SemanticOnly", "TagOnly"]
+
+    both, semantic_only, tag_only = results
+    assert both[1] == ["draw", "search"]
+    assert both[2] is True
+    assert semantic_only[1] == []
+    assert semantic_only[2] is True
+    assert tag_only[1] == ["draw"]
+    assert tag_only[2] is False
+
+
+async def test_rrf_respects_the_gate_filters(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Charizard", is_standard_legal=True),
+        _enrichment(dedupe_key="a", tags=["draw"], vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="Rotated", is_standard_legal=False),
+        _enrichment(dedupe_key="b", tags=["draw"], vector=_vector(1.0, 0.0)),
+    )
+
+    results, total = await run_rrf_search(
+        db_session, Filters(), Facets(), ["draw"], _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 1
+    assert results[0][0].name == "Charizard"
+
+
+async def test_rrf_pagination_limits_page_but_total_reflects_ranked_union(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Both"),
+        _enrichment(dedupe_key="a", tags=["draw"], vector=_vector(1.0, 0.0)),
+        _card(id="b", dedupe_key="b", name="TagOnly"),
+        _enrichment(dedupe_key="b", tags=["draw"], vector=None),
+        _card(id="c", dedupe_key="c", name="SemanticOnly"),
+        _enrichment(dedupe_key="c", tags=[], vector=_vector(0.0, 1.0)),
+    )
+
+    results, total = await run_rrf_search(
+        db_session, Filters(), Facets(), ["draw"], _vector(1.0, 0.0), limit=1, offset=1
+    )
+
+    assert total == 3
+    assert len(results) == 1
