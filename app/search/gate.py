@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,7 @@ class ResolvedGate:
 
     filters: Filters
     keyword: str | None = None
+    tags: list[str] = field(default_factory=list)
 
 
 async def resolve_search_gate(
@@ -34,7 +35,7 @@ async def resolve_search_gate(
     cache_key = make_cache_key(normalize_query(query), PARSE_VERSION)
     cached = await get_cached_parse(session, cache_key)
     if cached is not None:
-        return ResolvedGate(filters=enforce_filters(cached.filters))
+        return ResolvedGate(filters=enforce_filters(cached.filters), tags=list(cached.tags))
 
     try:
         result = await parse_client.parse(query)
@@ -43,4 +44,4 @@ async def resolve_search_gate(
         return ResolvedGate(filters=Filters(format="standard"), keyword=query)
 
     await store_parse(session, cache_key, result)
-    return ResolvedGate(filters=enforce_filters(result.filters))
+    return ResolvedGate(filters=enforce_filters(result.filters), tags=list(result.tags))

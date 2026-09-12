@@ -1,6 +1,9 @@
 from datetime import date
 
 from app.catalog.models import Card
+from app.enrichment import status
+from app.enrichment.models import CardEnrichment
+from app.enrichment.taxonomy import PROMPT_VERSION, TAXONOMY_VERSION
 
 
 def make_card(**overrides: object) -> Card:
@@ -31,3 +34,21 @@ def make_card(**overrides: object) -> Card:
     )
     base.update(overrides)
     return Card(**base)
+
+
+def make_enrichment(**overrides: object) -> CardEnrichment:
+    """A minimally-valid `CardEnrichment` row, for tests exercising tag-match retrieval."""
+    base = dict(
+        dedupe_key=overrides.pop("dedupe_key", "charizard-1"),
+        normalized_description="",
+        tags=[],
+        suggested_new_tag=None,
+        rationale=None,
+        vector=None,
+        taxonomy_version=TAXONOMY_VERSION,
+        prompt_version=PROMPT_VERSION,
+        status=status.COMPLETED,
+        batch_id=None,
+    )
+    base.update(overrides)
+    return CardEnrichment(**base)

@@ -11,6 +11,7 @@ from app.config import Settings
 from app.main import create_app
 from app.search.parse_cache import ParseCacheEntry
 from tests.factories import make_card as _card
+from tests.factories import make_enrichment as _enrichment
 from tests.stubs import StubParseClient
 
 
@@ -95,7 +96,9 @@ async def test_search_query_fills_the_gate_from_the_parse_object(
     db_session.add_all(
         [
             _card(id="a", dedupe_key="a", name="Charizard", hp=170),
+            _enrichment(dedupe_key="a", tags=["acceleration"]),
             _card(id="b", dedupe_key="b", name="Regieleki", hp=90),
+            _enrichment(dedupe_key="b", tags=["acceleration"]),
         ]
     )
     await db_session.commit()
@@ -144,3 +147,39 @@ async def test_search_a_repeat_query_does_not_re_invoke_the_parse_model(
     assert counting_client.call_count == 1
     cached = await db_session.scalars(select(ParseCacheEntry))
     assert len(list(cached)) == 1
+
+
+async def test_search_query_with_tags_routes_to_tag_match_ranking(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="a", dedupe_key="a", name="Charizard"),
+            _enrichment(dedupe_key="a", tags=["draw", "search"]),
+            _card(id="b", dedupe_key="b", name="Blastoise"),
+            _enrichment(dedupe_key="b", tags=["draw"]),
+            _card(id="c", dedupe_key="c", name="Pikachu"),
+            _enrichment(dedupe_key="c", tags=["gust"]),
+        ]
+    )
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="draw power", tags=["draw", "search"])
+    async with _client_with_parse_client(postgres_container, StubParseClient(canned)) as client:
+        response = await client.post("/search", json={"query": "cards that draw and search"})
+
+    body = response.json()
+    assert body["total"] == 2
+    assert [r["name"] for r in body["results"]] == ["Charizard", "Blastoise"]
+    assert body["results"][0]["matched"]["tags"] == ["draw", "search"]
+    assert body["results"][1]["matched"]["tags"] == ["draw"]
+
+
+async def test_search_without_tags_carries_no_matched_signals(client: AsyncClient, db_session: AsyncSession) -> None:
+    db_session.add_all([_card(id="a", dedupe_key="a", name="Charizard")])
+    await db_session.commit()
+
+    response = await client.post("/search", json={})
+
+    body = response.json()
+    assert body["results"][0]["matched"] is None
