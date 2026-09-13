@@ -19,6 +19,15 @@ class DeckLine:
 
 
 @dataclass(frozen=True)
+class UnresolvedEntry:
+    """A deck entry whose `printing_id` didn't resolve to a catalog row — untyped, but its
+    declared count still counts toward deck size (the user put that many cards in the deck)."""
+
+    printing_id: str
+    count: int
+
+
+@dataclass(frozen=True)
 class Violation:
     code: str
     message: str
@@ -49,18 +58,18 @@ def _is_ace_spec(card: Card) -> bool:
 
 
 def validate_deck(
-    lines: Sequence[DeckLine], *, unresolved_printing_ids: Sequence[str] = ()
+    lines: Sequence[DeckLine], *, unresolved: Sequence[UnresolvedEntry] = ()
 ) -> LegalityReport:
     """Allow-and-flag Standard legality: every violation is reported, nothing blocks (CONTEXT.md:
     Standard-legal; docs/archive/mvp-spec.md §12.3 — the builder accepts any corpus card).
 
-    `unresolved_printing_ids` are entries whose `printing_id` didn't resolve to a catalog row;
-    they can't be typed or legality-checked, but still count toward deck size since the user put
-    that many cards in the deck, so they're surfaced as their own violation.
+    `unresolved` are entries whose `printing_id` didn't resolve to a catalog row; they can't be
+    typed or legality-checked, but their declared count still counts toward deck size since the
+    user put that many cards in the deck, so they're surfaced as their own violation.
     """
     violations: list[Violation] = []
 
-    declared_total = sum(line.count for line in lines) + len(unresolved_printing_ids)
+    declared_total = sum(line.count for line in lines) + sum(entry.count for entry in unresolved)
     if declared_total != _REQUIRED_DECK_SIZE:
         violations.append(
             Violation(
@@ -69,12 +78,12 @@ def validate_deck(
             )
         )
 
-    if unresolved_printing_ids:
+    if unresolved:
         violations.append(
             Violation(
                 code="unknown_printing",
                 message="Some printing ids are not in the catalog.",
-                cards=list(unresolved_printing_ids),
+                cards=[entry.printing_id for entry in unresolved],
             )
         )
 

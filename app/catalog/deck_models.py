@@ -13,17 +13,27 @@ class DeckEntry(BaseModel):
 
 
 class DeckValidateRequest(BaseModel):
+    """The submitted deck (docs/archive/mvp-spec.md §14: `POST /decks/validate`)."""
+
     entries: list[DeckEntry] = Field(default_factory=list)
     format: Literal["standard"] = "standard"
 
 
 class Violation(BaseModel):
+    """One flagged rule breach (docs/archive/mvp-spec.md §12.3) — allow-and-flag, never blocking."""
+
+    model_config = {"from_attributes": True}
+
     code: str
     message: str
     cards: list[str] = Field(default_factory=list)
 
 
 class Counts(BaseModel):
+    """P/T/E tallies plus the total, riding in the same report (docs/archive/mvp-spec.md §12.3)."""
+
+    model_config = {"from_attributes": True}
+
     pokemon: int
     trainer: int
     energy: int
@@ -41,13 +51,6 @@ class DeckValidateResponse(BaseModel):
     def from_report(cls, report: LegalityReport) -> "DeckValidateResponse":
         return cls(
             legal=report.legal,
-            counts=Counts(
-                pokemon=report.counts.pokemon,
-                trainer=report.counts.trainer,
-                energy=report.counts.energy,
-                total=report.counts.total,
-            ),
-            violations=[
-                Violation(code=v.code, message=v.message, cards=v.cards) for v in report.violations
-            ],
+            counts=Counts.model_validate(report.counts),
+            violations=[Violation.model_validate(v) for v in report.violations],
         )

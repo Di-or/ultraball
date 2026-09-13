@@ -77,7 +77,7 @@ async def test_a_5th_copy_is_allowed_and_flagged_not_blocked(
     assert violation["cards"] == ["p1"]
 
 
-async def test_an_unknown_printing_id_is_flagged_rather_than_rejected(
+async def test_an_unknown_printing_id_is_flagged_and_its_count_still_counted(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     response = await client.post(
@@ -88,3 +88,5 @@ async def test_an_unknown_printing_id_is_flagged_rather_than_rejected(
     body = response.json()
     violation = next(v for v in body["violations"] if v["code"] == "unknown_printing")
     assert violation["cards"] == ["does-not-exist"]
+    assert body["counts"]["total"] == 60
+    assert "deck_size" not in [v["code"] for v in body["violations"]]

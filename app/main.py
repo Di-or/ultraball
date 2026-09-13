@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.deck_models import DeckValidateRequest, DeckValidateResponse
-from app.catalog.deck_validation import DeckLine, validate_deck
+from app.catalog.deck_validation import DeckLine, UnresolvedEntry, validate_deck
 from app.catalog.detail_models import CardDetail
 from app.catalog.models import Base as CatalogBase
 from app.catalog.queries import get_cards_by_ids, get_printings
@@ -150,20 +150,19 @@ def create_app(
     async def validate_deck_endpoint(
         request: DeckValidateRequest, session: AsyncSession = Depends(get_session)
     ) -> DeckValidateResponse:
-        cards_by_id = {
-            card.id: card for card in await get_cards_by_ids(session, [e.printing_id for e in request.entries])
-        }
+        printing_ids = [entry.printing_id for entry in request.entries]
+        cards_by_id = {card.id: card for card in await get_cards_by_ids(session, printing_ids)}
 
         lines: list[DeckLine] = []
-        unresolved: list[str] = []
+        unresolved: list[UnresolvedEntry] = []
         for entry in request.entries:
             card = cards_by_id.get(entry.printing_id)
             if card is None:
-                unresolved.append(entry.printing_id)
+                unresolved.append(UnresolvedEntry(printing_id=entry.printing_id, count=entry.count))
             else:
                 lines.append(DeckLine(card=card, count=entry.count))
 
-        report = validate_deck(lines, unresolved_printing_ids=unresolved)
+        report = validate_deck(lines, unresolved=unresolved)
         return DeckValidateResponse.from_report(report)
 
     return app

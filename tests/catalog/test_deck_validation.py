@@ -1,6 +1,6 @@
 from tests.factories import make_card as _card
 
-from app.catalog.deck_validation import DeckLine, validate_deck
+from app.catalog.deck_validation import DeckLine, UnresolvedEntry, validate_deck
 
 
 def _basic_pokemon(**overrides: object) -> object:
@@ -153,10 +153,10 @@ def test_more_than_one_ace_spec_is_flagged() -> None:
     assert sorted(violation.cards) == ["t1", "t2"]
 
 
-def test_unresolved_printing_ids_are_flagged_and_counted_toward_deck_size() -> None:
-    lines = [DeckLine(card=_basic_pokemon(id="p1", dedupe_key="p1"), count=59)]
+def test_unresolved_printing_ids_are_flagged_and_their_declared_count_counted_toward_deck_size() -> None:
+    lines = [DeckLine(card=_basic_pokemon(id="p1", dedupe_key="p1"), count=56)]
 
-    report = validate_deck(lines, unresolved_printing_ids=["does-not-exist"])
+    report = validate_deck(lines, unresolved=[UnresolvedEntry(printing_id="does-not-exist", count=4)])
 
     violation = next(v for v in report.violations if v.code == "unknown_printing")
     assert violation.cards == ["does-not-exist"]
