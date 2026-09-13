@@ -5,9 +5,11 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.deck_models import DeckValidateRequest, DeckValidateResponse
+from app.catalog.deck_validation import DeckLine, validate_deck
 from app.catalog.detail_models import CardDetail
 from app.catalog.models import Base as CatalogBase
-from app.catalog.queries import get_printings
+from app.catalog.queries import get_cards_by_ids, get_printings
 from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
@@ -143,6 +145,26 @@ def create_app(
         )
 
         return CardDetail.from_card(card, tags=tags, printings=printings, matched=matched)
+
+    @app.post("/decks/validate")
+    async def validate_deck_endpoint(
+        request: DeckValidateRequest, session: AsyncSession = Depends(get_session)
+    ) -> DeckValidateResponse:
+        cards_by_id = {
+            card.id: card for card in await get_cards_by_ids(session, [e.printing_id for e in request.entries])
+        }
+
+        lines: list[DeckLine] = []
+        unresolved: list[str] = []
+        for entry in request.entries:
+            card = cards_by_id.get(entry.printing_id)
+            if card is None:
+                unresolved.append(entry.printing_id)
+            else:
+                lines.append(DeckLine(card=card, count=entry.count))
+
+        report = validate_deck(lines, unresolved_printing_ids=unresolved)
+        return DeckValidateResponse.from_report(report)
 
     return app
 

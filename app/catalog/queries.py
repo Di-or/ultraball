@@ -1,3 +1,5 @@
+from collections.abc import Collection
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,4 +31,12 @@ async def get_printings(session: AsyncSession, dedupe_key: str) -> list[Card]:
         .where(Card.dedupe_key == dedupe_key)
         .order_by(Card.release_date.desc(), Card.ingested_at.desc())
     )
+    return list(await session.scalars(stmt))
+
+
+async def get_cards_by_ids(session: AsyncSession, printing_ids: Collection[str]) -> list[Card]:
+    """Printings by id, for resolving a deck's `printing_id` entries (`POST /decks/validate`)."""
+    if not printing_ids:
+        return []
+    stmt = select(Card).where(Card.id.in_(printing_ids))
     return list(await session.scalars(stmt))
