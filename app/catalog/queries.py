@@ -20,3 +20,13 @@ async def get_representative_printing(session: AsyncSession, dedupe_key: str) ->
         .limit(1)
     )
     return await session.scalar(stmt)
+
+
+async def get_printings(session: AsyncSession, dedupe_key: str) -> list[Card]:
+    """Every printing of a card entity, newest first (docs/archive/mvp-spec.md §12.4: Card-detail view)."""
+    stmt = (
+        select(Card)
+        .where(Card.dedupe_key == dedupe_key)
+        .order_by(Card.release_date.desc(), Card.ingested_at.desc())
+    )
+    return list(await session.scalars(stmt))

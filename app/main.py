@@ -1,16 +1,20 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.detail_models import CardDetail
 from app.catalog.models import Base as CatalogBase
+from app.catalog.queries import get_printings
 from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
 from app.db import make_engine, make_session_factory
+from app.enrichment import status as enrichment_status
 from app.enrichment.models import Base as EnrichmentBase
+from app.enrichment.models import CardEnrichment
 from app.search.embedding_cache import Base as QueryEmbeddingCacheBase
 from app.search.gate import resolve_search_gate
 from app.search.models import Matched, SearchRequest, SearchResponse, SearchResult
@@ -116,6 +120,29 @@ def create_app(
             offset=request.offset,
             filters=gate.filters,
         )
+
+    @app.get("/cards/{entity_id}")
+    async def card_detail(
+        entity_id: str,
+        matched_tags: list[str] | None = Query(default=None),
+        matched_semantic: bool = Query(default=False),
+        session: AsyncSession = Depends(get_session),
+    ) -> CardDetail:
+        printings = await get_printings(session, entity_id)
+        if not printings:
+            raise HTTPException(status_code=404, detail="card not found")
+        card = printings[0]  # newest-first (CONTEXT.md: Representative printing)
+
+        enrichment = await session.get(CardEnrichment, entity_id)
+        tags = enrichment.tags if enrichment and enrichment.status == enrichment_status.COMPLETED else []
+
+        matched = (
+            Matched(tags=matched_tags or [], semantic=matched_semantic)
+            if matched_tags or matched_semantic
+            else None
+        )
+
+        return CardDetail.from_card(card, tags=tags, printings=printings, matched=matched)
 
     return app
 

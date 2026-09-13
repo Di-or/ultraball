@@ -27,6 +27,7 @@ def make_card(**overrides: object) -> Card:
         abilities=[],
         attack_costs=[4],
         sub_category=[],
+        image="https://assets.tcgdex.net/en/swsh/swsh1/1",
         dedupe_key=overrides.pop("dedupe_key", "charizard-1"),
         canonical_card_text="Charizard",
         is_standard_legal=True,
