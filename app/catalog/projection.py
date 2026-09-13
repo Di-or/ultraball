@@ -29,6 +29,7 @@ class CardProjection:
     abilities: list[dict]
     attack_costs: list[int]
     sub_category: list[str]
+    image: str | None
     dedupe_key: str
     canonical_card_text: str
     is_standard_legal: bool
@@ -65,6 +66,7 @@ def project_card(
         abilities=raw.get("abilities") or [],
         attack_costs=[len(attack.get("cost") or []) for attack in attacks],
         sub_category=derive_sub_category(name=raw["name"], rarity=raw.get("rarity")),
+        image=raw.get("image"),
         dedupe_key=identity.dedupe_key,
         canonical_card_text=identity.canonical_card_text,
         is_standard_legal=derive_is_standard_legal(
