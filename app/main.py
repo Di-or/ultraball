@@ -5,11 +5,18 @@ from fastapi import Depends, FastAPI, HTTPException, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.catalog.deck_models import DeckValidateRequest, DeckValidateResponse
+from app.catalog.deck_models import (
+    DeckImportRequest,
+    DeckImportResponse,
+    DeckValidateRequest,
+    DeckValidateResponse,
+)
 from app.catalog.deck_validation import DeckLine, UnresolvedEntry, validate_deck
 from app.catalog.detail_models import CardDetail
+from app.catalog.energy_models import EnergyBasic, EnergyBasicsResponse
 from app.catalog.models import Base as CatalogBase
-from app.catalog.queries import get_cards_by_ids, get_printings
+from app.catalog.ptcgl_import import DeckImportError, resolve_ptcgl_import
+from app.catalog.queries import get_basic_energy_palette, get_cards_by_ids, get_printings
 from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
@@ -164,6 +171,24 @@ def create_app(
 
         report = validate_deck(lines, unresolved=unresolved)
         return DeckValidateResponse.from_report(report)
+
+    @app.post("/decks/import")
+    async def import_deck_endpoint(
+        request: DeckImportRequest, session: AsyncSession = Depends(get_session)
+    ) -> DeckImportResponse:
+        try:
+            entries = await resolve_ptcgl_import(session, request.text)
+        except DeckImportError as error:
+            raise HTTPException(
+                status_code=422,
+                detail={"message": "some lines did not resolve to a catalog printing", "lines": error.unresolved_lines},
+            ) from error
+        return DeckImportResponse(entries=entries)
+
+    @app.get("/energy/basics")
+    async def energy_basics_endpoint(session: AsyncSession = Depends(get_session)) -> EnergyBasicsResponse:
+        palette = await get_basic_energy_palette(session)
+        return EnergyBasicsResponse(palette=[EnergyBasic.from_card(card) for card in palette])
 
     return app
 

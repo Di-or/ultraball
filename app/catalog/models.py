@@ -27,6 +27,7 @@ class Card(Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True)
     set_id: Mapped[str] = mapped_column(String, index=True)
+    set_code: Mapped[str] = mapped_column(String, index=True)
     local_id: Mapped[str] = mapped_column(String)
     name: Mapped[str] = mapped_column(String, index=True)
     category: Mapped[str] = mapped_column(String, index=True)

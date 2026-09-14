@@ -4,6 +4,7 @@ from datetime import date
 
 from app.catalog.identity import build_card_identity
 from app.catalog.legality import derive_is_standard_legal
+from app.catalog.set_codes import derive_set_code
 from app.catalog.sub_category import derive_sub_category
 
 
@@ -13,6 +14,7 @@ class CardProjection:
 
     id: str
     set_id: str
+    set_code: str
     local_id: str
     name: str
     category: str
@@ -43,6 +45,7 @@ def project_card(
     release_date: date,
     standard_legal_marks: Collection[str],
     banned_dedupe_keys: Set[str],
+    official_abbreviation: str | None = None,
 ) -> CardProjection:
     attacks = raw.get("attacks") or []
     identity = build_card_identity(raw)
@@ -50,6 +53,7 @@ def project_card(
     return CardProjection(
         id=raw["id"],
         set_id=set_id,
+        set_code=derive_set_code(set_id, official_abbreviation),
         local_id=str(raw.get("localId", "")),
         name=raw["name"],
         category=raw["category"],

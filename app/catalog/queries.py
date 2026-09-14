@@ -40,3 +40,28 @@ async def get_cards_by_ids(session: AsyncSession, printing_ids: Collection[str])
         return []
     stmt = select(Card).where(Card.id.in_(printing_ids))
     return list(await session.scalars(stmt))
+
+
+async def get_card_by_set_code_and_local_id(
+    session: AsyncSession, set_code: str, local_id: str
+) -> Card | None:
+    """The printing a PTCGL line's `{set_code} {local_id}` tail identifies (issue #28)."""
+    stmt = select(Card).where(Card.set_code == set_code.upper(), Card.local_id == local_id)
+    return await session.scalar(stmt)
+
+
+async def get_basic_energy_palette(session: AsyncSession) -> list[Card]:
+    """The fixed basic-Energy palette for the tray, one representative printing per type
+    (CONTEXT.md: Basic-Energy tray)."""
+    stmt = (
+        select(Card)
+        .where(Card.category == "Energy", Card.energy_type == "Basic")
+        .order_by(Card.release_date.desc(), Card.ingested_at.desc())
+    )
+    seen: set[str] = set()
+    palette: list[Card] = []
+    for card in await session.scalars(stmt):
+        if card.dedupe_key not in seen:
+            seen.add(card.dedupe_key)
+            palette.append(card)
+    return palette
