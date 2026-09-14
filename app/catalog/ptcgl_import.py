@@ -20,7 +20,12 @@ _SET_TAIL_RE = re.compile(
 
 @dataclass(frozen=True)
 class ParsedLine:
-    """One decoded PTCGL line, before catalog resolution."""
+    """One decoded PTCGL line, before catalog resolution.
+
+    `name` is the full printed card name when `set_code`/`local_id` are present, or a
+    bare basic-Energy type name (e.g. "Fire Energy", "basic " prefix already stripped)
+    when they're absent.
+    """
 
     raw: str
     count: int

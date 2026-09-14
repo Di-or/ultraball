@@ -56,6 +56,32 @@ async def test_an_unresolvable_line_fails_the_whole_import(
     assert "2 Not A Real Card XYZ 999" in detail["lines"]
 
 
+async def test_resolves_a_bare_type_name_without_the_energy_suffix(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(
+                id="base1-98",
+                dedupe_key="fire-energy",
+                name="Fire Energy",
+                category="Energy",
+                energy_type="Basic",
+                stage=None,
+                set_id="base1",
+                set_code="BASE1",
+                local_id="98",
+            )
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.post("/decks/import", json={"text": "4 Fire"})
+
+    assert response.status_code == 200
+    assert response.json()["entries"] == [{"printing_id": "base1-98", "count": 4}]
+
+
 async def test_resolves_a_basic_energy_line_via_the_most_recent_printing(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
