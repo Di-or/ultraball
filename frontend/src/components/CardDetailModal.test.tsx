@@ -79,7 +79,7 @@ describe("CardDetailModal", () => {
   it("closes on backdrop click, close button, and Escape", async () => {
     vi.mocked(fetch).mockResolvedValue(detailResponse(CHARIZARD));
     const onClose = vi.fn();
-    const { rerender } = render(<CardDetailModal entityId="charizard" onClose={onClose} />);
+    const { container, rerender } = render(<CardDetailModal entityId="charizard" onClose={onClose} />);
     await waitFor(() => expect(screen.getByRole("heading", { name: "Charizard" })).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -88,7 +88,7 @@ describe("CardDetailModal", () => {
     fireEvent.click(screen.getByRole("dialog"));
     expect(onClose).toHaveBeenCalledTimes(1); // clicking inside the dialog itself does not close it
 
-    fireEvent.click(screen.getByTestId("modal-backdrop"));
+    fireEvent.click(container.querySelector(".modal-backdrop")!);
     expect(onClose).toHaveBeenCalledTimes(2);
 
     rerender(<CardDetailModal entityId="charizard" onClose={onClose} />);

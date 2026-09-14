@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { getCardDetail, type MatchedProvenance } from "../lib/api";
-import type { CardDetail } from "../lib/types";
+import { getCardDetail } from "../lib/api";
+import type { CardDetail, Matched } from "../lib/types";
+import { MatchedChips } from "./MatchedChips";
 
 interface CardDetailModalProps {
   entityId: string;
-  matched?: MatchedProvenance;
+  matched?: Matched | null;
   onClose: () => void;
 }
 
-// Opens as an overlay on top of the still-mounted results grid (CONTEXT.md: Card detail),
-// so the grid's scroll position is untouched by construction — nothing navigates away.
+// Opens as an overlay on top of the still-mounted results grid (docs/archive/mvp-spec.md
+// §12.4, cited by app/catalog/detail_models.py), so the grid's scroll position is untouched
+// by construction — nothing navigates away.
 export function CardDetailModal({ entityId, matched, onClose }: CardDetailModalProps) {
   const [detail, setDetail] = useState<CardDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export function CardDetailModal({ entityId, matched, onClose }: CardDetailModalP
   }, [onClose]);
 
   return (
-    <div className="modal-backdrop" data-testid="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal-dialog"
         role="dialog"
@@ -66,18 +68,7 @@ export function CardDetailModal({ entityId, matched, onClose }: CardDetailModalP
                   {detail.hp != null ? ` · ${detail.hp} HP` : ""}
                 </p>
                 {detail.types.length > 0 && <p className="card-types">{detail.types.join(", ")}</p>}
-                {detail.matched && (detail.matched.tags.length > 0 || detail.matched.semantic) && (
-                  <div className="card-matched">
-                    {detail.matched.tags.map((tag) => (
-                      <span key={tag} className="matched-tag">
-                        {tag}
-                      </span>
-                    ))}
-                    {detail.matched.semantic && (
-                      <span className="matched-tag matched-semantic">meaning</span>
-                    )}
-                  </div>
-                )}
+                <MatchedChips matched={detail.matched} />
               </div>
             </div>
 

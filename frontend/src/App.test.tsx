@@ -99,6 +99,50 @@ describe("App", () => {
     expect(lastBody.query).toBeNull();
   });
 
+  it("keeps the conceptually-ranked response after resolving, without a second fetch that would downgrade it to plain filtering", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ results: [], total: 0, limit: 30, offset: 0, filters: { format: "standard" } })
+    );
+
+    render(<App />);
+    await waitFor(() => expect(screen.queryByText("Searching…")).not.toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText("Search query"), { target: { value: "acceleration" } });
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        results: [
+          {
+            entity_id: "charizard",
+            printing_id: "swsh4-1",
+            name: "Charizard",
+            category: "Pokemon",
+            hp: 170,
+            types: ["Fire"],
+            stage: "Stage 2",
+            sub_category: [],
+            regulation_mark: "F",
+            rarity: "Rare Holo",
+            set_id: "swsh4",
+            is_standard_legal: true,
+            matched: { tags: ["acceleration"], semantic: true },
+          },
+        ],
+        total: 1,
+        limit: 30,
+        offset: 0,
+        filters: { format: "standard" },
+      })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+    await waitFor(() => expect(screen.getByText("acceleration")).toBeInTheDocument());
+    // The conceptual match chip from the parse-driven response must still be on screen — a
+    // second, `query: null` fetch would have overwritten it with an unranked, unmatched one.
+    expect(screen.getByText("meaning")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("opens a card-detail modal from a result and closes it", async () => {
     const fetchMock = vi.mocked(fetch);
     fetchMock.mockResolvedValueOnce(

@@ -1,4 +1,4 @@
-import type { CardDetail, SearchRequest, SearchResponse } from "./types";
+import type { CardDetail, Matched, SearchRequest, SearchResponse } from "./types";
 
 export async function search(request: SearchRequest, signal?: AbortSignal): Promise<SearchResponse> {
   const response = await fetch("/search", {
@@ -13,14 +13,9 @@ export async function search(request: SearchRequest, signal?: AbortSignal): Prom
   return (await response.json()) as SearchResponse;
 }
 
-export interface MatchedProvenance {
-  tags?: string[];
-  semantic?: boolean;
-}
-
 export async function getCardDetail(
   entityId: string,
-  matched?: MatchedProvenance,
+  matched?: Matched | null,
   signal?: AbortSignal
 ): Promise<CardDetail> {
   const params = new URLSearchParams();

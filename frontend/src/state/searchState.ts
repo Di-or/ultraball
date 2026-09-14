@@ -16,6 +16,14 @@ export interface SearchState {
   facets: Facets;
   limit: number;
   offset: number;
+  /** Bumped by every action that should cause a new `/search` fetch. `query-resolved` is the
+   * one exception — it only reconciles UI state from a response App already has in hand, so
+   * it deliberately leaves this untouched: bumping it would cost a redundant round trip that
+   * resends with `query: null` and silently downgrades the just-fetched conceptually-ranked
+   * results to a plain filter/browse response (the gate ignores `filters` only when `query`
+   * is set — see the `conceptActive` doc above — so a `query: null` re-request always takes
+   * the plain path). */
+  fetchRevision: number;
 }
 
 export const DEFAULT_LIMIT = 30;
@@ -28,6 +36,7 @@ export const initialSearchState: SearchState = {
   facets: EMPTY_FACETS,
   limit: DEFAULT_LIMIT,
   offset: 0,
+  fetchRevision: 0,
 };
 
 export type SearchAction =
@@ -56,8 +65,10 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         filters: EMPTY_FILTERS,
         facets: {},
         offset: 0,
+        fetchRevision: state.fetchRevision + 1,
       };
     case "query-resolved":
+      // Deliberately does not bump `fetchRevision` — see the field's doc comment.
       return {
         ...state,
         query: null,
@@ -70,6 +81,7 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         conceptActive: false,
         filters: { ...state.filters, ...action.patch },
         offset: 0,
+        fetchRevision: state.fetchRevision + 1,
       };
     case "facet-changed":
       return {
@@ -78,10 +90,11 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         conceptActive: false,
         facets: { ...state.facets, ...action.patch },
         offset: 0,
+        fetchRevision: state.fetchRevision + 1,
       };
     case "page-changed":
-      return { ...state, offset: action.offset };
+      return { ...state, offset: action.offset, fetchRevision: state.fetchRevision + 1 };
     case "concept-removed":
-      return { ...state, query: null, conceptActive: false };
+      return { ...state, query: null, conceptActive: false, fetchRevision: state.fetchRevision + 1 };
   }
 }

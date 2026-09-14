@@ -35,7 +35,9 @@ export function App() {
     )
       .then((result) => {
         setResponse(result);
-        // The parse ticked these filters on — surface them in the panel (CONTEXT.md: Filter panel).
+        // The parse ticked these filters on — surface them in the panel (CONTEXT.md: Filter
+        // panel). Reconciling this into state deliberately doesn't bump `fetchRevision`
+        // (see its doc comment), so this never causes a second, ranking-downgrading fetch.
         if (state.query) {
           dispatch({ type: "query-resolved", filters: result.filters });
         }
@@ -48,7 +50,7 @@ export function App() {
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.query, state.filters, state.facets, state.limit, state.offset]);
+  }, [state.fetchRevision]);
 
   function handleNlSubmit(query: string) {
     dispatch({ type: "query-submitted", query });
@@ -98,7 +100,7 @@ export function App() {
       {selectedCard && (
         <CardDetailModal
           entityId={selectedCard.entity_id}
-          matched={selectedCard.matched ?? undefined}
+          matched={selectedCard.matched}
           onClose={() => setSelectedCard(null)}
         />
       )}

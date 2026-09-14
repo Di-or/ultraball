@@ -1,3 +1,4 @@
+import { MatchedChips } from "./MatchedChips";
 import type { SearchResult } from "../lib/types";
 
 interface ResultsGridProps {
@@ -35,16 +36,7 @@ export function ResultsGrid({ results, total, loading, error, onSelectCard }: Re
                 {card.hp != null ? ` · ${card.hp} HP` : ""}
               </div>
               {card.types.length > 0 && <div className="card-types">{card.types.join(", ")}</div>}
-              {card.matched && (card.matched.tags.length > 0 || card.matched.semantic) && (
-                <div className="card-matched">
-                  {card.matched.tags.map((tag) => (
-                    <span key={tag} className="matched-tag">
-                      {tag}
-                    </span>
-                  ))}
-                  {card.matched.semantic && <span className="matched-tag matched-semantic">meaning</span>}
-                </div>
-              )}
+              <MatchedChips matched={card.matched} />
             </button>
           </li>
         ))}
