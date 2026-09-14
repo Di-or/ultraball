@@ -34,8 +34,14 @@ async def test_a_fully_resolvable_list_imports_and_returns_the_resolved_deck(
 
     assert response.status_code == 200
     body = response.json()
-    assert {"printing_id": "obf-10", "count": 4} in body["entries"]
-    assert {"printing_id": "base1-98", "count": 8} in body["entries"]
+    printing_ids = {entry["printing_id"]: entry for entry in body["entries"]}
+    assert printing_ids["obf-10"]["count"] == 4
+    assert printing_ids["obf-10"]["name"] == "Charmander"
+    assert printing_ids["obf-10"]["set_code"] == "OBF"
+    assert printing_ids["obf-10"]["local_id"] == "10"
+    assert printing_ids["base1-98"]["count"] == 8
+    assert printing_ids["base1-98"]["category"] == "Energy"
+    assert printing_ids["base1-98"]["energy_type"] == "Basic"
 
 
 async def test_an_unresolvable_line_fails_the_whole_import(
@@ -79,7 +85,8 @@ async def test_resolves_a_bare_type_name_without_the_energy_suffix(
     response = await client.post("/decks/import", json={"text": "4 Fire"})
 
     assert response.status_code == 200
-    assert response.json()["entries"] == [{"printing_id": "base1-98", "count": 4}]
+    entries = response.json()["entries"]
+    assert [(entry["printing_id"], entry["count"]) for entry in entries] == [("base1-98", 4)]
 
 
 async def test_resolves_a_basic_energy_line_via_the_most_recent_printing(
@@ -119,4 +126,4 @@ async def test_resolves_a_basic_energy_line_via_the_most_recent_printing(
 
     assert response.status_code == 200
     body = response.json()
-    assert body["entries"] == [{"printing_id": "base4-98", "count": 10}]
+    assert [(entry["printing_id"], entry["count"]) for entry in body["entries"]] == [("base4-98", 10)]

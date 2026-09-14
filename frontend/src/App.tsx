@@ -1,16 +1,19 @@
 import { useEffect, useReducer, useState } from "react";
 import { CardDetailModal } from "./components/CardDetailModal";
 import { ConceptIndicator } from "./components/ConceptIndicator";
+import { DeckPanel } from "./components/DeckPanel";
 import { FilterPanel } from "./components/FilterPanel";
 import { Pagination } from "./components/Pagination";
 import { ResultsGrid } from "./components/ResultsGrid";
 import { SearchBox } from "./components/SearchBox";
 import { search } from "./lib/api";
 import type { SearchResponse, SearchResult } from "./lib/types";
+import { deckStateReducer, initialDeckState } from "./state/deckState";
 import { initialSearchState, searchStateReducer } from "./state/searchState";
 
 export function App() {
   const [state, dispatch] = useReducer(searchStateReducer, initialSearchState);
+  const [deckState, deckDispatch] = useReducer(deckStateReducer, initialDeckState);
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +59,20 @@ export function App() {
     dispatch({ type: "query-submitted", query });
   }
 
+  function handleAddToDeck(card: SearchResult) {
+    deckDispatch({
+      type: "card-added",
+      card: {
+        printing_id: card.printing_id,
+        name: card.name,
+        category: card.category,
+        set_code: card.set_code,
+        local_id: card.local_id,
+        energy_type: null,
+      },
+    });
+  }
+
   return (
     <div className="app-shell">
       <header>
@@ -82,6 +99,7 @@ export function App() {
             loading={loading}
             error={error}
             onSelectCard={setSelectedCard}
+            onAddToDeck={handleAddToDeck}
           />
           {response && (
             <Pagination
@@ -92,10 +110,7 @@ export function App() {
             />
           )}
         </section>
-        <aside className="deck-panel" aria-label="Deck">
-          <h2>Deck</h2>
-          <p>Deck building lands in a follow-up ticket.</p>
-        </aside>
+        <DeckPanel lines={deckState.lines} dispatch={deckDispatch} />
       </main>
       {selectedCard && (
         <CardDetailModal

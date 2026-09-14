@@ -54,6 +54,8 @@ export interface SearchResult {
   regulation_mark: string | null;
   rarity: string | null;
   set_id: string;
+  set_code: string;
+  local_id: string;
   is_standard_legal: boolean;
   matched: Matched | null;
 }
@@ -117,4 +119,68 @@ export interface CardDetail {
   tags: string[];
   printings: Printing[];
   matched: Matched | null;
+}
+
+// Mirrors app/catalog/deck_models.py and app/catalog/energy_models.py (CONTEXT.md: Deck panel).
+
+export interface DeckEntry {
+  printing_id: string;
+  count: number;
+}
+
+export interface DeckValidateRequest {
+  entries: DeckEntry[];
+  format: "standard";
+}
+
+export interface Violation {
+  code: string;
+  message: string;
+  cards: string[];
+}
+
+export interface Counts {
+  pokemon: number;
+  trainer: number;
+  energy: number;
+  total: number;
+}
+
+export interface DeckValidateResponse {
+  legal: boolean;
+  counts: Counts;
+  violations: Violation[];
+}
+
+export interface DeckImportEntry {
+  printing_id: string;
+  count: number;
+  name: string;
+  category: string;
+  set_code: string;
+  local_id: string;
+  energy_type: string | null;
+}
+
+export interface DeckImportResponse {
+  entries: DeckImportEntry[];
+}
+
+export interface DeckImportError {
+  message: string;
+  lines: string[];
+}
+
+export interface EnergyBasic {
+  printing_id: string;
+  name: string;
+  energy_type: string | null;
+  types: string[];
+  image: string | null;
+  set_code: string;
+  local_id: string;
+}
+
+export interface EnergyBasicsResponse {
+  palette: EnergyBasic[];
 }

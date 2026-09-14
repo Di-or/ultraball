@@ -7,9 +7,17 @@ interface ResultsGridProps {
   loading: boolean;
   error: string | null;
   onSelectCard: (card: SearchResult) => void;
+  onAddToDeck: (card: SearchResult) => void;
 }
 
-export function ResultsGrid({ results, total, loading, error, onSelectCard }: ResultsGridProps) {
+export function ResultsGrid({
+  results,
+  total,
+  loading,
+  error,
+  onSelectCard,
+  onAddToDeck,
+}: ResultsGridProps) {
   if (error) {
     return <p role="alert">{error}</p>;
   }
@@ -37,6 +45,9 @@ export function ResultsGrid({ results, total, loading, error, onSelectCard }: Re
               </div>
               {card.types.length > 0 && <div className="card-types">{card.types.join(", ")}</div>}
               <MatchedChips matched={card.matched} />
+            </button>
+            <button type="button" className="add-to-deck" onClick={() => onAddToDeck(card)}>
+              Add to deck
             </button>
           </li>
         ))}

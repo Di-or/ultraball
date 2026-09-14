@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.catalog.deck_models import DeckEntry
+from app.catalog.deck_validation import DeckLine
 from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_and_local_id
 
 # A card line: "<count> <name...> [<set_code> <local_id>]". The set-code/local-id tail is
@@ -92,17 +92,20 @@ def _matches_basic_energy_name(candidate_name: str, palette_name: str) -> bool:
     return candidate == palette or palette == f"{candidate} energy"
 
 
-async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckEntry]:
-    """Resolve PTCGL decklist text into deck entries, all-or-nothing (issue #28).
+async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLine]:
+    """Resolve PTCGL decklist text into deck lines, all-or-nothing (issue #28).
 
     A line with a set code + local id resolves against that exact printing; a bare-name
     line resolves against the fixed basic-Energy palette. If any line fails to resolve,
     `DeckImportError` carries every failing line so the whole import can be rejected.
+
+    Returns the resolved `Card` alongside each count (not just the printing id) so the
+    caller can render the imported deck without a second round trip (issue #31).
     """
     parsed = parse_ptcgl(text)
     palette = await get_basic_energy_palette(session)
 
-    entries: list[DeckEntry] = []
+    lines: list[DeckLine] = []
     unresolved: list[str] = []
 
     for line in parsed:
@@ -117,9 +120,9 @@ async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckEnt
         if card is None:
             unresolved.append(line.raw)
         else:
-            entries.append(DeckEntry(printing_id=card.id, count=line.count))
+            lines.append(DeckLine(card=card, count=line.count))
 
     if unresolved:
         raise DeckImportError(unresolved)
 
-    return entries
+    return lines
