@@ -1,22 +1,22 @@
+import { DECK_CATEGORY_ORDER } from "./deckCategories";
+import type { Category } from "./types";
 import type { DeckLine } from "../state/deckState";
 
 // Client-side PTCGL export (issue #31) — the mirror of the server's lenient reader in
 // app/catalog/ptcgl_import.py. Writing is strict: every line carries its set code + local
 // id, including basic Energy, so a round trip through `/decks/import` resolves exactly.
 
-const SECTION_HEADINGS: Record<string, string> = {
+const SECTION_HEADINGS: Record<Category, string> = {
   Pokemon: "Pokémon",
   Trainer: "Trainer Cards",
   Energy: "Energy",
 };
 
-const SECTION_ORDER = ["Pokemon", "Trainer", "Energy"];
-
 export function exportToPtcgl(lines: DeckLine[]): string {
   const sections: string[] = [];
   let total = 0;
 
-  for (const category of SECTION_ORDER) {
+  for (const category of DECK_CATEGORY_ORDER) {
     const linesInSection = lines
       .filter((line) => line.category === category)
       .slice()

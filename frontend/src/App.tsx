@@ -7,7 +7,7 @@ import { Pagination } from "./components/Pagination";
 import { ResultsGrid } from "./components/ResultsGrid";
 import { SearchBox } from "./components/SearchBox";
 import { search } from "./lib/api";
-import type { SearchResponse, SearchResult } from "./lib/types";
+import type { Category, SearchResponse, SearchResult } from "./lib/types";
 import { deckStateReducer, initialDeckState } from "./state/deckState";
 import { initialSearchState, searchStateReducer } from "./state/searchState";
 
@@ -65,7 +65,9 @@ export function App() {
       card: {
         printing_id: card.printing_id,
         name: card.name,
-        category: card.category,
+        // The backend serves `category` as a plain string (app/search/models.py); the
+        // search gate already constrains it to one of the three deck categories.
+        category: card.category as Category,
         set_code: card.set_code,
         local_id: card.local_id,
         energy_type: null,

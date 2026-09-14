@@ -48,8 +48,6 @@ class CardDetail(BaseModel):
     regulation_mark: str | None
     rarity: str | None
     set_id: str
-    set_code: str
-    local_id: str
     sub_category: list[str]
     trainer_type: str | None
     energy_type: str | None
@@ -84,8 +82,6 @@ class CardDetail(BaseModel):
             regulation_mark=card.regulation_mark,
             rarity=card.rarity,
             set_id=card.set_id,
-            set_code=card.set_code,
-            local_id=card.local_id,
             sub_category=card.sub_category,
             trainer_type=card.trainer_type,
             energy_type=card.energy_type,

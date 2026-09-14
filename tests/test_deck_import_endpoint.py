@@ -37,6 +37,7 @@ async def test_a_fully_resolvable_list_imports_and_returns_the_resolved_deck(
     printing_ids = {entry["printing_id"]: entry for entry in body["entries"]}
     assert printing_ids["obf-10"]["count"] == 4
     assert printing_ids["obf-10"]["name"] == "Charmander"
+    assert printing_ids["obf-10"]["category"] == "Pokemon"
     assert printing_ids["obf-10"]["set_code"] == "OBF"
     assert printing_ids["obf-10"]["local_id"] == "10"
     assert printing_ids["base1-98"]["count"] == 8

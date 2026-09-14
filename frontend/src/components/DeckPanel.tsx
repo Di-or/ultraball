@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState, type Dispatch } from "react";
+import { useEffect, useState, type Dispatch } from "react";
 import { DeckImportRejected, getEnergyBasics, importDeck, validateDeck } from "../lib/api";
+import { DECK_CATEGORY_ORDER } from "../lib/deckCategories";
 import { exportToPtcgl } from "../lib/ptcgl";
-import type { Counts, EnergyBasic, Violation } from "../lib/types";
+import type { Category, Counts, EnergyBasic, Violation } from "../lib/types";
 import type { DeckAction, DeckLine } from "../state/deckState";
 
 const REQUIRED_DECK_SIZE = 60;
 const VALIDATE_DEBOUNCE_MS = 400;
-const SECTION_ORDER: Array<{ category: string; heading: string }> = [
-  { category: "Pokemon", heading: "Pokémon" },
-  { category: "Trainer", heading: "Trainer" },
-  { category: "Energy", heading: "Energy" },
-];
+const SECTION_HEADINGS: Record<Category, string> = {
+  Pokemon: "Pokémon",
+  Trainer: "Trainer",
+  Energy: "Energy",
+};
 
 interface DeckPanelProps {
   lines: DeckLine[];
@@ -21,9 +22,10 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [legal, setLegal] = useState<boolean | null>(null);
   const [violations, setViolations] = useState<Violation[]>([]);
+  const [validating, setValidating] = useState(false);
   const [palette, setPalette] = useState<EnergyBasic[]>([]);
   const [importText, setImportText] = useState("");
-  const [importError, setImportError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string[] | null>(null);
   const [exportText, setExportText] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
   // Debounced, server-authoritative legality (CONTEXT.md: Deck panel) — no rules client-side.
   useEffect(() => {
     const controller = new AbortController();
+    setValidating(true);
     const timer = setTimeout(() => {
       validateDeck(
         {
@@ -47,9 +50,11 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
           setCounts(report.counts);
           setLegal(report.legal);
           setViolations(report.violations);
+          setValidating(false);
         })
         .catch((err: unknown) => {
           if (err instanceof DOMException && err.name === "AbortError") return;
+          setValidating(false);
         });
     }, VALIDATE_DEBOUNCE_MS);
 
@@ -87,7 +92,9 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
           printing_id: entry.printing_id,
           count: entry.count,
           name: entry.name,
-          category: entry.category,
+          // The backend serves `category` as a plain string (app/catalog/deck_models.py);
+          // resolved import entries are always one of the three deck categories.
+          category: entry.category as Category,
           set_code: entry.set_code,
           local_id: entry.local_id,
           energy_type: entry.energy_type,
@@ -96,9 +103,9 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
       setImportText("");
     } catch (err: unknown) {
       if (err instanceof DeckImportRejected) {
-        setImportError(`Couldn't resolve: ${err.lines.join(", ")}`);
+        setImportError(err.lines);
       } else {
-        setImportError(err instanceof Error ? err.message : "import failed");
+        setImportError([err instanceof Error ? err.message : "import failed"]);
       }
     }
   }
@@ -123,18 +130,23 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
             {legal ? "Legal" : "Not legal"}
           </span>
         )}
+        {validating && <span aria-live="polite">Checking…</span>}
       </div>
       {violations.length > 0 && (
         <ul className="deck-violations" aria-label="Violations">
           {violations.map((violation) => (
-            <li key={violation.code}>{violation.message}</li>
+            <li key={violation.code}>
+              {violation.message}
+              {violation.cards.length > 0 && ` (${violation.cards.join(", ")})`}
+            </li>
           ))}
         </ul>
       )}
 
-      {SECTION_ORDER.map(({ category, heading }) => {
+      {DECK_CATEGORY_ORDER.map((category) => {
         const sectionLines = lines.filter((line) => line.category === category);
         if (sectionLines.length === 0) return null;
+        const heading = SECTION_HEADINGS[category];
         return (
           <section key={category} className="deck-section" aria-label={`${heading} deck rows`}>
             <h3>{heading}</h3>
@@ -174,7 +186,13 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
         <button type="button" onClick={handleImport} disabled={!importText.trim()}>
           Import
         </button>
-        {importError && <p role="alert">{importError}</p>}
+        {importError && (
+          <ul role="alert" className="import-error">
+            {importError.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="deck-export" aria-label="Export deck">
@@ -196,18 +214,15 @@ interface DeckStepperProps {
 }
 
 function DeckStepper({ count, onChange }: DeckStepperProps) {
-  const inputId = useRef(`stepper-${Math.random().toString(36).slice(2)}`);
   return (
     <div className="deck-stepper">
       <button type="button" aria-label="Decrease count" onClick={() => onChange(count - 1)}>
         −
       </button>
       <input
-        id={inputId.current}
         type="number"
         aria-label="Card count"
         value={count}
-        min={0}
         onChange={(event) => onChange(Number(event.target.value))}
       />
       <button type="button" aria-label="Increase count" onClick={() => onChange(count + 1)}>

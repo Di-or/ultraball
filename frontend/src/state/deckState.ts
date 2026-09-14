@@ -1,11 +1,13 @@
 // Client-side deck state (CONTEXT.md: Deck panel). Decks are ephemeral — no persistence,
 // no accounts (spec Out of Scope) — so this just tracks lines in memory for the session.
 
+import type { Category } from "../lib/types";
+
 export interface DeckLine {
   printing_id: string;
   count: number;
   name: string;
-  category: string;
+  category: Category;
   set_code: string;
   local_id: string;
   energy_type: string | null;
