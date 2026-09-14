@@ -1,4 +1,4 @@
-import type { SearchRequest, SearchResponse } from "./types";
+import type { CardDetail, SearchRequest, SearchResponse } from "./types";
 
 export async function search(request: SearchRequest, signal?: AbortSignal): Promise<SearchResponse> {
   const response = await fetch("/search", {
@@ -11,4 +11,28 @@ export async function search(request: SearchRequest, signal?: AbortSignal): Prom
     throw new Error(`search failed: ${response.status} ${await response.text()}`);
   }
   return (await response.json()) as SearchResponse;
+}
+
+export interface MatchedProvenance {
+  tags?: string[];
+  semantic?: boolean;
+}
+
+export async function getCardDetail(
+  entityId: string,
+  matched?: MatchedProvenance,
+  signal?: AbortSignal
+): Promise<CardDetail> {
+  const params = new URLSearchParams();
+  for (const tag of matched?.tags ?? []) params.append("matched_tags", tag);
+  if (matched?.semantic) params.set("matched_semantic", "true");
+
+  const query = params.toString();
+  const response = await fetch(`/cards/${encodeURIComponent(entityId)}${query ? `?${query}` : ""}`, {
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(`card detail failed: ${response.status} ${await response.text()}`);
+  }
+  return (await response.json()) as CardDetail;
 }

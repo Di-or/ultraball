@@ -90,4 +90,48 @@ describe("searchStateReducer", () => {
 
     expect(next.filters.category).toBeNull();
   });
+
+  it("marks the concept active once a query is submitted", () => {
+    const submitted = searchStateReducer(initialSearchState, {
+      type: "query-submitted",
+      query: "energy acceleration",
+    });
+
+    expect(submitted.conceptActive).toBe(true);
+  });
+
+  it("removing the concept indicator clears the query and drops semantic ranking without touching filters", () => {
+    const resolved = searchStateReducer(
+      searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+      { type: "query-resolved", filters: { format: "standard", category: "Pokemon" } }
+    );
+
+    const next = searchStateReducer(resolved, { type: "concept-removed" });
+
+    expect(next.conceptActive).toBe(false);
+    expect(next.query).toBeNull();
+    expect(next.filters).toEqual({ format: "standard", category: "Pokemon" });
+  });
+
+  it("drops the concept when a filter edit follows a resolved query (the gate ignores filters while query is set)", () => {
+    const resolved = searchStateReducer(
+      searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+      { type: "query-resolved", filters: { format: "standard" } }
+    );
+
+    const next = searchStateReducer(resolved, { type: "filter-changed", patch: { stage: "Basic" } });
+
+    expect(next.conceptActive).toBe(false);
+  });
+
+  it("drops the concept when a facet edit follows a resolved query", () => {
+    const resolved = searchStateReducer(
+      searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+      { type: "query-resolved", filters: { format: "standard" } }
+    );
+
+    const next = searchStateReducer(resolved, { type: "facet-changed", patch: { rarity: ["Rare"] } });
+
+    expect(next.conceptActive).toBe(false);
+  });
 });
