@@ -45,7 +45,7 @@ describe("App", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
-    await waitFor(() => expect(screen.getByLabelText("Maximum HP")).toHaveValue(130));
+    await waitFor(() => expect(screen.getByLabelText("Maximum HP")).toHaveValue("130"));
 
     const parseCall = fetchMock.mock.calls.find(
       (call) => JSON.parse(call[1]?.body as string).query === "energy acceleration under 130 HP"

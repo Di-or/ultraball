@@ -1,4 +1,13 @@
-import { CATEGORIES, POKEMON_TYPES, REGULATION_MARKS, RARITIES, STAGES } from "../lib/constants";
+import {
+  CATEGORIES,
+  HP_MAX,
+  HP_MIN,
+  HP_STEP,
+  POKEMON_TYPES,
+  REGULATION_MARKS,
+  RARITIES,
+  STAGES,
+} from "../lib/constants";
 import type { Category, Facets, Filters, Stage } from "../lib/types";
 
 interface FilterPanelProps {
@@ -74,28 +83,30 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
         <h3>HP</h3>
         <div className="range-inputs">
           <label>
-            Min
+            Min {filters.hp?.gte ?? HP_MIN}
             <input
-              type="number"
+              type="range"
               aria-label="Minimum HP"
-              value={filters.hp?.gte ?? ""}
+              min={HP_MIN}
+              max={HP_MAX}
+              step={HP_STEP}
+              value={filters.hp?.gte ?? HP_MIN}
               onChange={(event) =>
-                onFilterChange({
-                  hp: { ...filters.hp, gte: event.target.value ? Number(event.target.value) : undefined },
-                })
+                onFilterChange({ hp: { ...filters.hp, gte: Number(event.target.value) } })
               }
             />
           </label>
           <label>
-            Max
+            Max {filters.hp?.lte ?? HP_MAX}
             <input
-              type="number"
+              type="range"
               aria-label="Maximum HP"
-              value={filters.hp?.lte ?? ""}
+              min={HP_MIN}
+              max={HP_MAX}
+              step={HP_STEP}
+              value={filters.hp?.lte ?? HP_MAX}
               onChange={(event) =>
-                onFilterChange({
-                  hp: { ...filters.hp, lte: event.target.value ? Number(event.target.value) : undefined },
-                })
+                onFilterChange({ hp: { ...filters.hp, lte: Number(event.target.value) } })
               }
             />
           </label>

@@ -21,6 +21,10 @@ export const CATEGORIES = ["Pokemon", "Trainer", "Energy"] as const;
 
 export const REGULATION_MARKS = ["G", "H", "I"] as const;
 
+export const HP_MIN = 0;
+export const HP_MAX = 340;
+export const HP_STEP = 10;
+
 export const RARITIES = [
   "Common",
   "Uncommon",
