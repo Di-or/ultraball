@@ -10,6 +10,9 @@ class SetSnapshot:
     set_id: str
     release_date: date
     cards: list[dict]
+    official_abbreviation: str | None = None
+    """`set.abbreviation.official` from TCGdex, the input to PTCGL set-code derivation
+    (CONTEXT.md: catalog layer; issue #28)."""
 
 
 class CatalogClient(ABC):

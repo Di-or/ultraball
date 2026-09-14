@@ -19,6 +19,18 @@ class DeckValidateRequest(BaseModel):
     format: Literal["standard"] = "standard"
 
 
+class DeckImportRequest(BaseModel):
+    """A pasted PTCGL decklist (`POST /decks/import`, issue #28)."""
+
+    text: str
+
+
+class DeckImportResponse(BaseModel):
+    """The resolved deck, replacing whatever the client currently has (issue #28)."""
+
+    entries: list[DeckEntry]
+
+
 class Violation(BaseModel):
     """One flagged rule breach (docs/archive/mvp-spec.md §12.3) — allow-and-flag, never blocking."""
 

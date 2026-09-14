@@ -96,6 +96,31 @@ def test_basic_energy_projection_is_always_legal() -> None:
     assert card.attack_costs == []
 
 
+def test_set_code_is_derived_from_the_official_abbreviation() -> None:
+    card = project_card(
+        _raw_pokemon(),
+        set_id="sv3pt5",
+        release_date=date(2023, 6, 2),
+        standard_legal_marks=frozenset({"D"}),
+        banned_dedupe_keys=frozenset(),
+        official_abbreviation="MEW",
+    )
+
+    assert card.set_code == "MEW"
+
+
+def test_set_code_falls_back_to_the_set_id_without_an_official_abbreviation() -> None:
+    card = project_card(
+        _raw_pokemon(),
+        set_id="swsh1",
+        release_date=date(2020, 2, 7),
+        standard_legal_marks=frozenset({"D"}),
+        banned_dedupe_keys=frozenset(),
+    )
+
+    assert card.set_code == "SWSH1"
+
+
 def test_sub_category_is_derived_from_name_and_rarity() -> None:
     card = project_card(
         _raw_pokemon(name="Mega Charizard ex", rarity="Special Illustration Rare"),

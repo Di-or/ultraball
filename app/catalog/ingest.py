@@ -39,6 +39,7 @@ async def run_ingest(
             release_date=snapshot.release_date,
             standard_legal_marks=standard_legal_marks,
             banned_dedupe_keys=banned_dedupe_keys,
+            official_abbreviation=snapshot.official_abbreviation,
         )
         values = {**asdict(card), "ingested_at": func.now()}
         await session.execute(
