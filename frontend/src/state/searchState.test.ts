@@ -90,4 +90,77 @@ describe("searchStateReducer", () => {
 
     expect(next.filters.category).toBeNull();
   });
+
+  it("marks the concept active once a query is submitted", () => {
+    const submitted = searchStateReducer(initialSearchState, {
+      type: "query-submitted",
+      query: "energy acceleration",
+    });
+
+    expect(submitted.conceptActive).toBe(true);
+  });
+
+  it("removing the concept indicator clears the query and drops semantic ranking without touching filters", () => {
+    const resolved = searchStateReducer(
+      searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+      { type: "query-resolved", filters: { format: "standard", category: "Pokemon" } }
+    );
+
+    const next = searchStateReducer(resolved, { type: "concept-removed" });
+
+    expect(next.conceptActive).toBe(false);
+    expect(next.query).toBeNull();
+    expect(next.filters).toEqual({ format: "standard", category: "Pokemon" });
+  });
+
+  it("drops the concept when a filter edit follows a resolved query (the gate ignores filters while query is set)", () => {
+    const resolved = searchStateReducer(
+      searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+      { type: "query-resolved", filters: { format: "standard" } }
+    );
+
+    const next = searchStateReducer(resolved, { type: "filter-changed", patch: { stage: "Basic" } });
+
+    expect(next.conceptActive).toBe(false);
+  });
+
+  it("drops the concept when a facet edit follows a resolved query", () => {
+    const resolved = searchStateReducer(
+      searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+      { type: "query-resolved", filters: { format: "standard" } }
+    );
+
+    const next = searchStateReducer(resolved, { type: "facet-changed", patch: { rarity: ["Rare"] } });
+
+    expect(next.conceptActive).toBe(false);
+  });
+
+  it("bumps fetchRevision on every fetch-worthy action, but query-resolved leaves it untouched", () => {
+    // App.tsx keys its fetch effect off `fetchRevision` alone. `query-resolved` only
+    // reconciles state from a response already in hand — bumping it here would cost App a
+    // second, ranking-downgrading round trip (see the field's doc comment in searchState.ts).
+    const submitted = searchStateReducer(initialSearchState, {
+      type: "query-submitted",
+      query: "acceleration",
+    });
+    expect(submitted.fetchRevision).toBe(initialSearchState.fetchRevision + 1);
+
+    const resolved = searchStateReducer(submitted, {
+      type: "query-resolved",
+      filters: { format: "standard" },
+    });
+    expect(resolved.fetchRevision).toBe(submitted.fetchRevision);
+
+    const removed = searchStateReducer(resolved, { type: "concept-removed" });
+    expect(removed.fetchRevision).toBe(resolved.fetchRevision + 1);
+
+    const filtered = searchStateReducer(removed, { type: "filter-changed", patch: { category: "Pokemon" } });
+    expect(filtered.fetchRevision).toBe(removed.fetchRevision + 1);
+
+    const faceted = searchStateReducer(filtered, { type: "facet-changed", patch: { rarity: ["Rare"] } });
+    expect(faceted.fetchRevision).toBe(filtered.fetchRevision + 1);
+
+    const paged = searchStateReducer(faceted, { type: "page-changed", offset: 30 });
+    expect(paged.fetchRevision).toBe(faceted.fetchRevision + 1);
+  });
 });

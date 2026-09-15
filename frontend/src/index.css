@@ -117,10 +117,19 @@ header {
 }
 
 .card-tile {
+  display: block;
+  width: 100%;
+  text-align: left;
   background: #fff;
   border-radius: 8px;
   padding: 0.75rem;
   border: 1px solid #eee;
+  font: inherit;
+  cursor: pointer;
+}
+
+.card-tile:hover {
+  border-color: #2f6feb;
 }
 
 .card-name {
@@ -158,4 +167,102 @@ header {
   align-items: center;
   gap: 0.75rem;
   margin-top: 1rem;
+}
+
+.concept-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #eef2ff;
+  color: #3949ab;
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+
+.concept-indicator button {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.modal-dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 100%;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-image {
+  width: 100px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.modal-dialog section {
+  margin-top: 1rem;
+}
+
+.modal-dialog h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.ability,
+.attack {
+  margin-bottom: 0.5rem;
+}
+
+.printings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.printings-list li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.illegal-flag {
+  color: #b45309;
 }

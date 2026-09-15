@@ -6,10 +6,24 @@ export interface SearchState {
   query: string | null;
   /** The last submitted NL text, kept only for display in the search box / concept indicator. */
   lastQuery: string;
+  /** Whether the concept indicator (CONTEXT.md: Concept indicator) is showing — i.e. whether
+   * the *next* fetch still carries `query` and can therefore rank by tag/semantic match. The
+   * backend's gate (`resolve_search_gate`) ignores `filters` entirely whenever `query` is set,
+   * so any filter/facet edit — not just an explicit removal — has to drop the concept to let
+   * the edit take effect. */
+  conceptActive: boolean;
   filters: Filters;
   facets: Facets;
   limit: number;
   offset: number;
+  /** Bumped by every action that should cause a new `/search` fetch. `query-resolved` is the
+   * one exception — it only reconciles UI state from a response App already has in hand, so
+   * it deliberately leaves this untouched: bumping it would cost a redundant round trip that
+   * resends with `query: null` and silently downgrades the just-fetched conceptually-ranked
+   * results to a plain filter/browse response (the gate ignores `filters` only when `query`
+   * is set — see the `conceptActive` doc above — so a `query: null` re-request always takes
+   * the plain path). */
+  fetchRevision: number;
 }
 
 export const DEFAULT_LIMIT = 30;
@@ -17,10 +31,12 @@ export const DEFAULT_LIMIT = 30;
 export const initialSearchState: SearchState = {
   query: null,
   lastQuery: "",
+  conceptActive: false,
   filters: EMPTY_FILTERS,
   facets: EMPTY_FACETS,
   limit: DEFAULT_LIMIT,
   offset: 0,
+  fetchRevision: 0,
 };
 
 export type SearchAction =
@@ -33,7 +49,10 @@ export type SearchAction =
   // A chip/facet edit — patches filter state directly, no re-parse.
   | { type: "filter-changed"; patch: Partial<Filters> }
   | { type: "facet-changed"; patch: Partial<Facets> }
-  | { type: "page-changed"; offset: number };
+  | { type: "page-changed"; offset: number }
+  // The user dismissed the concept indicator — drops semantic/tag ranking, keeps the
+  // filters the parse already ticked on, and falls back to plain filter/browse.
+  | { type: "concept-removed" };
 
 export function searchStateReducer(state: SearchState, action: SearchAction): SearchState {
   switch (action.type) {
@@ -42,11 +61,14 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         ...state,
         query: action.query,
         lastQuery: action.query,
+        conceptActive: true,
         filters: EMPTY_FILTERS,
         facets: {},
         offset: 0,
+        fetchRevision: state.fetchRevision + 1,
       };
     case "query-resolved":
+      // Deliberately does not bump `fetchRevision` — see the field's doc comment.
       return {
         ...state,
         query: null,
@@ -56,17 +78,23 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
       return {
         ...state,
         query: null,
+        conceptActive: false,
         filters: { ...state.filters, ...action.patch },
         offset: 0,
+        fetchRevision: state.fetchRevision + 1,
       };
     case "facet-changed":
       return {
         ...state,
         query: null,
+        conceptActive: false,
         facets: { ...state.facets, ...action.patch },
         offset: 0,
+        fetchRevision: state.fetchRevision + 1,
       };
     case "page-changed":
-      return { ...state, offset: action.offset };
+      return { ...state, offset: action.offset, fetchRevision: state.fetchRevision + 1 };
+    case "concept-removed":
+      return { ...state, query: null, conceptActive: false, fetchRevision: state.fetchRevision + 1 };
   }
 }

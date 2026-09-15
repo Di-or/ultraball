@@ -1,10 +1,12 @@
 import { useEffect, useReducer, useState } from "react";
+import { CardDetailModal } from "./components/CardDetailModal";
+import { ConceptIndicator } from "./components/ConceptIndicator";
 import { FilterPanel } from "./components/FilterPanel";
 import { Pagination } from "./components/Pagination";
 import { ResultsGrid } from "./components/ResultsGrid";
 import { SearchBox } from "./components/SearchBox";
 import { search } from "./lib/api";
-import type { SearchResponse } from "./lib/types";
+import type { SearchResponse, SearchResult } from "./lib/types";
 import { initialSearchState, searchStateReducer } from "./state/searchState";
 
 export function App() {
@@ -12,6 +14,7 @@ export function App() {
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,7 +35,9 @@ export function App() {
     )
       .then((result) => {
         setResponse(result);
-        // The parse ticked these filters on — surface them in the panel (CONTEXT.md: Filter panel).
+        // The parse ticked these filters on — surface them in the panel (CONTEXT.md: Filter
+        // panel). Reconciling this into state deliberately doesn't bump `fetchRevision`
+        // (see its doc comment), so this never causes a second, ranking-downgrading fetch.
         if (state.query) {
           dispatch({ type: "query-resolved", filters: result.filters });
         }
@@ -45,7 +50,7 @@ export function App() {
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.query, state.filters, state.facets, state.limit, state.offset]);
+  }, [state.fetchRevision]);
 
   function handleNlSubmit(query: string) {
     dispatch({ type: "query-submitted", query });
@@ -56,6 +61,12 @@ export function App() {
       <header>
         <h1>Ultraball</h1>
         <SearchBox onSubmit={handleNlSubmit} disabled={loading} />
+        {state.conceptActive && (
+          <ConceptIndicator
+            query={state.lastQuery}
+            onRemove={() => dispatch({ type: "concept-removed" })}
+          />
+        )}
       </header>
       <main className="split-view">
         <FilterPanel
@@ -70,6 +81,7 @@ export function App() {
             total={response?.total ?? 0}
             loading={loading}
             error={error}
+            onSelectCard={setSelectedCard}
           />
           {response && (
             <Pagination
@@ -85,6 +97,13 @@ export function App() {
           <p>Deck building lands in a follow-up ticket.</p>
         </aside>
       </main>
+      {selectedCard && (
+        <CardDetailModal
+          entityId={selectedCard.entity_id}
+          matched={selectedCard.matched}
+          onClose={() => setSelectedCard(null)}
+        />
+      )}
     </div>
   );
 }
