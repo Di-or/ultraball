@@ -242,6 +242,64 @@ header {
 .modal-dialog h3 {
   margin: 0 0 0.4rem;
   font-size: 0.85rem;
+}
+
+.add-to-deck {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.deck-panel h2 {
+  margin-top: 0;
+}
+
+.deck-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.deck-count {
+  font-weight: 600;
+}
+
+.legality-light {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.legality-light.legal {
+  background: #e6f4ea;
+  color: #1a7f37;
+}
+
+.legality-light.illegal {
+  background: #fdecea;
+  color: #c62828;
+}
+
+.deck-violations {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  color: #c62828;
+}
+
+.deck-section {
+  margin-bottom: 1rem;
+}
+
+.deck-section h3,
+.energy-tray h3,
+.deck-import h3,
+.deck-export h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   color: #666;
 }
@@ -265,4 +323,44 @@ header {
 
 .illegal-flag {
   color: #b45309;
+}
+
+.deck-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.deck-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+.deck-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.deck-stepper input {
+  width: 2.5rem;
+  text-align: center;
+}
+
+.energy-tray-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.deck-import textarea,
+.deck-export textarea {
+  width: 100%;
+  min-height: 4rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
 }

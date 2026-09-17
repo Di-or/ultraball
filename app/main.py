@@ -6,6 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.deck_models import (
+    DeckImportEntry,
     DeckImportRequest,
     DeckImportResponse,
     DeckValidateRequest,
@@ -177,13 +178,13 @@ def create_app(
         request: DeckImportRequest, session: AsyncSession = Depends(get_session)
     ) -> DeckImportResponse:
         try:
-            entries = await resolve_ptcgl_import(session, request.text)
+            lines = await resolve_ptcgl_import(session, request.text)
         except DeckImportError as error:
             raise HTTPException(
                 status_code=422,
                 detail={"message": "some lines did not resolve to a catalog printing", "lines": error.unresolved_lines},
             ) from error
-        return DeckImportResponse(entries=entries)
+        return DeckImportResponse(entries=[DeckImportEntry.from_line(line) for line in lines])
 
     @app.get("/energy/basics")
     async def energy_basics_endpoint(session: AsyncSession = Depends(get_session)) -> EnergyBasicsResponse:

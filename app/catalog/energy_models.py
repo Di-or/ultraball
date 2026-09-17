@@ -13,6 +13,8 @@ class EnergyBasic(BaseModel):
     energy_type: str | None
     types: list[str]
     image: str | None
+    set_code: str
+    local_id: str
 
     @classmethod
     def from_card(cls, card: Card) -> "EnergyBasic":
@@ -22,6 +24,8 @@ class EnergyBasic(BaseModel):
             energy_type=card.energy_type,
             types=card.types,
             image=card.image,
+            set_code=card.set_code,
+            local_id=card.local_id,
         )
 
 

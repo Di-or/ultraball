@@ -73,6 +73,8 @@ class SearchResult(BaseModel):
     regulation_mark: str | None
     rarity: str | None
     set_id: str
+    set_code: str
+    local_id: str
     is_standard_legal: bool
     matched: Matched | None = None
 
@@ -90,6 +92,8 @@ class SearchResult(BaseModel):
             regulation_mark=card.regulation_mark,
             rarity=card.rarity,
             set_id=card.set_id,
+            set_code=card.set_code,
+            local_id=card.local_id,
             is_standard_legal=card.is_standard_legal,
             matched=matched,
         )
