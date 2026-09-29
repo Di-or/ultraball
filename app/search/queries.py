@@ -37,7 +37,9 @@ def _range_predicate(column: ColumnElement, rng: IntRange) -> ColumnElement:
 
 
 def _attack_cost_predicate(rep: type[Card], rng: IntRange) -> ColumnElement:
-    """Any-attack semantics: some attack's total cost falls in range."""
+    """Any-attack semantics: some attack's total cost falls in range. No bounds means no filter."""
+    if rng.gte is None and rng.lte is None:
+        return true()
     unnested = func.unnest(rep.attack_costs).table_valued("cost").render_derived()
     conditions = []
     if rng.gte is not None:

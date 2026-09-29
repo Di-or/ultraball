@@ -1,4 +1,7 @@
 import {
+  ATTACK_COST_MAX,
+  ATTACK_COST_MIN,
+  ATTACK_COST_STEP,
   CATEGORIES,
   HP_MAX,
   HP_MIN,
@@ -6,6 +9,9 @@ import {
   POKEMON_TYPES,
   REGULATION_MARKS,
   RARITIES,
+  RETREAT_MAX,
+  RETREAT_MIN,
+  RETREAT_STEP,
   STAGES,
 } from "../lib/constants";
 import type { Category, Facets, Filters, Stage } from "../lib/types";
@@ -90,6 +96,33 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
           value={filters.hp}
           onChange={(hp) => onFilterChange({ hp })}
         />
+      </section>
+
+      <section>
+        <h3>Retreat</h3>
+        <RangeControl
+          label="Retreat"
+          min={RETREAT_MIN}
+          max={RETREAT_MAX}
+          step={RETREAT_STEP}
+          topLabel={`${RETREAT_MAX}+`}
+          value={filters.retreat}
+          onChange={(retreat) => onFilterChange({ retreat })}
+        />
+      </section>
+
+      <section>
+        <h3>Attack cost</h3>
+        <RangeControl
+          label="Attack cost"
+          min={ATTACK_COST_MIN}
+          max={ATTACK_COST_MAX}
+          step={ATTACK_COST_STEP}
+          topLabel={`${ATTACK_COST_MAX}+`}
+          value={filters.attack_cost}
+          onChange={(attack_cost) => onFilterChange({ attack_cost })}
+        />
+        <p className="filter-caption">Matches if any attack costs in this range</p>
       </section>
 
       <section>
