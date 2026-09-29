@@ -293,6 +293,20 @@ describe("FilterPanel Trainer and Energy chips", () => {
     expect(onFilterChange).toHaveBeenCalledWith({ sub_category: null });
   });
 
+  it("disables ACE SPEC while Category is Pokémon, since no Pokémon card is ACE SPEC", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon" });
+    const aceSpec = screen.getByRole("button", { name: "ACE SPEC" });
+    expect(aceSpec).toBeDisabled();
+    fireEvent.click(aceSpec);
+    expect(onFilterChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps ACE SPEC clickable when Category is Pokémon but it is already on, so it can be switched off", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon", sub_category: ["ace-spec"] });
+    fireEvent.click(screen.getByRole("button", { name: "ACE SPEC" }));
+    expect(onFilterChange).toHaveBeenCalledWith({ sub_category: null });
+  });
+
   it("sets energy type Special and Category Energy from the Special Energy chip", () => {
     const onFilterChange = renderPanel();
     fireEvent.click(chip("Energy type", "Special Energy"));
