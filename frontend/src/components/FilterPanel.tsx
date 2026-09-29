@@ -9,6 +9,7 @@ import {
   STAGES,
 } from "../lib/constants";
 import type { Category, Facets, Filters, Stage } from "../lib/types";
+import { RangeControl } from "./RangeControl";
 
 interface FilterPanelProps {
   filters: Filters;
@@ -81,36 +82,14 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
 
       <section>
         <h3>HP</h3>
-        <div className="range-inputs">
-          <label>
-            Min {filters.hp?.gte ?? HP_MIN}
-            <input
-              type="range"
-              aria-label="Minimum HP"
-              min={HP_MIN}
-              max={HP_MAX}
-              step={HP_STEP}
-              value={filters.hp?.gte ?? HP_MIN}
-              onChange={(event) =>
-                onFilterChange({ hp: { ...filters.hp, gte: Number(event.target.value) } })
-              }
-            />
-          </label>
-          <label>
-            Max {filters.hp?.lte ?? HP_MAX}
-            <input
-              type="range"
-              aria-label="Maximum HP"
-              min={HP_MIN}
-              max={HP_MAX}
-              step={HP_STEP}
-              value={filters.hp?.lte ?? HP_MAX}
-              onChange={(event) =>
-                onFilterChange({ hp: { ...filters.hp, lte: Number(event.target.value) } })
-              }
-            />
-          </label>
-        </div>
+        <RangeControl
+          label="HP"
+          min={HP_MIN}
+          max={HP_MAX}
+          step={HP_STEP}
+          value={filters.hp}
+          onChange={(hp) => onFilterChange({ hp })}
+        />
       </section>
 
       <section>
