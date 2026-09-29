@@ -18,7 +18,7 @@ const FILTER_COVERAGE = {
   types: { exposed: "Type" },
   hp: { exposed: "Minimum HP" },
   stage: { exposed: "Stage" },
-  format: { exempt: NOT_BUILT },
+  format: { exposed: "Include non-Standard cards" },
   sub_category: { exposed: "Sub-category" },
   retreat: { exposed: "Minimum Retreat" },
   attack_cost: { exposed: "Minimum Attack cost" },
@@ -66,6 +66,48 @@ describe("FilterPanel", () => {
     fireEvent.click(within(group).getByRole("button", { name: "J" }));
 
     expect(onFacetChange).toHaveBeenCalledWith({ regulation_mark: ["J"] });
+  });
+});
+
+describe("FilterPanel non-Standard checkbox", () => {
+  function renderPanel(filters: Filters = {}) {
+    const onFilterChange = vi.fn();
+    render(<FilterPanel filters={filters} facets={{}} onFilterChange={onFilterChange} onFacetChange={vi.fn()} />);
+    return onFilterChange;
+  }
+
+  it("sits above the filter sections", () => {
+    renderPanel();
+    const checkbox = screen.getByLabelText("Include non-Standard cards");
+    const firstHeading = screen.getAllByRole("heading")[0];
+    expect(checkbox.compareDocumentPosition(firstHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("is unchecked when the filters are Standard-only", () => {
+    renderPanel({ format: "standard" });
+    expect(screen.getByLabelText("Include non-Standard cards")).not.toBeChecked();
+  });
+
+  it("is unchecked when format is unset, which the backend treats as Standard", () => {
+    renderPanel({});
+    expect(screen.getByLabelText("Include non-Standard cards")).not.toBeChecked();
+  });
+
+  it("is checked when a parsed query returns format null", () => {
+    renderPanel({ format: null });
+    expect(screen.getByLabelText("Include non-Standard cards")).toBeChecked();
+  });
+
+  it("checking it sends format null", () => {
+    const onFilterChange = renderPanel({ format: "standard" });
+    fireEvent.click(screen.getByLabelText("Include non-Standard cards"));
+    expect(onFilterChange).toHaveBeenCalledWith({ format: null });
+  });
+
+  it("unchecking it sends format standard", () => {
+    const onFilterChange = renderPanel({ format: null });
+    fireEvent.click(screen.getByLabelText("Include non-Standard cards"));
+    expect(onFilterChange).toHaveBeenCalledWith({ format: "standard" });
   });
 });
 
