@@ -38,6 +38,15 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
 
   return (
     <aside className="filter-panel" aria-label="Filters">
+      <label className="format-toggle">
+        <input
+          type="checkbox"
+          checked={filters.format === null}
+          onChange={(event) => onFilterChange({ format: event.target.checked ? null : "standard" })}
+        />
+        Include non-Standard cards
+      </label>
+
       <section>
         <h3>Category</h3>
         <select
