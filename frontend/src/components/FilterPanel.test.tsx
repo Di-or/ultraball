@@ -213,10 +213,10 @@ describe("FilterPanel Pokémon chip row", () => {
     expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", sub_category: ["ex", "mega"] });
   });
 
-  it("removes only the clicked sub-category, and sends null when none remain", () => {
-    const both = renderPanel({ category: "Pokemon", sub_category: ["ex", "mega"] });
+  it("removes only the clicked sub-category", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon", sub_category: ["ex", "mega"] });
     fireEvent.click(chip("Sub-category", "ex"));
-    expect(both).toHaveBeenCalledWith({ category: "Pokemon", sub_category: ["mega"] });
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", sub_category: ["mega"] });
   });
 
   it("sends null sub_category when the last chip is switched off", () => {

@@ -198,6 +198,15 @@ describe("searchStateReducer", () => {
       expect(next.filters).toEqual({ format: "standard", category: "Pokemon", sub_category: ["ex"] });
     });
 
+    it("a stage chip click after a Trainer search clears the trainer type", () => {
+      const next = searchStateReducer(
+        seed({ format: "standard", category: "Trainer", trainer_type: "Supporter" }),
+        { type: "filter-changed", patch: { category: "Pokemon", stage: "Basic" } }
+      );
+
+      expect(next.filters).toEqual({ format: "standard", category: "Pokemon", stage: "Basic" });
+    });
+
     it("switching to Pokemon clears trainer type and energy type", () => {
       const next = searchStateReducer(
         seed({ format: "standard", category: "Trainer", trainer_type: "Supporter", energy_type: "Fire" }),
