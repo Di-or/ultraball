@@ -21,6 +21,9 @@ function stubFetch(searchResponses: SearchResponse[], options: { cardDetail?: un
     if (url.startsWith("/cards/")) {
       return Promise.resolve(jsonResponse(options.cardDetail ?? {}));
     }
+    if (url === "/sets") {
+      return Promise.resolve(jsonResponse([]));
+    }
     if (url === "/energy/basics") {
       return Promise.resolve(jsonResponse({ palette: [] }));
     }

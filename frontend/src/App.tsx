@@ -6,8 +6,8 @@ import { FilterPanel } from "./components/FilterPanel";
 import { Pagination } from "./components/Pagination";
 import { ResultsGrid } from "./components/ResultsGrid";
 import { SearchBox } from "./components/SearchBox";
-import { search } from "./lib/api";
-import type { Category, SearchResponse, SearchResult } from "./lib/types";
+import { getSets, search } from "./lib/api";
+import type { Category, SearchResponse, SearchResult, SetSummary } from "./lib/types";
 import { deckStateReducer, initialDeckState } from "./state/deckState";
 import { initialSearchState, searchStateReducer } from "./state/searchState";
 
@@ -17,7 +17,14 @@ export function App() {
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sets, setSets] = useState<SetSummary[]>([]);
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null);
+
+  useEffect(() => {
+    getSets()
+      .then(setSets)
+      .catch(() => setSets([]));
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -91,6 +98,7 @@ export function App() {
         <FilterPanel
           filters={state.filters}
           facets={state.facets}
+          sets={sets}
           onFilterChange={(patch) => dispatch({ type: "filter-changed", patch })}
           onFacetChange={(patch) => dispatch({ type: "facet-changed", patch })}
         />

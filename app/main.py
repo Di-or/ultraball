@@ -17,7 +17,8 @@ from app.catalog.detail_models import CardDetail
 from app.catalog.energy_models import EnergyBasic, EnergyBasicsResponse
 from app.catalog.models import Base as CatalogBase
 from app.catalog.ptcgl_import import DeckImportError, resolve_ptcgl_import
-from app.catalog.queries import get_basic_energy_palette, get_cards_by_ids, get_printings
+from app.catalog.queries import get_basic_energy_palette, get_cards_by_ids, get_printings, get_sets
+from app.catalog.set_models import SetSummary
 from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
@@ -190,6 +191,10 @@ def create_app(
     async def energy_basics_endpoint(session: AsyncSession = Depends(get_session)) -> EnergyBasicsResponse:
         palette = await get_basic_energy_palette(session)
         return EnergyBasicsResponse(palette=[EnergyBasic.from_card(card) for card in palette])
+
+    @app.get("/sets")
+    async def sets_endpoint(session: AsyncSession = Depends(get_session)) -> list[SetSummary]:
+        return await get_sets(session)
 
     return app
 
