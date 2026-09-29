@@ -316,6 +316,17 @@ describe("searchStateReducer", () => {
       expect(next.filters.sub_category).toEqual(["ace-spec"]);
     });
 
+    it("picking Item with ACE SPEC already on keeps both, so the search finds ACE SPEC Items", () => {
+      const next = searchStateReducer(seed({ sub_category: ["ace-spec"] }), {
+        type: "filter-changed",
+        patch: { category: "Trainer", trainer_type: "Item" },
+      });
+
+      expect(next.filters.category).toBe("Trainer");
+      expect(next.filters.trainer_type).toBe("Item");
+      expect(next.filters.sub_category).toEqual(["ace-spec"]);
+    });
+
     it("clicking Special Energy from a Pokémon search clears Pokémon filters and keeps energy type", () => {
       const next = searchStateReducer(seed({ category: "Pokemon", hp: { gte: 100 }, stage: "Basic" }), {
         type: "filter-changed",
