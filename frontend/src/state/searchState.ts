@@ -68,6 +68,18 @@ function withoutAceSpecUnderPokemon(filters: Filters): Filters {
  * `previous`, so a leftover Pokémon-only filter can't zero out a Trainer search. */
 function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
   const category = next.category ?? null;
+  const turnedOnAceSpec =
+    next.sub_category?.includes("ace-spec") && !previous.sub_category?.includes("ace-spec");
+  if (category === null && previous.category === "Pokemon" && turnedOnAceSpec) {
+    // Leaving Pokémon because ACE SPEC was just turned on: Pokémon-only filters would zero out the results.
+    const cleared: Filters = { ...next, sub_category: ["ace-spec"] };
+    delete cleared.stage;
+    delete cleared.types;
+    delete cleared.hp;
+    delete cleared.retreat;
+    delete cleared.attack_cost;
+    return cleared;
+  }
   if (category === (previous.category ?? null) || category === null) {
     return withoutAceSpecUnderPokemon(next);
   }

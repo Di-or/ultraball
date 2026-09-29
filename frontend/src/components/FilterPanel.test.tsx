@@ -333,12 +333,10 @@ describe("FilterPanel Trainer and Energy chips", () => {
     expect(onFilterChange).toHaveBeenCalledWith({ sub_category: null });
   });
 
-  it("still sends the ACE SPEC toggle while Category is Pokémon; the reducer drops it", () => {
+  it("switches Category to Any when ACE SPEC is clicked under Pokémon", () => {
     const onFilterChange = renderPanel({ category: "Pokemon" });
-    const aceSpec = screen.getByRole("button", { name: "ACE SPEC" });
-    expect(aceSpec).toBeEnabled();
-    fireEvent.click(aceSpec);
-    expect(onFilterChange).toHaveBeenCalledWith({ sub_category: ["ace-spec"] });
+    fireEvent.click(screen.getByRole("button", { name: "ACE SPEC" }));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: null, sub_category: ["ace-spec"] });
   });
 
   it("sets energy type Special and Category Energy from the Special Energy chip", () => {
