@@ -124,13 +124,15 @@ export function FilterPanel({ filters, facets, sets = [], onFilterChange, onFace
             })}
           </div>
           <span className="chip-divider" aria-hidden="true" />
-          {/* ACE SPEC leaves Category alone: ACE SPEC cards include Special Energy. */}
+          {/* ACE SPEC leaves Category alone (its cards include Special Energy), except under
+              Pokémon, where no card is ACE SPEC: there it moves Category to Any. */}
           <div className="chip-group" role="group" aria-label="Trainer sub-category">
             <Chip
               active={aceSpecActive}
               onClick={() => {
                 const next = toggle(filters.sub_category, "ace-spec" as const);
-                onFilterChange({ sub_category: next.length ? next : null });
+                const sub_category = next.length ? next : null;
+                onFilterChange(filters.category === "Pokemon" ? { category: null, sub_category } : { sub_category });
               }}
             >
               ACE SPEC

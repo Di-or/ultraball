@@ -340,6 +340,22 @@ describe("searchStateReducer", () => {
       expect(next.filters.sub_category ?? null).toBeNull();
     });
 
+    it("switching Pokemon to Any with ACE SPEC on drops the Pokemon-only filters", () => {
+      const next = searchStateReducer(seed({ ...pokemonFilters, sub_category: ["ex", "mega"] }), {
+        type: "filter-changed",
+        patch: { category: null, sub_category: ["ex", "mega", "ace-spec"] },
+      });
+
+      expect(next.filters).toEqual({ format: "standard", category: null, sub_category: ["ace-spec"], set_id: "sv1" });
+    });
+
+    it("switching Pokemon to Any without ACE SPEC keeps the Pokemon-only filters", () => {
+      const next = searchStateReducer(seed(pokemonFilters), { type: "filter-changed", patch: { category: null } });
+
+      expect(next.filters.stage).toBe("Basic");
+      expect(next.filters.hp).toEqual({ gte: 100 });
+    });
+
     it("toggling ACE SPEC under Pokemon keeps the other sub-categories", () => {
       const next = searchStateReducer(seed({ category: "Pokemon", sub_category: ["ex"] }), {
         type: "filter-changed",
