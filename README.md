@@ -10,6 +10,16 @@ docker compose up
 
 FastAPI serves on `http://localhost:8000`; `GET /health` returns `{"status": "ok"}` once the app can reach Postgres.
 
+## Seeding dummy data
+
+The real TCGdex ingest isn't built yet, so a fresh database is empty. With `docker compose up` running, load a few made-up sets, cards, enrichments and embeddings:
+
+```
+uv run python -m scripts.seed_dummy
+```
+
+It connects to Postgres on `localhost:5432` (the port `docker compose` publishes) unless `DATABASE_URL` says otherwise. Safe to run more than once. Search results from the fake data aren't meaningful.
+
 ## Development
 
 ```
