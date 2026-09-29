@@ -189,6 +189,15 @@ describe("searchStateReducer", () => {
       expect(next.filters.sub_category ?? null).toBeNull();
     });
 
+    it("switching to Pokemon drops ACE SPEC but keeps a sub-category chosen in the same edit", () => {
+      const next = searchStateReducer(
+        seed({ format: "standard", category: "Trainer", trainer_type: "Item", sub_category: ["ace-spec"] }),
+        { type: "filter-changed", patch: { category: "Pokemon", sub_category: ["ace-spec", "ex"] } }
+      );
+
+      expect(next.filters).toEqual({ format: "standard", category: "Pokemon", sub_category: ["ex"] });
+    });
+
     it("switching to Pokemon clears trainer type and energy type", () => {
       const next = searchStateReducer(
         seed({ format: "standard", category: "Trainer", trainer_type: "Supporter", energy_type: "Fire" }),

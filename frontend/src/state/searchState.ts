@@ -64,6 +64,9 @@ function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
   if (category === "Pokemon") {
     delete cleared.trainer_type;
     delete cleared.energy_type;
+    const kept = next.sub_category?.filter((s) => s !== "ace-spec");
+    if (kept?.length) cleared.sub_category = kept;
+    else delete cleared.sub_category;
   } else {
     if (category === "Trainer") delete cleared.energy_type;
     else delete cleared.trainer_type;

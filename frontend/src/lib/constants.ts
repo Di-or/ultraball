@@ -17,6 +17,12 @@ export const POKEMON_TYPES = [
 
 export const STAGES = ["Basic", "Stage 1", "Stage 2"] as const;
 
+// mega ⊂ ex in the data (CONTEXT.md: sub_category), so selecting ex also finds Mega ex cards.
+export const POKEMON_SUB_CATEGORIES = [
+  { value: "ex", label: "ex" },
+  { value: "mega", label: "Mega" },
+] as const;
+
 export const CATEGORIES = ["Pokemon", "Trainer", "Energy"] as const;
 
 export const REGULATION_MARKS = ["G", "H", "I", "J"] as const;

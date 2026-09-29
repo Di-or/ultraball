@@ -19,7 +19,7 @@ const FILTER_COVERAGE = {
   hp: { exposed: "Minimum HP" },
   stage: { exposed: "Stage" },
   format: { exempt: NOT_BUILT },
-  sub_category: { exempt: NOT_BUILT },
+  sub_category: { exposed: "Sub-category" },
   retreat: { exposed: "Minimum Retreat" },
   attack_cost: { exposed: "Minimum Attack cost" },
   trainer_type: { exempt: NOT_BUILT },
@@ -153,5 +153,87 @@ describe("FilterPanel retreat and attack cost ranges", () => {
     const onFilterChange = renderPanel({ attack_cost: { gte: 2 } });
     fireEvent.change(screen.getByLabelText("Minimum Attack cost"), { target: { value: "0" } });
     expect(onFilterChange).toHaveBeenCalledWith({ attack_cost: null });
+  });
+});
+
+describe("FilterPanel Pokémon chip row", () => {
+  function renderPanel(filters: Filters = {}) {
+    const onFilterChange = vi.fn();
+    render(<FilterPanel filters={filters} facets={{}} onFilterChange={onFilterChange} onFacetChange={vi.fn()} />);
+    return onFilterChange;
+  }
+
+  function chip(group: string, name: string) {
+    return within(screen.getByRole("group", { name: group })).getByRole("button", { name });
+  }
+
+  it("replaces the Stage dropdown with Basic, Stage 1 and Stage 2 chips", () => {
+    renderPanel();
+    expect(screen.queryByRole("combobox", { name: "Stage" })).not.toBeInTheDocument();
+    const names = within(screen.getByRole("group", { name: "Stage" }))
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+    expect(names).toEqual(["Basic", "Stage 1", "Stage 2"]);
+  });
+
+  it("selects a stage and sets Category to Pokémon in the same edit", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.click(chip("Stage", "Stage 1"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", stage: "Stage 1" });
+  });
+
+  it("clears the stage when the selected chip is clicked again", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon", stage: "Basic" });
+    fireEvent.click(chip("Stage", "Basic"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", stage: null });
+  });
+
+  it("switches stage when another stage chip is clicked", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon", stage: "Basic" });
+    fireEvent.click(chip("Stage", "Stage 2"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", stage: "Stage 2" });
+  });
+
+  it("marks only the current stage chip as pressed", () => {
+    renderPanel({ category: "Pokemon", stage: "Stage 1" });
+    expect(chip("Stage", "Basic")).toHaveAttribute("aria-pressed", "false");
+    expect(chip("Stage", "Stage 1")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Stage", "Stage 2")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("toggles ex and Mega independently and sets Category to Pokémon", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.click(chip("Sub-category", "ex"));
+    expect(onFilterChange).toHaveBeenLastCalledWith({ category: "Pokemon", sub_category: ["ex"] });
+  });
+
+  it("adds Mega alongside an already selected ex", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon", sub_category: ["ex"] });
+    fireEvent.click(chip("Sub-category", "Mega"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", sub_category: ["ex", "mega"] });
+  });
+
+  it("removes only the clicked sub-category, and sends null when none remain", () => {
+    const both = renderPanel({ category: "Pokemon", sub_category: ["ex", "mega"] });
+    fireEvent.click(chip("Sub-category", "ex"));
+    expect(both).toHaveBeenCalledWith({ category: "Pokemon", sub_category: ["mega"] });
+  });
+
+  it("sends null sub_category when the last chip is switched off", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon", sub_category: ["mega"] });
+    fireEvent.click(chip("Sub-category", "Mega"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Pokemon", sub_category: null });
+  });
+
+  it("reflects stage and sub-category set by a parsed query", () => {
+    renderPanel({ category: "Pokemon", stage: "Stage 2", sub_category: ["ex", "mega"] });
+    expect(chip("Stage", "Stage 2")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Sub-category", "ex")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Sub-category", "Mega")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("leaves the Category dropdown in place", () => {
+    renderPanel();
+    expect(screen.getByRole("combobox", { name: "Category" })).toBeInTheDocument();
   });
 });
