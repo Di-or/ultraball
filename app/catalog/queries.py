@@ -1,9 +1,10 @@
 from collections.abc import Collection
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import Card
+from app.catalog.set_models import SetSummary
 
 
 async def get_representative_printing(session: AsyncSession, dedupe_key: str) -> Card | None:
@@ -48,6 +49,20 @@ async def get_card_by_set_code_and_local_id(
     """The printing a PTCGL line's `{set_code} {local_id}` tail identifies (issue #28)."""
     stmt = select(Card).where(Card.set_code == set_code.upper(), Card.local_id == local_id)
     return await session.scalar(stmt)
+
+
+async def get_sets(session: AsyncSession) -> list[SetSummary]:
+    """Every distinct set, newest first. Derived from `cards` — there is no sets table."""
+    release_date = func.min(Card.release_date)
+    stmt = (
+        select(Card.set_id, func.min(Card.set_code), release_date)
+        .group_by(Card.set_id)
+        .order_by(release_date.desc(), Card.set_id)
+    )
+    return [
+        SetSummary(id=set_id, code=code, release_date=released)
+        for set_id, code, released in await session.execute(stmt)
+    ]
 
 
 async def get_basic_energy_palette(session: AsyncSession) -> list[Card]:

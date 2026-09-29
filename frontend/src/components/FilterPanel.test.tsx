@@ -11,8 +11,6 @@ import { FilterPanel } from "./FilterPanel";
 // exempt should be empty or carry a reason that isn't "not built yet".
 type Coverage = { exposed: string } | { exempt: string };
 
-const NOT_BUILT = "not built yet (#46)";
-
 const FILTER_COVERAGE = {
   category: { exposed: "Category" },
   types: { exposed: "Type" },
@@ -24,7 +22,7 @@ const FILTER_COVERAGE = {
   attack_cost: { exposed: "Minimum Attack cost" },
   trainer_type: { exposed: "Trainer type" },
   energy_type: { exposed: "Energy type" },
-  set_id: { exempt: NOT_BUILT },
+  set_id: { exposed: "Set" },
 } satisfies Record<keyof Required<Filters>, Coverage>;
 
 const FACET_COVERAGE = {
@@ -108,6 +106,55 @@ describe("FilterPanel non-Standard checkbox", () => {
     const onFilterChange = renderPanel({ format: null });
     fireEvent.click(screen.getByLabelText("Include non-Standard cards"));
     expect(onFilterChange).toHaveBeenCalledWith({ format: "standard" });
+  });
+});
+
+describe("FilterPanel set dropdown", () => {
+  const sets = [
+    { id: "sv1", code: "SVI", release_date: "2023-03-31" },
+    { id: "swsh1", code: "SSH", release_date: "2020-02-07" },
+  ];
+
+  function renderPanel(filters: Filters = {}) {
+    const onFilterChange = vi.fn();
+    render(
+      <FilterPanel
+        filters={filters}
+        facets={{}}
+        sets={sets}
+        onFilterChange={onFilterChange}
+        onFacetChange={vi.fn()}
+      />
+    );
+    return onFilterChange;
+  }
+
+  it("offers Any plus every set, labelled by code", () => {
+    renderPanel();
+    const options = within(screen.getByLabelText("Set")).getAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual(["Any", "SVI", "SSH"]);
+  });
+
+  it("choosing a set sends its id", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.change(screen.getByLabelText("Set"), { target: { value: "swsh1" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ set_id: "swsh1" });
+  });
+
+  it("choosing Any clears the set filter", () => {
+    const onFilterChange = renderPanel({ set_id: "sv1" });
+    fireEvent.change(screen.getByLabelText("Set"), { target: { value: "" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ set_id: null });
+  });
+
+  it("shows the set a parsed query chose", () => {
+    renderPanel({ set_id: "swsh1" });
+    expect(screen.getByLabelText("Set")).toHaveValue("swsh1");
+  });
+
+  it("shows Any when no set is chosen", () => {
+    renderPanel({});
+    expect(screen.getByLabelText("Set")).toHaveValue("");
   });
 });
 

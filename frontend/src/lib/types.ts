@@ -184,3 +184,11 @@ export interface EnergyBasic {
 export interface EnergyBasicsResponse {
   palette: EnergyBasic[];
 }
+
+// Mirrors app/catalog/set_models.py — GET /sets, labelled by `code` in the Filter panel's set dropdown.
+
+export interface SetSummary {
+  id: string;
+  code: string;
+  release_date: string;
+}

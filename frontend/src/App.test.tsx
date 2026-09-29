@@ -21,6 +21,14 @@ function stubFetch(searchResponses: SearchResponse[], options: { cardDetail?: un
     if (url.startsWith("/cards/")) {
       return Promise.resolve(jsonResponse(options.cardDetail ?? {}));
     }
+    if (url === "/sets") {
+      return Promise.resolve(
+        jsonResponse([
+          { id: "sv1", code: "SVI", release_date: "2023-03-31" },
+          { id: "swsh1", code: "SSH", release_date: "2020-02-07" },
+        ])
+      );
+    }
     if (url === "/energy/basics") {
       return Promise.resolve(jsonResponse({ palette: [] }));
     }
@@ -69,6 +77,21 @@ describe("App", () => {
       const body = JSON.parse(lastSearchCall?.[1]?.body as string);
       expect(body.query).toBeNull();
       expect(body.filters.category).toBe("Pokemon");
+    });
+  });
+
+  it("loads the sets into the dropdown and sends the chosen set id with the search", async () => {
+    const fetchMock = stubFetch([]);
+
+    render(<App />);
+    await waitFor(() => expect(screen.getByRole("option", { name: "SSH" })).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText("Set"), { target: { value: "swsh1" } });
+
+    await waitFor(() => {
+      const lastSearchCall = fetchMock.mock.calls.filter((call) => call[0] === "/search").at(-1);
+      const body = JSON.parse(lastSearchCall?.[1]?.body as string);
+      expect(body.filters.set_id).toBe("swsh1");
     });
   });
 

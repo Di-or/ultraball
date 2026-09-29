@@ -8,6 +8,7 @@ import type {
   Matched,
   SearchRequest,
   SearchResponse,
+  SetSummary,
 } from "./types";
 
 export async function search(request: SearchRequest, signal?: AbortSignal): Promise<SearchResponse> {
@@ -81,6 +82,14 @@ export async function importDeck(text: string): Promise<DeckImportResponse> {
     throw new Error(`deck import failed: ${response.status} ${await response.text()}`);
   }
   return (await response.json()) as DeckImportResponse;
+}
+
+export async function getSets(signal?: AbortSignal): Promise<SetSummary[]> {
+  const response = await fetch("/sets", { signal });
+  if (!response.ok) {
+    throw new Error(`sets failed: ${response.status} ${await response.text()}`);
+  }
+  return (await response.json()) as SetSummary[];
 }
 
 export async function getEnergyBasics(): Promise<EnergyBasicsResponse> {

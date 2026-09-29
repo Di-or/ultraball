@@ -16,13 +16,14 @@ import {
   STAGES,
   TRAINER_TYPES,
 } from "../lib/constants";
-import type { Category, Facets, Filters } from "../lib/types";
+import type { Category, Facets, Filters, SetSummary } from "../lib/types";
 import { Chip } from "./Chip";
 import { RangeControl } from "./RangeControl";
 
 interface FilterPanelProps {
   filters: Filters;
   facets: Facets;
+  sets?: SetSummary[];
   onFilterChange: (patch: Partial<Filters>) => void;
   onFacetChange: (patch: Partial<Facets>) => void;
 }
@@ -32,7 +33,13 @@ function toggle<T>(list: T[] | null | undefined, value: T): T[] {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
 }
 
-export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: FilterPanelProps) {
+export function FilterPanel({
+  filters,
+  facets,
+  sets = [],
+  onFilterChange,
+  onFacetChange,
+}: FilterPanelProps) {
   const aceSpecActive = (filters.sub_category ?? []).includes("ace-spec");
   const specialEnergyActive = filters.energy_type === "Special";
 
@@ -207,6 +214,22 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
           onChange={(attack_cost) => onFilterChange({ attack_cost })}
         />
         <p className="filter-caption">Matches if any attack costs in this range</p>
+      </section>
+
+      <section>
+        <h3>Set</h3>
+        <select
+          aria-label="Set"
+          value={filters.set_id ?? ""}
+          onChange={(event) => onFilterChange({ set_id: event.target.value || null })}
+        >
+          <option value="">Any</option>
+          {sets.map((set) => (
+            <option key={set.id} value={set.id}>
+              {set.code}
+            </option>
+          ))}
+        </select>
       </section>
 
       <section>

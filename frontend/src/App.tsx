@@ -6,8 +6,8 @@ import { FilterPanel } from "./components/FilterPanel";
 import { Pagination } from "./components/Pagination";
 import { ResultsGrid } from "./components/ResultsGrid";
 import { SearchBox } from "./components/SearchBox";
-import { search } from "./lib/api";
-import type { Category, SearchResponse, SearchResult } from "./lib/types";
+import { getSets, search } from "./lib/api";
+import type { Category, SearchResponse, SearchResult, SetSummary } from "./lib/types";
 import { deckStateReducer, initialDeckState } from "./state/deckState";
 import { initialSearchState, searchStateReducer } from "./state/searchState";
 
@@ -18,6 +18,16 @@ export function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<SearchResult | null>(null);
+  const [sets, setSets] = useState<SetSummary[]>([]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    // A failed load leaves the dropdown at just "Any" — the rest of the panel still works.
+    getSets(controller.signal)
+      .then(setSets)
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -91,6 +101,7 @@ export function App() {
         <FilterPanel
           filters={state.filters}
           facets={state.facets}
+          sets={sets}
           onFilterChange={(patch) => dispatch({ type: "filter-changed", patch })}
           onFacetChange={(patch) => dispatch({ type: "facet-changed", patch })}
         />
