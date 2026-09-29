@@ -1,4 +1,4 @@
-from sqlalchemy import ColumnElement, and_, exists, func, select, true
+from sqlalchemy import ColumnElement, and_, exists, func, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -51,7 +51,10 @@ def _attack_cost_predicate(rep: type[Card], rng: IntRange) -> ColumnElement:
 
 def _build_predicates(rep: type[Card], filters: Filters, facets: Facets) -> list[ColumnElement]:
     """Fields conjoin (AND); a multi-valued field disjoins (OR/overlap) within itself."""
-    predicates: list[ColumnElement] = []
+    predicates: list[ColumnElement] = [
+        # Basic Energy lives in the tray, not in search (CONTEXT.md: Basic-Energy tray).
+        or_(rep.category != "Energy", rep.energy_type.is_distinct_from("Basic")),
+    ]
 
     if filters.format == "standard":
         predicates.append(rep.is_standard_legal.is_(True))
