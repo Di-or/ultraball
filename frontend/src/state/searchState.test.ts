@@ -225,22 +225,25 @@ describe("searchStateReducer", () => {
       expect(next.filters).toEqual({ ...pokemonFilters, category: null });
     });
 
-    it("re-selecting the same category clears nothing", () => {
+    // ACE SPEC is the one exception: it never applies under Pokémon, so it is dropped on any edit.
+    const pokemonFiltersWithoutAceSpec = { ...pokemonFilters, sub_category: ["ex", "mega"] };
+
+    it("re-selecting the same category clears nothing but ACE SPEC", () => {
       const next = searchStateReducer(seed(pokemonFilters), {
         type: "filter-changed",
         patch: { category: "Pokemon" },
       });
 
-      expect(next.filters).toEqual(pokemonFilters);
+      expect(next.filters).toEqual(pokemonFiltersWithoutAceSpec);
     });
 
-    it("editing a field without changing the category clears nothing", () => {
+    it("editing a field without changing the category clears nothing but ACE SPEC", () => {
       const next = searchStateReducer(seed(pokemonFilters), {
         type: "filter-changed",
         patch: { stage: "Stage 1" },
       });
 
-      expect(next.filters).toEqual({ ...pokemonFilters, stage: "Stage 1" });
+      expect(next.filters).toEqual({ ...pokemonFiltersWithoutAceSpec, stage: "Stage 1" });
     });
 
     it("a combined category-plus-field edit keeps its field", () => {
@@ -314,6 +317,25 @@ describe("searchStateReducer", () => {
 
       expect(next.filters.category ?? null).toBeNull();
       expect(next.filters.sub_category).toEqual(["ace-spec"]);
+    });
+
+    it("toggling ACE SPEC while Category is Pokemon drops it, since no Pokemon card is ACE SPEC", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon" }), {
+        type: "filter-changed",
+        patch: { sub_category: ["ace-spec"] },
+      });
+
+      expect(next.filters.category).toBe("Pokemon");
+      expect(next.filters.sub_category ?? null).toBeNull();
+    });
+
+    it("toggling ACE SPEC under Pokemon keeps the other sub-categories", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", sub_category: ["ex"] }), {
+        type: "filter-changed",
+        patch: { sub_category: ["ex", "ace-spec"] },
+      });
+
+      expect(next.filters.sub_category).toEqual(["ex"]);
     });
 
     it("picking Item with ACE SPEC already on keeps both, so the search finds ACE SPEC Items", () => {

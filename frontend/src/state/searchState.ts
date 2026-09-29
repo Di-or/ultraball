@@ -54,19 +54,28 @@ export type SearchAction =
   // filters the parse already ticked on, and falls back to plain filter/browse.
   | { type: "concept-removed" };
 
+/** No Pokémon card is ACE SPEC, so the tag can never apply under Pokémon. */
+function withoutAceSpecUnderPokemon(filters: Filters): Filters {
+  if (filters.category !== "Pokemon") return filters;
+  const kept = filters.sub_category?.filter((s) => s !== "ace-spec");
+  const result: Filters = { ...filters };
+  if (kept?.length) result.sub_category = kept;
+  else delete result.sub_category;
+  return result;
+}
+
 /** Drops filters that can't apply to `next.category` whenever the category differs from
  * `previous`, so a leftover Pokémon-only filter can't zero out a Trainer search. */
 function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
   const category = next.category ?? null;
-  if (category === (previous.category ?? null) || category === null) return next;
+  if (category === (previous.category ?? null) || category === null) {
+    return withoutAceSpecUnderPokemon(next);
+  }
 
   const cleared: Filters = { ...next };
   if (category === "Pokemon") {
     delete cleared.trainer_type;
     delete cleared.energy_type;
-    const kept = next.sub_category?.filter((s) => s !== "ace-spec");
-    if (kept?.length) cleared.sub_category = kept;
-    else delete cleared.sub_category;
   } else {
     if (category === "Trainer") delete cleared.energy_type;
     else delete cleared.trainer_type;
@@ -79,7 +88,7 @@ function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
     if (kept?.length) cleared.sub_category = kept;
     else delete cleared.sub_category;
   }
-  return cleared;
+  return withoutAceSpecUnderPokemon(cleared);
 }
 
 export function searchStateReducer(state: SearchState, action: SearchAction): SearchState {
