@@ -54,6 +54,30 @@ export type SearchAction =
   // filters the parse already ticked on, and falls back to plain filter/browse.
   | { type: "concept-removed" };
 
+/** Drops filters that can't apply to `next.category` whenever the category differs from
+ * `previous`, so a leftover Pokémon-only filter can't zero out a Trainer search. Fields set in
+ * the same edit survive only if they apply to the new category. */
+function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
+  const category = next.category ?? null;
+  if (category === (previous.category ?? null) || category === null) return next;
+
+  const cleared: Filters = { ...next };
+  if (category === "Pokemon") {
+    delete cleared.trainer_type;
+    delete cleared.energy_type;
+  } else {
+    delete cleared.stage;
+    delete cleared.types;
+    delete cleared.hp;
+    delete cleared.retreat;
+    delete cleared.attack_cost;
+    const kept = next.sub_category?.filter((s) => s === "ace-spec");
+    if (kept?.length) cleared.sub_category = kept;
+    else delete cleared.sub_category;
+  }
+  return cleared;
+}
+
 export function searchStateReducer(state: SearchState, action: SearchAction): SearchState {
   switch (action.type) {
     case "query-submitted":
@@ -72,14 +96,14 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
       return {
         ...state,
         query: null,
-        filters: action.filters,
+        filters: clearInapplicableFilters(state.filters, action.filters),
       };
     case "filter-changed":
       return {
         ...state,
         query: null,
         conceptActive: false,
-        filters: { ...state.filters, ...action.patch },
+        filters: clearInapplicableFilters(state.filters, { ...state.filters, ...action.patch }),
         offset: 0,
         fetchRevision: state.fetchRevision + 1,
       };
