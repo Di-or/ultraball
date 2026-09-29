@@ -22,4 +22,13 @@ describe("RangeControl", () => {
 
     expect(onChange).toHaveBeenCalledWith(null);
   });
+
+  it("shows the top label at the top stop and plain numbers elsewhere", () => {
+    render(
+      <RangeControl label="Retreat" min={0} max={4} step={1} topLabel="4+" value={{ gte: 1 }} onChange={vi.fn()} />,
+    );
+
+    expect(screen.getByText("Min 1")).toBeInTheDocument();
+    expect(screen.getByText("Max 4+")).toBeInTheDocument();
+  });
 });

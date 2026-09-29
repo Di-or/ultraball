@@ -5,6 +5,7 @@ interface RangeControlProps {
   min: number;
   max: number;
   step: number;
+  topLabel?: string;
   value: IntRange | null | undefined;
   onChange: (value: IntRange | null) => void;
 }
@@ -18,11 +19,12 @@ function normalize(range: IntRange, min: number, max: number): IntRange | null {
   return next.gte === undefined && next.lte === undefined ? null : next;
 }
 
-export function RangeControl({ label, min, max, step, value, onChange }: RangeControlProps) {
+export function RangeControl({ label, min, max, step, topLabel, value, onChange }: RangeControlProps) {
+  const show = (n: number) => (n === max && topLabel ? topLabel : n);
   return (
     <div className="range-inputs">
       <label>
-        Min {value?.gte ?? min}
+        Min {show(value?.gte ?? min)}
         <input
           type="range"
           aria-label={`Minimum ${label}`}
@@ -34,7 +36,7 @@ export function RangeControl({ label, min, max, step, value, onChange }: RangeCo
         />
       </label>
       <label>
-        Max {value?.lte ?? max}
+        Max {show(value?.lte ?? max)}
         <input
           type="range"
           aria-label={`Maximum ${label}`}

@@ -25,6 +25,14 @@ export const HP_MIN = 0;
 export const HP_MAX = 340;
 export const HP_STEP = 10;
 
+export const RETREAT_MIN = 0;
+export const RETREAT_MAX = 4;
+export const RETREAT_STEP = 1;
+
+export const ATTACK_COST_MIN = 0;
+export const ATTACK_COST_MAX = 5;
+export const ATTACK_COST_STEP = 1;
+
 export const RARITIES = [
   "Common",
   "Uncommon",

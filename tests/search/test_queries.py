@@ -115,6 +115,47 @@ async def test_attack_cost_matches_any_attack_in_range(db_session: AsyncSession)
     assert {r.name for r in results} == {"Charizard"}
 
 
+async def test_attack_cost_range_starting_at_zero_includes_a_free_attack(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Free Attacker", attack_costs=[0]),
+        _card(id="b", dedupe_key="b", name="Blastoise", attack_costs=[5]),
+    )
+
+    results, _total = await run_search(
+        db_session, Filters(attack_cost=IntRange(gte=0, lte=1)), Facets(), limit=30, offset=0
+    )
+
+    assert {r.name for r in results} == {"Free Attacker"}
+
+
+async def test_attack_cost_range_with_no_bounds_filters_nothing(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Attacker", attack_costs=[2]),
+        _card(id="b", dedupe_key="b", name="Professor", category="Trainer", attack_costs=[]),
+    )
+
+    results, total = await run_search(db_session, Filters(attack_cost=IntRange()), Facets(), limit=30, offset=0)
+
+    assert {r.name for r in results} == {"Attacker", "Professor"}
+    assert total == 2
+
+
+async def test_retreat_range_starting_at_zero_includes_a_free_retreat_pokemon(db_session: AsyncSession) -> None:
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Free Retreater", retreat=0),
+        _card(id="b", dedupe_key="b", name="Blastoise", retreat=3),
+    )
+
+    results, _total = await run_search(
+        db_session, Filters(retreat=IntRange(gte=0, lte=1)), Facets(), limit=30, offset=0
+    )
+
+    assert {r.name for r in results} == {"Free Retreater"}
+
+
 async def test_facets_filter_by_regulation_mark_and_rarity(db_session: AsyncSession) -> None:
     await _seed(
         db_session,

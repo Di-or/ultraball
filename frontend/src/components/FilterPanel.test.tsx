@@ -20,8 +20,8 @@ const FILTER_COVERAGE = {
   stage: { exposed: "Stage" },
   format: { exempt: NOT_BUILT },
   sub_category: { exempt: NOT_BUILT },
-  retreat: { exempt: NOT_BUILT },
-  attack_cost: { exempt: NOT_BUILT },
+  retreat: { exposed: "Minimum Retreat" },
+  attack_cost: { exposed: "Minimum Attack cost" },
   trainer_type: { exempt: NOT_BUILT },
   energy_type: { exempt: NOT_BUILT },
   set_id: { exempt: NOT_BUILT },
@@ -110,5 +110,48 @@ describe("FilterPanel HP range", () => {
     const onFilterChange = renderPanel({ hp: { gte: 100, lte: 200 } });
     fireEvent.change(screen.getByLabelText("Minimum HP"), { target: { value: "0" } });
     expect(onFilterChange).toHaveBeenCalledWith({ hp: { lte: 200 } });
+  });
+});
+
+describe("FilterPanel retreat and attack cost ranges", () => {
+  function renderPanel(filters: Filters = {}) {
+    const onFilterChange = vi.fn();
+    render(<FilterPanel filters={filters} facets={{}} onFilterChange={onFilterChange} onFacetChange={vi.fn()} />);
+    return onFilterChange;
+  }
+
+  it("runs retreat from 0 to 4 in steps of 1 with a 4+ top stop", () => {
+    renderPanel();
+    const minimum = screen.getByLabelText("Minimum Retreat");
+    const maximum = screen.getByLabelText("Maximum Retreat");
+    expect(minimum).toHaveAttribute("min", "0");
+    expect(minimum).toHaveAttribute("max", "4");
+    expect(minimum).toHaveAttribute("step", "1");
+    expect(maximum).toHaveValue("4");
+    expect(screen.getByText("Max 4+")).toBeInTheDocument();
+  });
+
+  it("runs attack cost from 0 to 5 in steps of 1 with a 5+ top stop and an any-attack caption", () => {
+    renderPanel();
+    const minimum = screen.getByLabelText("Minimum Attack cost");
+    const maximum = screen.getByLabelText("Maximum Attack cost");
+    expect(minimum).toHaveAttribute("min", "0");
+    expect(minimum).toHaveAttribute("max", "5");
+    expect(minimum).toHaveAttribute("step", "1");
+    expect(maximum).toHaveValue("5");
+    expect(screen.getByText("Max 5+")).toBeInTheDocument();
+    expect(screen.getByText("Matches if any attack costs in this range")).toBeInTheDocument();
+  });
+
+  it("sends no upper bound when the retreat maximum sits at its top stop", () => {
+    const onFilterChange = renderPanel({ retreat: { gte: 1, lte: 3 } });
+    fireEvent.change(screen.getByLabelText("Maximum Retreat"), { target: { value: "4" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ retreat: { gte: 1 } });
+  });
+
+  it("sends null when an untouched attack-cost slider is nudged back to its extreme", () => {
+    const onFilterChange = renderPanel({ attack_cost: { gte: 2 } });
+    fireEvent.change(screen.getByLabelText("Minimum Attack cost"), { target: { value: "0" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ attack_cost: null });
   });
 });

@@ -98,6 +98,12 @@ header {
   width: 4.5rem;
 }
 
+.filter-caption {
+  color: #555;
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0;
+}
+
 .results-pane {
   overflow-y: auto;
 }
