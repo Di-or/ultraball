@@ -225,22 +225,25 @@ describe("searchStateReducer", () => {
       expect(next.filters).toEqual({ ...pokemonFilters, category: null });
     });
 
-    it("re-selecting the same category clears nothing", () => {
+    // ACE SPEC is the one exception: it never applies under Pokémon, so it is dropped on any edit.
+    const pokemonFiltersWithoutAceSpec = { ...pokemonFilters, sub_category: ["ex", "mega"] };
+
+    it("re-selecting the same category clears nothing but ACE SPEC", () => {
       const next = searchStateReducer(seed(pokemonFilters), {
         type: "filter-changed",
         patch: { category: "Pokemon" },
       });
 
-      expect(next.filters).toEqual(pokemonFilters);
+      expect(next.filters).toEqual(pokemonFiltersWithoutAceSpec);
     });
 
-    it("editing a field without changing the category clears nothing", () => {
+    it("editing a field without changing the category clears nothing but ACE SPEC", () => {
       const next = searchStateReducer(seed(pokemonFilters), {
         type: "filter-changed",
         patch: { stage: "Stage 1" },
       });
 
-      expect(next.filters).toEqual({ ...pokemonFilters, stage: "Stage 1" });
+      expect(next.filters).toEqual({ ...pokemonFiltersWithoutAceSpec, stage: "Stage 1" });
     });
 
     it("a combined category-plus-field edit keeps its field", () => {
@@ -293,6 +296,68 @@ describe("searchStateReducer", () => {
       const resolved = searchStateReducer(submitted, { type: "query-resolved", filters: parsed });
 
       expect(resolved.filters).toEqual(parsed);
+    });
+
+    it("clicking Supporter after setting an HP range clears the HP range", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", hp: { gte: 100 } }), {
+        type: "filter-changed",
+        patch: { category: "Trainer", trainer_type: "Supporter" },
+      });
+
+      expect(next.filters.hp ?? null).toBeNull();
+      expect(next.filters.category).toBe("Trainer");
+      expect(next.filters.trainer_type).toBe("Supporter");
+    });
+
+    it("toggling ACE SPEC with no category set leaves Category unset", () => {
+      const next = searchStateReducer(seed({ format: "standard" }), {
+        type: "filter-changed",
+        patch: { sub_category: ["ace-spec"] },
+      });
+
+      expect(next.filters.category ?? null).toBeNull();
+      expect(next.filters.sub_category).toEqual(["ace-spec"]);
+    });
+
+    it("toggling ACE SPEC while Category is Pokemon drops it, since no Pokemon card is ACE SPEC", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon" }), {
+        type: "filter-changed",
+        patch: { sub_category: ["ace-spec"] },
+      });
+
+      expect(next.filters.category).toBe("Pokemon");
+      expect(next.filters.sub_category ?? null).toBeNull();
+    });
+
+    it("toggling ACE SPEC under Pokemon keeps the other sub-categories", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", sub_category: ["ex"] }), {
+        type: "filter-changed",
+        patch: { sub_category: ["ex", "ace-spec"] },
+      });
+
+      expect(next.filters.sub_category).toEqual(["ex"]);
+    });
+
+    it("picking Item with ACE SPEC already on keeps both, so the search finds ACE SPEC Items", () => {
+      const next = searchStateReducer(seed({ sub_category: ["ace-spec"] }), {
+        type: "filter-changed",
+        patch: { category: "Trainer", trainer_type: "Item" },
+      });
+
+      expect(next.filters.category).toBe("Trainer");
+      expect(next.filters.trainer_type).toBe("Item");
+      expect(next.filters.sub_category).toEqual(["ace-spec"]);
+    });
+
+    it("clicking Special Energy from a Pokémon search clears Pokémon filters and keeps energy type", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", hp: { gte: 100 }, stage: "Basic" }), {
+        type: "filter-changed",
+        patch: { category: "Energy", energy_type: "Special" },
+      });
+
+      expect(next.filters.hp ?? null).toBeNull();
+      expect(next.filters.stage ?? null).toBeNull();
+      expect(next.filters.energy_type).toBe("Special");
     });
   });
 

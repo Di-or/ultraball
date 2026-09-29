@@ -22,8 +22,8 @@ const FILTER_COVERAGE = {
   sub_category: { exposed: "Sub-category" },
   retreat: { exposed: "Minimum Retreat" },
   attack_cost: { exposed: "Minimum Attack cost" },
-  trainer_type: { exempt: NOT_BUILT },
-  energy_type: { exempt: NOT_BUILT },
+  trainer_type: { exposed: "Trainer type" },
+  energy_type: { exposed: "Energy type" },
   set_id: { exempt: NOT_BUILT },
 } satisfies Record<keyof Required<Filters>, Coverage>;
 
@@ -235,5 +235,94 @@ describe("FilterPanel Pokémon chip row", () => {
   it("leaves the Category dropdown in place", () => {
     renderPanel();
     expect(screen.getByRole("combobox", { name: "Category" })).toBeInTheDocument();
+  });
+});
+
+describe("FilterPanel Trainer and Energy chips", () => {
+  function renderPanel(filters: Filters = {}) {
+    const onFilterChange = vi.fn();
+    render(<FilterPanel filters={filters} facets={{}} onFilterChange={onFilterChange} onFacetChange={vi.fn()} />);
+    return onFilterChange;
+  }
+
+  function chip(group: string, name: string) {
+    return within(screen.getByRole("group", { name: group })).getByRole("button", { name });
+  }
+
+  it("shows Item, Supporter, Stadium and Tool chips", () => {
+    renderPanel();
+    const names = within(screen.getByRole("group", { name: "Trainer type" }))
+      .getAllByRole("button")
+      .map((button) => button.textContent);
+    expect(names).toEqual(["Item", "Supporter", "Stadium", "Tool"]);
+  });
+
+  it("selects a trainer type and sets Category to Trainer in the same edit", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.click(chip("Trainer type", "Supporter"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Trainer", trainer_type: "Supporter" });
+  });
+
+  it("clears the trainer type when the selected chip is clicked again", () => {
+    const onFilterChange = renderPanel({ category: "Trainer", trainer_type: "Item" });
+    fireEvent.click(chip("Trainer type", "Item"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Trainer", trainer_type: null });
+  });
+
+  it("switches trainer type when another chip is clicked", () => {
+    const onFilterChange = renderPanel({ category: "Trainer", trainer_type: "Item" });
+    fireEvent.click(chip("Trainer type", "Stadium"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Trainer", trainer_type: "Stadium" });
+  });
+
+  it("toggles ACE SPEC without touching Category", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.click(screen.getByRole("button", { name: "ACE SPEC" }));
+    expect(onFilterChange).toHaveBeenCalledWith({ sub_category: ["ace-spec"] });
+  });
+
+  it("switches ACE SPEC off without touching Category, keeping other sub-categories", () => {
+    const onFilterChange = renderPanel({ sub_category: ["ex", "ace-spec"] });
+    fireEvent.click(screen.getByRole("button", { name: "ACE SPEC" }));
+    expect(onFilterChange).toHaveBeenCalledWith({ sub_category: ["ex"] });
+  });
+
+  it("sends null sub_category when ACE SPEC is the last one switched off", () => {
+    const onFilterChange = renderPanel({ category: "Trainer", sub_category: ["ace-spec"] });
+    fireEvent.click(screen.getByRole("button", { name: "ACE SPEC" }));
+    expect(onFilterChange).toHaveBeenCalledWith({ sub_category: null });
+  });
+
+  it("still sends the ACE SPEC toggle while Category is Pokémon; the reducer drops it", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon" });
+    const aceSpec = screen.getByRole("button", { name: "ACE SPEC" });
+    expect(aceSpec).toBeEnabled();
+    fireEvent.click(aceSpec);
+    expect(onFilterChange).toHaveBeenCalledWith({ sub_category: ["ace-spec"] });
+  });
+
+  it("sets energy type Special and Category Energy from the Special Energy chip", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.click(chip("Energy type", "Special Energy"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Energy", energy_type: "Special" });
+  });
+
+  it("clears energy type when Special Energy is clicked again", () => {
+    const onFilterChange = renderPanel({ category: "Energy", energy_type: "Special" });
+    fireEvent.click(chip("Energy type", "Special Energy"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Energy", energy_type: null });
+  });
+
+  it("offers no Basic Energy chip", () => {
+    renderPanel();
+    expect(screen.queryByRole("button", { name: /basic energy/i })).not.toBeInTheDocument();
+  });
+
+  it("reflects trainer type, ACE SPEC and energy type set by a parsed query", () => {
+    renderPanel({ category: "Trainer", trainer_type: "Tool", sub_category: ["ace-spec"], energy_type: "Special" });
+    expect(chip("Trainer type", "Tool")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Trainer type", "Item")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "ACE SPEC" })).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Energy type", "Special Energy")).toHaveAttribute("aria-pressed", "true");
   });
 });

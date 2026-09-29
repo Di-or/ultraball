@@ -14,8 +14,10 @@ import {
   RETREAT_STEP,
   POKEMON_SUB_CATEGORIES,
   STAGES,
+  TRAINER_TYPES,
 } from "../lib/constants";
 import type { Category, Facets, Filters } from "../lib/types";
+import { Chip } from "./Chip";
 import { RangeControl } from "./RangeControl";
 
 interface FilterPanelProps {
@@ -31,6 +33,9 @@ function toggle<T>(list: T[] | null | undefined, value: T): T[] {
 }
 
 export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: FilterPanelProps) {
+  const aceSpecActive = (filters.sub_category ?? []).includes("ace-spec");
+  const specialEnergyActive = filters.energy_type === "Special";
+
   return (
     <aside className="filter-panel" aria-label="Filters">
       <section>
@@ -58,15 +63,13 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
             {STAGES.map((stage) => {
               const active = filters.stage === stage;
               return (
-                <button
+                <Chip
                   key={stage}
-                  type="button"
-                  aria-pressed={active}
-                  className={active ? "chip chip-active" : "chip"}
+                  active={active}
                   onClick={() => onFilterChange({ category: "Pokemon", stage: active ? null : stage })}
                 >
                   {stage}
-                </button>
+                </Chip>
               );
             })}
           </div>
@@ -75,21 +78,68 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
             {POKEMON_SUB_CATEGORIES.map(({ value, label }) => {
               const active = (filters.sub_category ?? []).includes(value);
               return (
-                <button
+                <Chip
                   key={value}
-                  type="button"
-                  aria-pressed={active}
-                  className={active ? "chip chip-active" : "chip"}
+                  active={active}
                   onClick={() => {
                     const next = toggle(filters.sub_category, value);
                     onFilterChange({ category: "Pokemon", sub_category: next.length ? next : null });
                   }}
                 >
                   {label}
-                </button>
+                </Chip>
               );
             })}
           </div>
+        </div>
+      </section>
+
+      <section>
+        <h3>Trainer</h3>
+        <div className="chip-group" role="group" aria-label="Trainer">
+          <div className="chip-group" role="group" aria-label="Trainer type">
+            {TRAINER_TYPES.map((trainerType) => {
+              const active = filters.trainer_type === trainerType;
+              return (
+                <Chip
+                  key={trainerType}
+                  active={active}
+                  onClick={() =>
+                    onFilterChange({ category: "Trainer", trainer_type: active ? null : trainerType })
+                  }
+                >
+                  {trainerType}
+                </Chip>
+              );
+            })}
+          </div>
+          <span className="chip-divider" aria-hidden="true" />
+          {/* ACE SPEC leaves Category alone: ACE SPEC cards include Special Energy. */}
+          <div className="chip-group" role="group" aria-label="Trainer sub-category">
+            <Chip
+              active={aceSpecActive}
+              onClick={() => {
+                const next = toggle(filters.sub_category, "ace-spec" as const);
+                onFilterChange({ sub_category: next.length ? next : null });
+              }}
+            >
+              ACE SPEC
+            </Chip>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h3>Energy</h3>
+        <div className="chip-group" role="group" aria-label="Energy type">
+          <Chip
+            active={specialEnergyActive}
+            onClick={() =>
+              onFilterChange({ category: "Energy", energy_type: specialEnergyActive ? null : "Special" })
+            }
+          >
+            Special Energy
+          </Chip>
         </div>
       </section>
 
@@ -99,15 +149,13 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
           {POKEMON_TYPES.map((type) => {
             const active = (filters.types ?? []).includes(type);
             return (
-              <button
+              <Chip
                 key={type}
-                type="button"
-                aria-pressed={active}
-                className={active ? "chip chip-active" : "chip"}
+                active={active}
                 onClick={() => onFilterChange({ types: toggle(filters.types, type) })}
               >
                 {type}
-              </button>
+              </Chip>
             );
           })}
         </div>
@@ -158,17 +206,15 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
           {REGULATION_MARKS.map((mark) => {
             const active = (facets.regulation_mark ?? []).includes(mark);
             return (
-              <button
+              <Chip
                 key={mark}
-                type="button"
-                aria-pressed={active}
-                className={active ? "chip chip-active" : "chip"}
+                active={active}
                 onClick={() =>
                   onFacetChange({ regulation_mark: toggle(facets.regulation_mark, mark) })
                 }
               >
                 {mark}
-              </button>
+              </Chip>
             );
           })}
         </div>
@@ -180,15 +226,13 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
           {RARITIES.map((rarity) => {
             const active = (facets.rarity ?? []).includes(rarity);
             return (
-              <button
+              <Chip
                 key={rarity}
-                type="button"
-                aria-pressed={active}
-                className={active ? "chip chip-active" : "chip"}
+                active={active}
                 onClick={() => onFacetChange({ rarity: toggle(facets.rarity, rarity) })}
               >
                 {rarity}
-              </button>
+              </Chip>
             );
           })}
         </div>
