@@ -236,6 +236,32 @@ describe("searchStateReducer", () => {
       expect(next.filters.hp ?? null).toBeNull();
     });
 
+    it("switching from Energy to Pokemon clears energy type", () => {
+      const next = searchStateReducer(seed({ category: "Energy", energy_type: "Fire" }), {
+        type: "filter-changed",
+        patch: { category: "Pokemon" },
+      });
+
+      expect(next.filters.energy_type ?? null).toBeNull();
+    });
+
+    it("keeps a parsed query's category-specific field after the real submit-then-resolve flow", () => {
+      const submitted = searchStateReducer(seed(pokemonFilters), {
+        type: "query-submitted",
+        query: "supporter draw",
+      });
+      const resolved = searchStateReducer(submitted, {
+        type: "query-resolved",
+        filters: { format: "standard", category: "Trainer", trainer_type: "Supporter" },
+      });
+
+      expect(resolved.filters).toEqual({
+        format: "standard",
+        category: "Trainer",
+        trainer_type: "Supporter",
+      });
+    });
+
     it("applies the same rule when a parsed query changes the category", () => {
       const resolved = searchStateReducer(seed(pokemonFilters), {
         type: "query-resolved",
