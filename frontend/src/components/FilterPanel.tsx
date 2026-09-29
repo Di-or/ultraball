@@ -12,9 +12,10 @@ import {
   RETREAT_MAX,
   RETREAT_MIN,
   RETREAT_STEP,
+  POKEMON_SUB_CATEGORIES,
   STAGES,
 } from "../lib/constants";
-import type { Category, Facets, Filters, Stage } from "../lib/types";
+import type { Category, Facets, Filters } from "../lib/types";
 import { RangeControl } from "./RangeControl";
 
 interface FilterPanelProps {
@@ -51,19 +52,45 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
       </section>
 
       <section>
-        <h3>Stage</h3>
-        <select
-          aria-label="Stage"
-          value={filters.stage ?? ""}
-          onChange={(event) => onFilterChange({ stage: (event.target.value || null) as Stage | null })}
-        >
-          <option value="">Any</option>
-          {STAGES.map((stage) => (
-            <option key={stage} value={stage}>
-              {stage}
-            </option>
-          ))}
-        </select>
+        <h3>Pokémon</h3>
+        <div className="chip-group" role="group" aria-label="Pokémon">
+          <div className="chip-group" role="group" aria-label="Stage">
+            {STAGES.map((stage) => {
+              const active = filters.stage === stage;
+              return (
+                <button
+                  key={stage}
+                  type="button"
+                  aria-pressed={active}
+                  className={active ? "chip chip-active" : "chip"}
+                  onClick={() => onFilterChange({ category: "Pokemon", stage: active ? null : stage })}
+                >
+                  {stage}
+                </button>
+              );
+            })}
+          </div>
+          <span className="chip-divider" aria-hidden="true" />
+          <div className="chip-group" role="group" aria-label="Sub-category">
+            {POKEMON_SUB_CATEGORIES.map(({ value, label }) => {
+              const active = (filters.sub_category ?? []).includes(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={active}
+                  className={active ? "chip chip-active" : "chip"}
+                  onClick={() => {
+                    const next = toggle(filters.sub_category, value);
+                    onFilterChange({ category: "Pokemon", sub_category: next.length ? next : null });
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       <section>
