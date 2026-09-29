@@ -578,3 +578,61 @@ async def test_rrf_pagination_limits_page_but_total_reflects_ranked_union(db_ses
 
     assert total == 3
     assert len(results) == 1
+
+
+async def _seed_basic_and_special_energy(session: AsyncSession) -> None:
+    await _seed(
+        session,
+        _card(id="basic", dedupe_key="basic", name="Basic Fire Energy", category="Energy", energy_type="Basic"),
+        _enrichment(dedupe_key="basic", tags=["draw"], vector=_vector(1.0, 0.0)),
+        _card(id="special", dedupe_key="special", name="Double Turbo", category="Energy", energy_type="Special"),
+        _enrichment(dedupe_key="special", tags=["draw"], vector=_vector(1.0, 0.0)),
+    )
+
+
+async def test_faceted_search_excludes_basic_energy_but_keeps_special_energy(db_session: AsyncSession) -> None:
+    await _seed_basic_and_special_energy(db_session)
+
+    results, total = await run_search(db_session, Filters(), Facets(), limit=30, offset=0)
+
+    assert total == 1
+    assert [r.name for r in results] == ["Double Turbo"]
+
+
+async def test_basic_energy_stays_excluded_when_the_standard_gate_is_off(db_session: AsyncSession) -> None:
+    await _seed_basic_and_special_energy(db_session)
+
+    results, _ = await run_search(db_session, Filters(format=None), Facets(), limit=30, offset=0)
+
+    assert [r.name for r in results] == ["Double Turbo"]
+
+
+async def test_tag_match_excludes_basic_energy_but_keeps_special_energy(db_session: AsyncSession) -> None:
+    await _seed_basic_and_special_energy(db_session)
+
+    results, total = await run_tag_match_search(db_session, Filters(), Facets(), ["draw"], limit=30, offset=0)
+
+    assert total == 1
+    assert [card.name for card, _matched in results] == ["Double Turbo"]
+
+
+async def test_semantic_excludes_basic_energy_but_keeps_special_energy(db_session: AsyncSession) -> None:
+    await _seed_basic_and_special_energy(db_session)
+
+    results, total = await run_semantic_search(
+        db_session, Filters(), Facets(), _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 1
+    assert [card.name for card in results] == ["Double Turbo"]
+
+
+async def test_rrf_excludes_basic_energy_but_keeps_special_energy(db_session: AsyncSession) -> None:
+    await _seed_basic_and_special_energy(db_session)
+
+    results, total = await run_rrf_search(
+        db_session, Filters(), Facets(), ["draw"], _vector(1.0, 0.0), limit=30, offset=0
+    )
+
+    assert total == 1
+    assert [card.name for card, _tags, _semantic in results] == ["Double Turbo"]
