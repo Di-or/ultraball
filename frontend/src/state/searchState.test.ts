@@ -135,6 +135,17 @@ describe("searchStateReducer", () => {
     expect(next.conceptActive).toBe(false);
   });
 
+  it("a format patch of null is kept in filters and survives a later category change", () => {
+    const unlocked = searchStateReducer(initialSearchState, { type: "filter-changed", patch: { format: null } });
+    expect(unlocked.filters.format).toBeNull();
+
+    const next = searchStateReducer(unlocked, { type: "filter-changed", patch: { category: "Trainer" } });
+    expect(next.filters.format).toBeNull();
+
+    const restored = searchStateReducer(next, { type: "filter-changed", patch: { format: "standard" } });
+    expect(restored.filters.format).toBe("standard");
+  });
+
   describe("changing category clears filters that can't apply", () => {
     const pokemonFilters = {
       format: "standard" as const,
