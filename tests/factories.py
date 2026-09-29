@@ -38,6 +38,25 @@ def make_card(**overrides: object) -> Card:
     return Card(**base)
 
 
+def make_raw_pokemon(**overrides: object) -> dict[str, object]:
+    """A minimally-valid raw TCGdex Basic Pokémon printing, for tests that run it through ingest."""
+    printing_id = str(overrides.pop("id", "sv1-1"))
+    base: dict[str, object] = dict(
+        id=printing_id,
+        localId=printing_id.split("-")[1],
+        name="Sprigatito",
+        category="Pokemon",
+        hp=60,
+        types=["Grass"],
+        stage="Basic",
+        regulationMark="H",
+        attacks=[{"name": "Tackle", "cost": ["Colorless"], "damage": 10, "effect": ""}],
+        abilities=[],
+    )
+    base.update(overrides)
+    return base
+
+
 def make_enrichment(**overrides: object) -> CardEnrichment:
     """A minimally-valid `CardEnrichment` row, for tests exercising tag-match retrieval."""
     base = dict(

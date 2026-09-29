@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.catalog.ingest import run_ingest
 from app.clients.catalog_client import SetSnapshot
 from tests.factories import make_card as _card
+from tests.factories import make_raw_pokemon
 from tests.stubs import StubCatalogClient
 
 
@@ -97,34 +98,21 @@ async def test_an_unknown_printing_id_is_flagged_and_its_count_still_counted(
     assert "deck_size" not in [v["code"] for v in body["violations"]]
 
 
-def _raw_basic_pokemon(printing_id: str, name: str, mark: str) -> dict[str, object]:
-    return {
-        "id": printing_id,
-        "localId": printing_id.split("-")[1],
-        "name": name,
-        "category": "Pokemon",
-        "hp": 60,
-        "types": ["Grass"],
-        "stage": "Basic",
-        "regulationMark": mark,
-        "attacks": [{"name": "Tackle", "cost": ["Colorless"], "damage": 10, "effect": ""}],
-        "abilities": [],
-    }
-
-
 async def test_an_ingested_g_card_is_flagged_not_standard_legal_under_the_current_rotation(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     catalog_client = StubCatalogClient(
         {
             "me2": SetSnapshot(
-                "me2",
-                date(2025, 11, 14),
-                [_raw_basic_pokemon("me2-1", "Bulbasaur", "J"), _raw_basic_pokemon("sv1-1", "Sprigatito", "G")],
-            )
+                "me2", date(2025, 11, 14), [make_raw_pokemon(id="me2-1", name="Bulbasaur", regulationMark="J")]
+            ),
+            "sv1": SetSnapshot(
+                "sv1", date(2023, 3, 31), [make_raw_pokemon(id="sv1-1", name="Sprigatito", regulationMark="G")]
+            ),
         }
     )
     await run_ingest(db_session, catalog_client, "me2")
+    await run_ingest(db_session, catalog_client, "sv1")
 
     response = await client.post(
         "/decks/validate",
