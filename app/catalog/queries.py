@@ -53,15 +53,15 @@ async def get_card_by_set_code_and_local_id(
 
 async def get_sets(session: AsyncSession) -> list[SetSummary]:
     """Every distinct set, newest first. Derived from `cards` — there is no sets table."""
-    release_date = func.min(Card.release_date)
+    first_release = func.min(Card.release_date)
     stmt = (
-        select(Card.set_id, func.min(Card.set_code), release_date)
+        select(Card.set_id, func.min(Card.set_code), first_release)
         .group_by(Card.set_id)
-        .order_by(release_date.desc(), Card.set_id)
+        .order_by(first_release.desc(), Card.set_id)
     )
     return [
-        SetSummary(id=set_id, code=code, release_date=released)
-        for set_id, code, released in await session.execute(stmt)
+        SetSummary(id=set_id, code=code, release_date=release_date)
+        for set_id, code, release_date in await session.execute(stmt)
     ]
 
 

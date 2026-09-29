@@ -152,6 +152,18 @@ describe("FilterPanel set dropdown", () => {
     expect(screen.getByLabelText("Set")).toHaveValue("swsh1");
   });
 
+  it("still shows a parsed set that isn't in the loaded list, rather than claiming Any", () => {
+    renderPanel({ set_id: "unknown9" });
+    const select = screen.getByLabelText("Set");
+    expect(select).toHaveValue("unknown9");
+    expect(within(select).getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Any",
+      "unknown9",
+      "SVI",
+      "SSH",
+    ]);
+  });
+
   it("shows Any when no set is chosen", () => {
     renderPanel({});
     expect(screen.getByLabelText("Set")).toHaveValue("");

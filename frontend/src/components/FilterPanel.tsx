@@ -224,6 +224,9 @@ export function FilterPanel({
           onChange={(event) => onFilterChange({ set_id: event.target.value || null })}
         >
           <option value="">Any</option>
+          {filters.set_id && !sets.some((set) => set.id === filters.set_id) && (
+            <option value={filters.set_id}>{filters.set_id}</option>
+          )}
           {sets.map((set) => (
             <option key={set.id} value={set.id}>
               {set.code}
