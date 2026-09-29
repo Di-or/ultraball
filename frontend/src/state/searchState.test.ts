@@ -265,36 +265,16 @@ describe("searchStateReducer", () => {
       expect(next.filters.energy_type ?? null).toBeNull();
     });
 
-    it("keeps a parsed query's category-specific field after the real submit-then-resolve flow", () => {
+    it("a parsed query's filters are copied as-is so the panel matches the results already fetched", () => {
       const submitted = searchStateReducer(seed(pokemonFilters), {
         type: "query-submitted",
         query: "supporter draw",
       });
-      const resolved = searchStateReducer(submitted, {
-        type: "query-resolved",
-        filters: { format: "standard", category: "Trainer", trainer_type: "Supporter" },
-      });
+      const parsed = { format: "standard" as const, category: "Trainer" as const, hp: { lte: 100 } };
 
-      expect(resolved.filters).toEqual({
-        format: "standard",
-        category: "Trainer",
-        trainer_type: "Supporter",
-      });
-    });
+      const resolved = searchStateReducer(submitted, { type: "query-resolved", filters: parsed });
 
-    it("applies the same rule when a parsed query changes the category", () => {
-      const resolved = searchStateReducer(seed(pokemonFilters), {
-        type: "query-resolved",
-        filters: { ...pokemonFilters, category: "Trainer", trainer_type: "Supporter" },
-      });
-
-      expect(resolved.filters).toEqual({
-        format: "standard",
-        category: "Trainer",
-        trainer_type: "Supporter",
-        sub_category: ["ace-spec"],
-        set_id: "sv1",
-      });
+      expect(resolved.filters).toEqual(parsed);
     });
   });
 

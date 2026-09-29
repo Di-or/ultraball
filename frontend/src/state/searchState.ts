@@ -55,8 +55,7 @@ export type SearchAction =
   | { type: "concept-removed" };
 
 /** Drops filters that can't apply to `next.category` whenever the category differs from
- * `previous`, so a leftover Pokémon-only filter can't zero out a Trainer search. Fields set in
- * the same edit survive only if they apply to the new category. */
+ * `previous`, so a leftover Pokémon-only filter can't zero out a Trainer search. */
 function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
   const category = next.category ?? null;
   if (category === (previous.category ?? null) || category === null) return next;
@@ -94,11 +93,13 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         fetchRevision: state.fetchRevision + 1,
       };
     case "query-resolved":
-      // Deliberately does not bump `fetchRevision` — see the field's doc comment.
+      // Deliberately does not bump `fetchRevision` — see the field's doc comment. The parse is
+      // copied verbatim, not run through clearInapplicableFilters: those filters already drove
+      // the fetch in hand, so trimming them would leave the panel disagreeing with the results.
       return {
         ...state,
         query: null,
-        filters: clearInapplicableFilters(state.filters, action.filters),
+        filters: action.filters,
       };
     case "filter-changed":
       return {
