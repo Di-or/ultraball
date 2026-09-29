@@ -135,6 +135,149 @@ describe("searchStateReducer", () => {
     expect(next.conceptActive).toBe(false);
   });
 
+  describe("changing category clears filters that can't apply", () => {
+    const pokemonFilters = {
+      format: "standard" as const,
+      category: "Pokemon" as const,
+      stage: "Basic" as const,
+      types: ["Fire"],
+      hp: { gte: 100 },
+      retreat: { lte: 2 },
+      attack_cost: { lte: 3 },
+      sub_category: ["ex" as const, "mega" as const, "ace-spec" as const],
+      set_id: "sv1",
+    };
+    const seed = (filters: typeof pokemonFilters | Record<string, unknown>) => ({
+      ...initialSearchState,
+      filters: filters as typeof pokemonFilters,
+    });
+
+    it("switching to Trainer clears the Pokemon-only fields but keeps ACE SPEC and unrelated fields", () => {
+      const next = searchStateReducer(seed(pokemonFilters), {
+        type: "filter-changed",
+        patch: { category: "Trainer" },
+      });
+
+      expect(next.filters).toEqual({
+        format: "standard",
+        category: "Trainer",
+        sub_category: ["ace-spec"],
+        set_id: "sv1",
+      });
+    });
+
+    it("switching to Energy clears the Pokemon-only fields but keeps ACE SPEC", () => {
+      const next = searchStateReducer(seed(pokemonFilters), {
+        type: "filter-changed",
+        patch: { category: "Energy" },
+      });
+
+      expect(next.filters).toEqual({
+        format: "standard",
+        category: "Energy",
+        sub_category: ["ace-spec"],
+        set_id: "sv1",
+      });
+    });
+
+    it("drops sub_category entirely when only ex/Mega were set", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", sub_category: ["ex", "mega"] }), {
+        type: "filter-changed",
+        patch: { category: "Trainer" },
+      });
+
+      expect(next.filters.sub_category ?? null).toBeNull();
+    });
+
+    it("switching to Pokemon clears trainer type and energy type", () => {
+      const next = searchStateReducer(
+        seed({ format: "standard", category: "Trainer", trainer_type: "Supporter", energy_type: "Fire" }),
+        { type: "filter-changed", patch: { category: "Pokemon" } }
+      );
+
+      expect(next.filters).toEqual({ format: "standard", category: "Pokemon" });
+    });
+
+    it("switching to Any clears nothing", () => {
+      const next = searchStateReducer(seed(pokemonFilters), {
+        type: "filter-changed",
+        patch: { category: null },
+      });
+
+      expect(next.filters).toEqual({ ...pokemonFilters, category: null });
+    });
+
+    it("re-selecting the same category clears nothing", () => {
+      const next = searchStateReducer(seed(pokemonFilters), {
+        type: "filter-changed",
+        patch: { category: "Pokemon" },
+      });
+
+      expect(next.filters).toEqual(pokemonFilters);
+    });
+
+    it("editing a field without changing the category clears nothing", () => {
+      const next = searchStateReducer(seed(pokemonFilters), {
+        type: "filter-changed",
+        patch: { stage: "Stage 1" },
+      });
+
+      expect(next.filters).toEqual({ ...pokemonFilters, stage: "Stage 1" });
+    });
+
+    it("a combined category-plus-field edit keeps its field", () => {
+      const next = searchStateReducer(seed(pokemonFilters), {
+        type: "filter-changed",
+        patch: { category: "Trainer", trainer_type: "Supporter" },
+      });
+
+      expect(next.filters.category).toBe("Trainer");
+      expect(next.filters.trainer_type).toBe("Supporter");
+      expect(next.filters.hp ?? null).toBeNull();
+    });
+
+    it("switching from Trainer to Energy clears trainer type but keeps energy type", () => {
+      const next = searchStateReducer(
+        seed({ category: "Trainer", trainer_type: "Supporter", energy_type: "Fire" }),
+        { type: "filter-changed", patch: { category: "Energy" } }
+      );
+
+      expect(next.filters.trainer_type ?? null).toBeNull();
+      expect(next.filters.energy_type).toBe("Fire");
+    });
+
+    it("switching from Energy to Trainer clears energy type but keeps trainer type", () => {
+      const next = searchStateReducer(
+        seed({ category: "Energy", trainer_type: "Supporter", energy_type: "Fire" }),
+        { type: "filter-changed", patch: { category: "Trainer" } }
+      );
+
+      expect(next.filters.energy_type ?? null).toBeNull();
+      expect(next.filters.trainer_type).toBe("Supporter");
+    });
+
+    it("switching from Energy to Pokemon clears energy type", () => {
+      const next = searchStateReducer(seed({ category: "Energy", energy_type: "Fire" }), {
+        type: "filter-changed",
+        patch: { category: "Pokemon" },
+      });
+
+      expect(next.filters.energy_type ?? null).toBeNull();
+    });
+
+    it("a parsed query's filters are copied as-is so the panel matches the results already fetched", () => {
+      const submitted = searchStateReducer(seed(pokemonFilters), {
+        type: "query-submitted",
+        query: "supporter draw",
+      });
+      const parsed = { format: "standard" as const, category: "Trainer" as const, hp: { lte: 100 } };
+
+      const resolved = searchStateReducer(submitted, { type: "query-resolved", filters: parsed });
+
+      expect(resolved.filters).toEqual(parsed);
+    });
+  });
+
   it("bumps fetchRevision on every fetch-worthy action, but query-resolved leaves it untouched", () => {
     // App.tsx keys its fetch effect off `fetchRevision` alone. `query-resolved` only
     // reconciles state from a response already in hand — bumping it here would cost App a
