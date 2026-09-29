@@ -24,6 +24,12 @@ export interface Filters {
   set_id?: string | null;
 }
 
+export interface SetSummary {
+  id: string;
+  code: string;
+  release_date: string;
+}
+
 export interface Facets {
   regulation_mark?: string[] | null;
   rarity?: string[] | null;

@@ -11,8 +11,6 @@ import { FilterPanel } from "./FilterPanel";
 // exempt should be empty or carry a reason that isn't "not built yet".
 type Coverage = { exposed: string } | { exempt: string };
 
-const NOT_BUILT = "not built yet (#46)";
-
 const FILTER_COVERAGE = {
   category: { exposed: "Category" },
   types: { exposed: "Type" },
@@ -24,7 +22,7 @@ const FILTER_COVERAGE = {
   attack_cost: { exposed: "Minimum Attack cost" },
   trainer_type: { exposed: "Trainer type" },
   energy_type: { exposed: "Energy type" },
-  set_id: { exempt: NOT_BUILT },
+  set_id: { exposed: "Set" },
 } satisfies Record<keyof Required<Filters>, Coverage>;
 
 const FACET_COVERAGE = {
@@ -366,5 +364,37 @@ describe("FilterPanel Trainer and Energy chips", () => {
     expect(chip("Trainer type", "Item")).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "ACE SPEC" })).toHaveAttribute("aria-pressed", "true");
     expect(chip("Energy type", "Special Energy")).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+describe("FilterPanel set dropdown", () => {
+  const sets = [
+    { id: "sv1", code: "SVI", release_date: "2023-03-31" },
+    { id: "base1", code: "BS", release_date: "1999-01-09" },
+  ];
+
+  it("offers Any plus every set labelled by code", () => {
+    render(<FilterPanel filters={{}} facets={{}} sets={sets} onFilterChange={vi.fn()} onFacetChange={vi.fn()} />);
+    const options = within(screen.getByLabelText("Set")).getAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual(["Any", "SVI", "BS"]);
+  });
+
+  it("sends the set id when a set is picked, and clears it on Any", () => {
+    const onFilterChange = vi.fn();
+    render(
+      <FilterPanel filters={{ set_id: "sv1" }} facets={{}} sets={sets} onFilterChange={onFilterChange} onFacetChange={vi.fn()} />
+    );
+    const select = screen.getByLabelText("Set");
+    fireEvent.change(select, { target: { value: "base1" } });
+    expect(onFilterChange).toHaveBeenLastCalledWith({ set_id: "base1" });
+    fireEvent.change(select, { target: { value: "" } });
+    expect(onFilterChange).toHaveBeenLastCalledWith({ set_id: null });
+  });
+
+  it("shows the set a parsed query selected", () => {
+    render(
+      <FilterPanel filters={{ set_id: "base1" }} facets={{}} sets={sets} onFilterChange={vi.fn()} onFacetChange={vi.fn()} />
+    );
+    expect((screen.getByLabelText("Set") as HTMLSelectElement).value).toBe("base1");
   });
 });
