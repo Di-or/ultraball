@@ -10,6 +10,7 @@ export default defineConfig({
       "/cards": "http://localhost:8000",
       "/decks": "http://localhost:8000",
       "/energy": "http://localhost:8000",
+      "/sets": "http://localhost:8000",
     },
   },
   test: {
