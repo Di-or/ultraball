@@ -68,3 +68,47 @@ describe("FilterPanel", () => {
     expect(onFacetChange).toHaveBeenCalledWith({ regulation_mark: ["J"] });
   });
 });
+
+describe("FilterPanel HP range", () => {
+  function renderPanel(filters: Filters = {}) {
+    const onFilterChange = vi.fn();
+    render(<FilterPanel filters={filters} facets={{}} onFilterChange={onFilterChange} onFacetChange={vi.fn()} />);
+    return onFilterChange;
+  }
+
+  it("sends only a lower bound when only the minimum is moved", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.change(screen.getByLabelText("Minimum HP"), { target: { value: "100" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ hp: { gte: 100 } });
+  });
+
+  it("sends only an upper bound when only the maximum is moved", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.change(screen.getByLabelText("Maximum HP"), { target: { value: "200" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ hp: { lte: 200 } });
+  });
+
+  it("keeps the other bound when one is moved", () => {
+    const onFilterChange = renderPanel({ hp: { lte: 200 } });
+    fireEvent.change(screen.getByLabelText("Minimum HP"), { target: { value: "100" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ hp: { gte: 100, lte: 200 } });
+  });
+
+  it("sends null when the minimum returns to its extreme and no maximum is set", () => {
+    const onFilterChange = renderPanel({ hp: { gte: 100 } });
+    fireEvent.change(screen.getByLabelText("Minimum HP"), { target: { value: "0" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ hp: null });
+  });
+
+  it("sends null when the maximum returns to its extreme and no minimum is set", () => {
+    const onFilterChange = renderPanel({ hp: { lte: 200 } });
+    fireEvent.change(screen.getByLabelText("Maximum HP"), { target: { value: "340" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ hp: null });
+  });
+
+  it("drops only the returned bound when the other side is still set", () => {
+    const onFilterChange = renderPanel({ hp: { gte: 100, lte: 200 } });
+    fireEvent.change(screen.getByLabelText("Minimum HP"), { target: { value: "0" } });
+    expect(onFilterChange).toHaveBeenCalledWith({ hp: { lte: 200 } });
+  });
+});
