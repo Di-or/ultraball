@@ -2,7 +2,6 @@ import {
   ATTACK_COST_MAX,
   ATTACK_COST_MIN,
   ATTACK_COST_STEP,
-  CATEGORIES,
   HP_MAX,
   HP_MIN,
   HP_STEP,
@@ -16,7 +15,7 @@ import {
   STAGES,
   TRAINER_TYPES,
 } from "../lib/constants";
-import type { Category, Facets, Filters, SetSummary } from "../lib/types";
+import type { Facets, Filters, SetSummary } from "../lib/types";
 import { Chip } from "./Chip";
 import { RangeControl } from "./RangeControl";
 
@@ -33,9 +32,13 @@ function toggle<T>(list: T[] | null | undefined, value: T): T[] {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
 }
 
+const CATEGORY_PILLS = [
+  { value: "Pokemon", label: "Pokémon" },
+  { value: "Trainer", label: "Trainer" },
+] as const;
+
 export function FilterPanel({ filters, facets, sets = [], onFilterChange, onFacetChange }: FilterPanelProps) {
   const aceSpecActive = (filters.sub_category ?? []).includes("ace-spec");
-  const specialEnergyActive = filters.energy_type === "Special";
 
   return (
     <aside className="filter-panel" aria-label="Filters">
@@ -50,20 +53,33 @@ export function FilterPanel({ filters, facets, sets = [], onFilterChange, onFace
 
       <section>
         <h3>Category</h3>
-        <select
-          aria-label="Category"
-          value={filters.category ?? ""}
-          onChange={(event) =>
-            onFilterChange({ category: (event.target.value || null) as Category | null })
-          }
-        >
-          <option value="">Any</option>
-          {CATEGORIES.map((category) => (
-            <option key={category} value={category}>
-              {category}
-            </option>
+        <div className="chip-group" role="group" aria-label="Category">
+          <Chip active={filters.category == null} onClick={() => onFilterChange({ category: null })}>
+            Any
+          </Chip>
+          {CATEGORY_PILLS.map(({ value, label }) => (
+            <Chip
+              key={value}
+              active={filters.category === value}
+              onClick={() => onFilterChange({ category: filters.category === value ? null : value })}
+            >
+              {label}
+            </Chip>
           ))}
-        </select>
+          {/* Basic Energy lives in the tray, so Energy here only ever means Special Energy. */}
+          <Chip
+            active={filters.category === "Energy"}
+            onClick={() =>
+              onFilterChange(
+                filters.category === "Energy"
+                  ? { category: null, energy_type: null }
+                  : { category: "Energy", energy_type: "Special" },
+              )
+            }
+          >
+            Special Energy
+          </Chip>
+        </div>
       </section>
 
       <section>
@@ -138,20 +154,6 @@ export function FilterPanel({ filters, facets, sets = [], onFilterChange, onFace
               ACE SPEC
             </Chip>
           </div>
-        </div>
-      </section>
-
-      <section>
-        <h3>Energy</h3>
-        <div className="chip-group" role="group" aria-label="Energy type">
-          <Chip
-            active={specialEnergyActive}
-            onClick={() =>
-              onFilterChange({ category: "Energy", energy_type: specialEnergyActive ? null : "Special" })
-            }
-          >
-            Special Energy
-          </Chip>
         </div>
       </section>
 

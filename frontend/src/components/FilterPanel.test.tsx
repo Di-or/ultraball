@@ -21,7 +21,7 @@ const FILTER_COVERAGE = {
   retreat: { exposed: "Minimum Retreat" },
   attack_cost: { exposed: "Minimum Attack cost" },
   trainer_type: { exposed: "Trainer type" },
-  energy_type: { exposed: "Energy type" },
+  energy_type: { exposed: "Category" },
   set_id: { exposed: "Set" },
 } satisfies Record<keyof Required<Filters>, Coverage>;
 
@@ -272,10 +272,6 @@ describe("FilterPanel Pokémon chip row", () => {
     expect(chip("Sub-category", "Mega")).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("leaves the Category dropdown in place", () => {
-    renderPanel();
-    expect(screen.getByRole("combobox", { name: "Category" })).toBeInTheDocument();
-  });
 });
 
 describe("FilterPanel Trainer and Energy chips", () => {
@@ -339,16 +335,16 @@ describe("FilterPanel Trainer and Energy chips", () => {
     expect(onFilterChange).toHaveBeenCalledWith({ category: null, sub_category: ["ace-spec"] });
   });
 
-  it("sets energy type Special and Category Energy from the Special Energy chip", () => {
+  it("sets energy type Special and Category Energy from the Special Energy pill", () => {
     const onFilterChange = renderPanel();
-    fireEvent.click(chip("Energy type", "Special Energy"));
+    fireEvent.click(chip("Category", "Special Energy"));
     expect(onFilterChange).toHaveBeenCalledWith({ category: "Energy", energy_type: "Special" });
   });
 
-  it("clears energy type when Special Energy is clicked again", () => {
+  it("goes back to Any when the lit Special Energy pill is clicked", () => {
     const onFilterChange = renderPanel({ category: "Energy", energy_type: "Special" });
-    fireEvent.click(chip("Energy type", "Special Energy"));
-    expect(onFilterChange).toHaveBeenCalledWith({ category: "Energy", energy_type: null });
+    fireEvent.click(chip("Category", "Special Energy"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: null, energy_type: null });
   });
 
   it("offers no Basic Energy chip", () => {
@@ -356,12 +352,47 @@ describe("FilterPanel Trainer and Energy chips", () => {
     expect(screen.queryByRole("button", { name: /basic energy/i })).not.toBeInTheDocument();
   });
 
-  it("reflects trainer type, ACE SPEC and energy type set by a parsed query", () => {
-    renderPanel({ category: "Trainer", trainer_type: "Tool", sub_category: ["ace-spec"], energy_type: "Special" });
+  it("reflects trainer type, ACE SPEC and category set by a parsed query", () => {
+    renderPanel({ category: "Trainer", trainer_type: "Tool", sub_category: ["ace-spec"] });
     expect(chip("Trainer type", "Tool")).toHaveAttribute("aria-pressed", "true");
     expect(chip("Trainer type", "Item")).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "ACE SPEC" })).toHaveAttribute("aria-pressed", "true");
-    expect(chip("Energy type", "Special Energy")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Category", "Trainer")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("has no Category dropdown and no separate Special Energy chip", () => {
+    renderPanel();
+    expect(screen.queryByRole("combobox", { name: "Category" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Energy type" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Special Energy" })).toHaveLength(1);
+  });
+
+  it("shows Any, Pokémon, Trainer and Special Energy pills with Any lit when no category is set", () => {
+    renderPanel();
+    const buttons = within(screen.getByRole("group", { name: "Category" })).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual(["Any", "Pokémon", "Trainer", "Special Energy"]);
+    expect(chip("Category", "Any")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Category", "Pokémon")).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("selects a category in one click", () => {
+    const onFilterChange = renderPanel();
+    fireEvent.click(chip("Category", "Trainer"));
+    expect(onFilterChange).toHaveBeenCalledWith({ category: "Trainer" });
+  });
+
+  it("goes back to Any when a lit category pill is clicked, and when Any is clicked", () => {
+    const onFilterChange = renderPanel({ category: "Pokemon" });
+    fireEvent.click(chip("Category", "Pokémon"));
+    expect(onFilterChange).toHaveBeenLastCalledWith({ category: null });
+    fireEvent.click(chip("Category", "Any"));
+    expect(onFilterChange).toHaveBeenLastCalledWith({ category: null });
+  });
+
+  it("lights the Special Energy pill for a parsed category Energy", () => {
+    renderPanel({ category: "Energy" });
+    expect(chip("Category", "Special Energy")).toHaveAttribute("aria-pressed", "true");
+    expect(chip("Category", "Any")).toHaveAttribute("aria-pressed", "false");
   });
 });
 

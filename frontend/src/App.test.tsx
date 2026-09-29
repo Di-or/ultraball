@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import type { SearchResponse } from "./lib/types";
@@ -65,7 +65,7 @@ describe("App", () => {
     );
     expect(parseCall).toBeDefined();
 
-    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "Pokemon" } });
+    fireEvent.click(within(screen.getByRole("group", { name: "Category" })).getByRole("button", { name: "Pokémon" }));
 
     await waitFor(() => {
       const lastSearchCall = fetchMock.mock.calls.filter((call) => call[0] === "/search").at(-1);

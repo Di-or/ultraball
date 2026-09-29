@@ -141,7 +141,7 @@ _Avoid_: browse mode, filter-only search.
 ### Frontend
 
 **Filter panel**:
-The standing, always-usable structured-filter controls: an "Include non-Standard cards" checkbox (unchecked = Standard-only), category, per-category chip rows (Pokémon stage and ex/Mega; Trainer type and ACE SPEC; Special Energy), Type, HP / retreat / attack-cost ranges, set, plus UI-only `regulation_mark`/`rarity` facets. One shared filter state that the natural-language query writes into (parse ticks the controls on) and the user can also edit directly; changing category clears any filter that can't apply to the new category.
+The standing, always-usable structured-filter controls: an "Include non-Standard cards" checkbox (unchecked = Standard-only), a single-select category pill row (Any, Pokémon, Trainer, Special Energy — Special Energy is folded in, setting `category: "Energy"` and `energy_type: "Special"`; a lit pill goes back to Any), per-category chip rows (Pokémon stage and ex/Mega; Trainer type and ACE SPEC), Type, HP / retreat / attack-cost ranges, set, plus UI-only `regulation_mark`/`rarity` facets. One shared filter state that the natural-language query writes into (parse ticks the controls on) and the user can also edit directly; changing category clears any filter that can't apply to the new category.
 _Avoid_: sidebar, facets panel.
 
 **Concept indicator**:
