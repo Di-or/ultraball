@@ -236,6 +236,26 @@ describe("searchStateReducer", () => {
       expect(next.filters.hp ?? null).toBeNull();
     });
 
+    it("switching from Trainer to Energy clears trainer type but keeps energy type", () => {
+      const next = searchStateReducer(
+        seed({ category: "Trainer", trainer_type: "Supporter", energy_type: "Fire" }),
+        { type: "filter-changed", patch: { category: "Energy" } }
+      );
+
+      expect(next.filters.trainer_type ?? null).toBeNull();
+      expect(next.filters.energy_type).toBe("Fire");
+    });
+
+    it("switching from Energy to Trainer clears energy type but keeps trainer type", () => {
+      const next = searchStateReducer(
+        seed({ category: "Energy", trainer_type: "Supporter", energy_type: "Fire" }),
+        { type: "filter-changed", patch: { category: "Trainer" } }
+      );
+
+      expect(next.filters.energy_type ?? null).toBeNull();
+      expect(next.filters.trainer_type).toBe("Supporter");
+    });
+
     it("switching from Energy to Pokemon clears energy type", () => {
       const next = searchStateReducer(seed({ category: "Energy", energy_type: "Fire" }), {
         type: "filter-changed",

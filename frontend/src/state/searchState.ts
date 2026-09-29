@@ -66,6 +66,8 @@ function clearInapplicableFilters(previous: Filters, next: Filters): Filters {
     delete cleared.trainer_type;
     delete cleared.energy_type;
   } else {
+    if (category === "Trainer") delete cleared.energy_type;
+    else delete cleared.trainer_type;
     delete cleared.stage;
     delete cleared.types;
     delete cleared.hp;
