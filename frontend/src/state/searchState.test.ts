@@ -294,6 +294,38 @@ describe("searchStateReducer", () => {
 
       expect(resolved.filters).toEqual(parsed);
     });
+
+    it("clicking Supporter after setting an HP range clears the HP range", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", hp: { gte: 100 } }), {
+        type: "filter-changed",
+        patch: { category: "Trainer", trainer_type: "Supporter" },
+      });
+
+      expect(next.filters.hp ?? null).toBeNull();
+      expect(next.filters.category).toBe("Trainer");
+      expect(next.filters.trainer_type).toBe("Supporter");
+    });
+
+    it("toggling ACE SPEC with no category set leaves Category unset", () => {
+      const next = searchStateReducer(seed({ format: "standard" }), {
+        type: "filter-changed",
+        patch: { sub_category: ["ace-spec"] },
+      });
+
+      expect(next.filters.category ?? null).toBeNull();
+      expect(next.filters.sub_category).toEqual(["ace-spec"]);
+    });
+
+    it("clicking Special Energy from a Pokémon search clears Pokémon filters and keeps energy type", () => {
+      const next = searchStateReducer(seed({ category: "Pokemon", hp: { gte: 100 }, stage: "Basic" }), {
+        type: "filter-changed",
+        patch: { category: "Energy", energy_type: "Special" },
+      });
+
+      expect(next.filters.hp ?? null).toBeNull();
+      expect(next.filters.stage ?? null).toBeNull();
+      expect(next.filters.energy_type).toBe("Special");
+    });
   });
 
   it("bumps fetchRevision on every fetch-worthy action, but query-resolved leaves it untouched", () => {

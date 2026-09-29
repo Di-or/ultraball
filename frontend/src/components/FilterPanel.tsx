@@ -14,6 +14,7 @@ import {
   RETREAT_STEP,
   POKEMON_SUB_CATEGORIES,
   STAGES,
+  TRAINER_TYPES,
 } from "../lib/constants";
 import type { Category, Facets, Filters } from "../lib/types";
 import { RangeControl } from "./RangeControl";
@@ -31,6 +32,9 @@ function toggle<T>(list: T[] | null | undefined, value: T): T[] {
 }
 
 export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: FilterPanelProps) {
+  const aceSpecActive = (filters.sub_category ?? []).includes("ace-spec");
+  const specialEnergyActive = filters.energy_type === "Special";
+
   return (
     <aside className="filter-panel" aria-label="Filters">
       <section>
@@ -90,6 +94,61 @@ export function FilterPanel({ filters, facets, onFilterChange, onFacetChange }: 
               );
             })}
           </div>
+        </div>
+      </section>
+
+      <section>
+        <h3>Trainer</h3>
+        <div className="chip-group" role="group" aria-label="Trainer">
+          <div className="chip-group" role="group" aria-label="Trainer type">
+            {TRAINER_TYPES.map((trainerType) => {
+              const active = filters.trainer_type === trainerType;
+              return (
+                <button
+                  key={trainerType}
+                  type="button"
+                  aria-pressed={active}
+                  className={active ? "chip chip-active" : "chip"}
+                  onClick={() =>
+                    onFilterChange({ category: "Trainer", trainer_type: active ? null : trainerType })
+                  }
+                >
+                  {trainerType}
+                </button>
+              );
+            })}
+          </div>
+          <span className="chip-divider" aria-hidden="true" />
+          {/* ACE SPEC leaves Category alone: ACE SPEC cards include Special Energy. */}
+          <div className="chip-group" role="group" aria-label="Trainer sub-category">
+            <button
+              type="button"
+              aria-pressed={aceSpecActive}
+              className={aceSpecActive ? "chip chip-active" : "chip"}
+              onClick={() => {
+                const next = toggle(filters.sub_category, "ace-spec" as const);
+                onFilterChange({ sub_category: next.length ? next : null });
+              }}
+            >
+              ACE SPEC
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h3>Energy</h3>
+        <div className="chip-group" role="group" aria-label="Energy type">
+          <button
+            type="button"
+            aria-pressed={specialEnergyActive}
+            className={specialEnergyActive ? "chip chip-active" : "chip"}
+            onClick={() =>
+              onFilterChange({ category: "Energy", energy_type: specialEnergyActive ? null : "Special" })
+            }
+          >
+            Special Energy
+          </button>
         </div>
       </section>
 

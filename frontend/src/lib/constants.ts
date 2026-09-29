@@ -23,6 +23,8 @@ export const POKEMON_SUB_CATEGORIES = [
   { value: "mega", label: "Mega" },
 ] as const;
 
+export const TRAINER_TYPES = ["Item", "Supporter", "Stadium", "Tool"] as const;
+
 export const CATEGORIES = ["Pokemon", "Trainer", "Energy"] as const;
 
 export const REGULATION_MARKS = ["G", "H", "I", "J"] as const;
