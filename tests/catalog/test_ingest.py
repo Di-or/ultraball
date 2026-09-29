@@ -8,6 +8,8 @@ from app.catalog.ingest import run_ingest
 from app.catalog.models import Card, RawCard
 from app.catalog.queries import get_representative_printing
 from app.clients.catalog_client import SetSnapshot
+from app.search.models import Facets, Filters
+from app.search.queries import run_search
 from tests.stubs import StubCatalogClient
 
 _CHARIZARD = {
@@ -151,3 +153,60 @@ async def test_re_ingesting_a_set_after_a_rotation_edit_flips_legality(db_sessio
     db_session.expire_all()  # ingest upserts via Core, bypassing the ORM identity map
     legal_after = await db_session.scalar(select(Card).where(Card.id == "base1-4"))
     assert legal_after is not None and legal_after.is_standard_legal is False
+
+
+_J_POKEMON = {
+    "id": "me2-1",
+    "localId": "1",
+    "name": "Bulbasaur",
+    "category": "Pokemon",
+    "hp": 70,
+    "types": ["Grass"],
+    "stage": "Basic",
+    "regulationMark": "J",
+    "attacks": [{"name": "Vine Whip", "cost": ["Grass"], "damage": 20, "effect": ""}],
+    "abilities": [],
+}
+
+_G_POKEMON = {
+    "id": "sv1-1",
+    "localId": "1",
+    "name": "Sprigatito",
+    "category": "Pokemon",
+    "hp": 60,
+    "types": ["Grass"],
+    "stage": "Basic",
+    "regulationMark": "G",
+    "attacks": [{"name": "Scratch", "cost": ["Grass"], "damage": 10, "effect": ""}],
+    "abilities": [],
+}
+
+_G_BASIC_ENERGY = {**_FIRE_ENERGY, "id": "sve-2", "localId": "2", "regulationMark": "G"}
+
+
+async def test_the_current_rotation_makes_j_cards_legal_and_g_cards_not(db_session: AsyncSession) -> None:
+    catalog_client = StubCatalogClient(
+        {"me2": SetSnapshot("me2", date(2025, 11, 14), [_J_POKEMON, _G_POKEMON, _G_BASIC_ENERGY])}
+    )
+
+    await run_ingest(db_session, catalog_client, "me2")
+
+    j_card = await db_session.scalar(select(Card).where(Card.id == "me2-1"))
+    g_card = await db_session.scalar(select(Card).where(Card.id == "sv1-1"))
+    g_energy = await db_session.scalar(select(Card).where(Card.id == "sve-2"))
+    assert j_card is not None and j_card.is_standard_legal is True
+    assert g_card is not None and g_card.is_standard_legal is False
+    assert g_energy is not None and g_energy.is_standard_legal is True
+
+
+async def test_the_j_facet_under_the_default_standard_gate_returns_j_cards(db_session: AsyncSession) -> None:
+    catalog_client = StubCatalogClient(
+        {"me2": SetSnapshot("me2", date(2025, 11, 14), [_J_POKEMON, _G_POKEMON])}
+    )
+    await run_ingest(db_session, catalog_client, "me2")
+
+    j_results, _ = await run_search(db_session, Filters(), Facets(regulation_mark=["J"]), limit=30, offset=0)
+    g_results, _ = await run_search(db_session, Filters(), Facets(regulation_mark=["G"]), limit=30, offset=0)
+
+    assert [r.name for r in j_results] == ["Bulbasaur"]
+    assert g_results == []

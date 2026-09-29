@@ -1,4 +1,35 @@
 from app.catalog.legality import derive_is_standard_legal
+from app.catalog.legality_config import STANDARD_LEGAL_MARKS
+
+
+def test_the_current_rotation_is_h_i_j() -> None:
+    assert STANDARD_LEGAL_MARKS == frozenset({"H", "I", "J"})
+
+
+def test_under_the_current_rotation_a_j_card_is_legal_and_a_g_card_is_not() -> None:
+    def legal(mark: str) -> bool:
+        return derive_is_standard_legal(
+            regulation_mark=mark,
+            category="Pokemon",
+            energy_type=None,
+            dedupe_key="some-card",
+            standard_legal_marks=STANDARD_LEGAL_MARKS,
+            banned_dedupe_keys=frozenset(),
+        )
+
+    assert legal("J") is True
+    assert legal("G") is False
+
+
+def test_under_the_current_rotation_basic_energy_with_a_rotated_mark_is_still_legal() -> None:
+    assert derive_is_standard_legal(
+        regulation_mark="G",
+        category="Energy",
+        energy_type="Basic",
+        dedupe_key="basic-fire-energy",
+        standard_legal_marks=STANDARD_LEGAL_MARKS,
+        banned_dedupe_keys=frozenset(),
+    ) is True
 
 
 def test_card_within_the_allowed_mark_range_is_legal() -> None:

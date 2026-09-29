@@ -1,7 +1,12 @@
+from datetime import date
+
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.ingest import run_ingest
+from app.clients.catalog_client import SetSnapshot
 from tests.factories import make_card as _card
+from tests.stubs import StubCatalogClient
 
 
 async def test_a_legal_60_card_deck_reports_legal(client: AsyncClient, db_session: AsyncSession) -> None:
@@ -90,3 +95,62 @@ async def test_an_unknown_printing_id_is_flagged_and_its_count_still_counted(
     assert violation["cards"] == ["does-not-exist"]
     assert body["counts"]["total"] == 60
     assert "deck_size" not in [v["code"] for v in body["violations"]]
+
+
+def _raw_basic_pokemon(printing_id: str, name: str, mark: str) -> dict[str, object]:
+    return {
+        "id": printing_id,
+        "localId": printing_id.split("-")[1],
+        "name": name,
+        "category": "Pokemon",
+        "hp": 60,
+        "types": ["Grass"],
+        "stage": "Basic",
+        "regulationMark": mark,
+        "attacks": [{"name": "Tackle", "cost": ["Colorless"], "damage": 10, "effect": ""}],
+        "abilities": [],
+    }
+
+
+async def test_a_g_card_is_flagged_not_standard_legal_under_the_current_rotation(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    raw_energy = {
+        "id": "sve-2",
+        "localId": "2",
+        "name": "Fire Energy",
+        "category": "Energy",
+        "energyType": "Basic",
+        "regulationMark": "G",
+        "attacks": [],
+        "abilities": [],
+    }
+    catalog_client = StubCatalogClient(
+        {
+            "me2": SetSnapshot(
+                "me2",
+                date(2025, 11, 14),
+                [
+                    _raw_basic_pokemon("me2-1", "Bulbasaur", "J"),
+                    _raw_basic_pokemon("sv1-1", "Sprigatito", "G"),
+                    raw_energy,
+                ],
+            )
+        }
+    )
+    await run_ingest(db_session, catalog_client, "me2")
+
+    response = await client.post(
+        "/decks/validate",
+        json={
+            "entries": [
+                {"printing_id": "me2-1", "count": 4},
+                {"printing_id": "sv1-1", "count": 4},
+                {"printing_id": "sve-2", "count": 52},
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    violation = next(v for v in response.json()["violations"] if v["code"] == "not_standard_legal")
+    assert violation["cards"] == ["sv1-1"]
