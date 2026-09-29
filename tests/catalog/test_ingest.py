@@ -151,3 +151,54 @@ async def test_re_ingesting_a_set_after_a_rotation_edit_flips_legality(db_sessio
     db_session.expire_all()  # ingest upserts via Core, bypassing the ORM identity map
     legal_after = await db_session.scalar(select(Card).where(Card.id == "base1-4"))
     assert legal_after is not None and legal_after.is_standard_legal is False
+
+
+def _basic_pokemon(printing_id: str, name: str, mark: str) -> dict[str, object]:
+    return {
+        "id": printing_id,
+        "localId": printing_id.split("-")[1],
+        "name": name,
+        "category": "Pokemon",
+        "hp": 60,
+        "types": ["Grass"],
+        "stage": "Basic",
+        "regulationMark": mark,
+        "attacks": [{"name": "Tackle", "cost": ["Colorless"], "damage": 10, "effect": ""}],
+        "abilities": [],
+    }
+
+
+_G_POKEMON = _basic_pokemon("sv1-1", "Sprigatito", "G")
+
+
+async def test_under_the_current_rotation_a_g_card_is_not_standard_legal(db_session: AsyncSession) -> None:
+    catalog_client = StubCatalogClient({"sv1": SetSnapshot("sv1", date(2023, 3, 31), [_G_POKEMON])})
+
+    await run_ingest(db_session, catalog_client, "sv1")
+
+    g_card = await db_session.scalar(select(Card).where(Card.id == "sv1-1"))
+    assert g_card is not None and g_card.is_standard_legal is False
+
+
+_J_POKEMON = _basic_pokemon("me2-1", "Bulbasaur", "J")
+
+
+async def test_under_the_current_rotation_a_j_card_is_standard_legal(db_session: AsyncSession) -> None:
+    catalog_client = StubCatalogClient({"me2": SetSnapshot("me2", date(2025, 11, 14), [_J_POKEMON])})
+
+    await run_ingest(db_session, catalog_client, "me2")
+
+    j_card = await db_session.scalar(select(Card).where(Card.id == "me2-1"))
+    assert j_card is not None and j_card.is_standard_legal is True
+
+
+async def test_under_the_current_rotation_basic_energy_with_a_rotated_mark_is_still_legal(
+    db_session: AsyncSession,
+) -> None:
+    g_fire_energy = {**_FIRE_ENERGY, "id": "sve-2", "localId": "2", "regulationMark": "G"}
+    catalog_client = StubCatalogClient({"sve": SetSnapshot("sve", date(2023, 3, 31), [g_fire_energy])})
+
+    await run_ingest(db_session, catalog_client, "sve")
+
+    energy = await db_session.scalar(select(Card).where(Card.id == "sve-2"))
+    assert energy is not None and energy.is_standard_legal is True

@@ -19,7 +19,7 @@ export const STAGES = ["Basic", "Stage 1", "Stage 2"] as const;
 
 export const CATEGORIES = ["Pokemon", "Trainer", "Energy"] as const;
 
-export const REGULATION_MARKS = ["G", "H", "I"] as const;
+export const REGULATION_MARKS = ["G", "H", "I", "J"] as const;
 
 export const HP_MIN = 0;
 export const HP_MAX = 340;
