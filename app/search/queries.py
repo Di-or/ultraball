@@ -53,7 +53,6 @@ def _build_predicates(rep: type[Card], filters: Filters, facets: Facets) -> list
     """Fields conjoin (AND); a multi-valued field disjoins (OR/overlap) within itself."""
     predicates: list[ColumnElement] = [
         # Basic Energy lives in the tray, not in search (CONTEXT.md: Basic-Energy tray).
-        # `energy_type` is NULL for non-Energy cards, so it needs the explicit IS NULL arm.
         or_(rep.category != "Energy", rep.energy_type.is_distinct_from("Basic")),
     ]
 
