@@ -14,12 +14,13 @@ import hashlib
 import random
 from datetime import date
 
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.identity import build_card_identity
 from app.catalog.ingest import run_ingest
 from app.catalog.models import Base as CatalogBase
+from app.catalog.models import Card
 from app.clients.catalog_client import SetSnapshot
 from app.clients.embedding_client import EMBEDDING_DIM, EmbeddingClient
 from app.clients.enrichment_client import EnrichmentResult
@@ -191,6 +192,10 @@ def _enrichment_results() -> dict[str, EnrichmentResult]:
 
 
 async def seed(session: AsyncSession) -> None:
+    real_set = await session.scalar(select(Card.set_id).where(Card.set_id.not_in(SNAPSHOTS)).limit(1))
+    if real_set is not None:
+        raise RuntimeError(f"Refusing to seed: the database already has real data (set {real_set!r}).")
+
     catalog_client = StubCatalogClient(SNAPSHOTS)
     for set_id in SNAPSHOTS:
         await run_ingest(session, catalog_client, set_id)

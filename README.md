@@ -18,7 +18,7 @@ The real TCGdex ingest isn't built yet, so a fresh database is empty. With `dock
 uv run python -m scripts.seed_dummy
 ```
 
-It connects to Postgres on `localhost:5432` (the port `docker compose` publishes) unless `DATABASE_URL` says otherwise. Safe to run more than once. Search results from the fake data aren't meaningful.
+It connects to Postgres on `localhost:5432` (the port `docker compose` publishes) unless `DATABASE_URL` says otherwise. Safe to run more than once, but it refuses to run if the database already holds real (non-dummy) sets. To go back to real data only, reset the volume with `docker compose down -v`. Search results from the fake data aren't meaningful.
 
 ## Development
 
