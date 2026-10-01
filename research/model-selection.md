@@ -1,22 +1,43 @@
 # Hosted model selection: parse, enrichment, embeddings
 
 **Ticket:** [#3 — Choose hosted models for parse, enrichment, and embeddings](https://github.com/Di-or/ultraball/issues/3)
-**Date:** 2026-08-28
+**Date:** 2026-08-28 (revised 2026-09-30, see below)
 **Scope:** Hosted API models (not local) for a Pokémon TCG deckbuilder's conceptual-search system: ~18,000 cards embedded into Postgres + pgvector.
 
 All prices verified against provider primary sources (pricing/docs pages) as cited. Anything I could not tie to a primary source is called out under **Unverified / assumptions** at the end.
 
 ---
 
-## TL;DR — the three picks
+## Revision 2026-09-30: smaller corpus
+
+The corpus is now scoped to Scarlet & Violet through the current Mega Evolution era, not every card ever released. That is roughly 3.5–4.5k printings, which collapse to an estimated **~2–2.5k `dedupe_key`s** (alt-art and secret-rare reprints share card text). This is an estimate; confirm with `SELECT count(DISTINCT dedupe_key)` after real ingest.
+
+Only work that scales with the corpus is affected:
+
+| Role | Was | Now | Why |
+|---|---|---|---|
+| Parse + rewrite | GPT-5-mini | **Unchanged** | Cost scales with query volume, not corpus size. The binding constraint is latency (<1s target, 4s timeout), which rules out bigger reasoning models. |
+| Enrichment | GPT-4.1-mini (Batch, temp 0) | **Claude Sonnet 5.5** (Message Batches, structured outputs) | ~7–9× fewer cards makes a stronger model cheap, and tag quality is the product. See Role 2. |
+| Embedding (documents) | voyage-4 | **voyage-4-large** | Still inside the free tier at this size. |
+| Embedding (queries) | voyage-4 | **Unchanged** | voyage-4-series models share one embedding space, so queries stay on the faster standard model. |
+
+**The temperature-0 argument is dropped.** It was the main reason GPT-4.1-mini beat reasoning models, but `CONTEXT.md` (Enrichment identity) already treats temperature-0 output as not bit-deterministic, and re-enrichment is keyed on inputs plus the `(taxonomy_version, prompt_version)` stamp. Determinism was never load-bearing.
+
+**Known issue, parse client:** `app/clients/parse_client.py` sends `"temperature": 0` to `gpt-5-mini`. GPT-5 reasoning models are expected to reject non-default temperature with a 400. Unverified against a live call; tests use stubs.
+
+---
+
+## TL;DR — the three picks (current)
 
 | Role | Recommendation | Rough cost | Fallback |
 |---|---|---|---|
 | 1. Parse + rewrite (per query) | **OpenAI GPT-5-mini** (Structured Outputs, strict JSON schema) | $0.25 in / $2.00 out per 1M tok | Claude Haiku 4.5 |
-| 2. Enrichment (one-time batch, ~18k cards) | **OpenAI GPT-4.1-mini** via Batch API, `temperature=0` | $0.20 in / $0.80 out per 1M tok (batch); **~$5–8 total** for 18k cards | Claude Haiku 4.5 (Batch) / GPT-5-nano (Batch) |
-| 3. Embedding | **Voyage `voyage-4`**, `input_type` query/document | $0.06 per 1M tok; ~18k cards fits inside the 200M free tokens (≈ $0) | OpenAI `text-embedding-3-large` / Cohere `embed-v4.0` |
+| 2. Enrichment (offline batch, ~2–2.5k cards) | **Claude Sonnet 5.5** via Message Batches, strict structured outputs, adaptive thinking | $1 in / $5 out per 1M tok (batch); **~$10–20 per full run** | OpenAI flagship reasoning model (Batch); also the second tagger for disagreement review |
+| 3. Embedding | **Voyage `voyage-4-large`** for documents, **`voyage-4`** for queries, `input_type` document/query | $0.12 / $0.06 per 1M tok; corpus fits inside the 200M free tokens (≈ $0) | OpenAI `text-embedding-3-large` / Cohere `embed-v4.0` |
 
-**Embedding vector dimensionality: 1024** (Voyage `voyage-4` default) → pgvector column `vector(1024)`.
+**Embedding vector dimensionality: 1024** (voyage-4 series default) → pgvector column `vector(1024)`. Unchanged: at this corpus size an exact scan is milliseconds at any dimension, and staying at 1024 avoids a migration.
+
+The original 2026-08-28 analysis follows. Where it conflicts with the revision above, the revision wins.
 
 ---
 
@@ -32,6 +53,18 @@ All prices verified against provider primary sources (pricing/docs pages) as cit
 **Cheaper alternative if rewrite quality holds:** GPT-5-nano ($0.05 in / $0.40 out) or GPT-4.1-nano ($0.10 / $0.40) — both support Structured Outputs. Worth an eval; the "concept" rewrite is the part that benefits from the larger mini model.
 
 ## Role 2 — Enrichment model
+
+> **Superseded 2026-09-30: Claude Sonnet 5.5.** With ~2–2.5k cards, a stronger model costs about $10–20 per full run, so cost no longer decides this role. Sonnet 5.5 fits the existing seam:
+> - **Strict structured outputs** (`output_config.format`) constrain `tags` to the 27-tag enum, as OpenAI strict mode did.
+> - **Message Batches** (50% off) match `EnrichmentClient`'s submit / poll / fetch shape. Results come back in any order, keyed by `custom_id` (use the `dedupe_key`).
+> - **Request constraints:** a non-default `temperature` returns a 400, thinking is always on and depth is set with `output_config.effort` (default `high`; compare `medium` vs `high` on the gold set), and forced `tool_choice` returns a 400 (use `output_config.format` instead).
+> - **Refusals:** check `stop_reason == "refusal"` per result. Server-side fallbacks are not available on Batches, so the repair path handles them.
+> - **Billing:** needs a Claude API key with Console credits. A Claude Pro subscription does not cover API usage.
+> - **LLM-as-judge flips provider:** `CONTEXT.md` had Claude Sonnet judging a GPT-4.1-mini taggee. With Sonnet as the taggee, the judge becomes an OpenAI flagship reasoning model so the two stay cross-family. At ~2.5k cards the judge can still re-tag every unique text.
+>
+> Rough cost: ~2.5k cards × (~1,500 in, cached prefix, + ~1,300 out incl. thinking) ≈ 3.75M in + 3.25M out ≈ $3.75 + $16 at batch rates. Re-estimate once the prompt exists.
+>
+> The original analysis below is kept for history.
 
 **Requirement:** small/cheap, good at multi-label classification + text normalization. Runs ONCE per ~18,000 cards as an offline batch (bounded one-time cost). Temperature-0 determinism wanted.
 
@@ -59,6 +92,8 @@ All prices verified against provider primary sources (pricing/docs pages) as cit
 
 **Model-size note within Voyage:** `voyage-4-lite` ($0.02) and `voyage-3.5` ($0.06) are also viable; all voyage-4-series vectors share an embedding space (index with one, query with another). `voyage-4` (standard) is the balanced quality/cost default. Given the corpus is tiny and cost is free-tier-covered, prefer the higher-quality `voyage-4` over `-lite`.
 
+**Revised 2026-09-30:** embed documents with `voyage-4-large` ($0.12) and keep `voyage-4` for queries, using the shared embedding space. Switching the document model needs a full re-embed and a bump to `EMBED_VERSION` in `app/search/embedding_cache.py`.
+
 ---
 
 ## Where Anthropic fits (repo default = Claude)
@@ -79,6 +114,7 @@ Net: the system can run Anthropic-only (Haiku 4.5 for both LLM roles + Voyage fo
 - Voyage AI pricing — https://docs.voyageai.com/docs/pricing (voyage-4 $0.06/1M, voyage-4-lite $0.02, voyage-4-large $0.12; 200M free tokens/account; Batch −33%, free credits excluded from batch)
 - Cohere Embed doc — https://docs.cohere.com/docs/cohere-embed (embed-v4.0 default 1536 dims; english/multilingual-v3.0 1024)
 - Anthropic models + pricing — `claude-api` skill (cached 2026-06-24): Claude Haiku 4.5 $1.00/$5.00 per 1M, 200K context; structured outputs via `output_config.format` + `strict:true`; Message Batches −50%.
+- Anthropic models + pricing (revision) — `claude-api` skill (cached 2026-09-25): Claude Sonnet 5.5 (`claude-sonnet-5-5`) $2.00/$10.00 per 1M, 1M context; non-default sampling params return 400; `thinking: {type: "disabled"}` returns 400; forced `tool_choice` returns 400; server-side fallbacks rejected on the Batches API.
 
 ## Unverified / assumptions (flagged)
 
