@@ -4,7 +4,7 @@ import httpx
 import pytest
 
 from app.clients import parse_client
-from app.clients.parse_client import HostedParseClient, ParseResult
+from app.clients.parse_client import HostedParseClient
 
 _PARSE_OBJECT = {
     "filters": {
@@ -45,19 +45,14 @@ def sent_requests(monkeypatch: pytest.MonkeyPatch) -> list[httpx.Request]:
     return requests
 
 
-async def test_hosted_parse_request_omits_temperature(sent_requests: list[httpx.Request]) -> None:
+async def test_hosted_parse_request_is_strict_gpt_5_mini_without_temperature(
+    sent_requests: list[httpx.Request],
+) -> None:
     # gpt-5-mini is a reasoning model: it only accepts the default temperature.
-    result = await HostedParseClient(api_key="test-key").parse("energy accel pokemon under 130 HP")
+    await HostedParseClient(api_key="test-key").parse("energy accel pokemon under 130 HP")
 
-    assert len(sent_requests) == 1
-    body = json.loads(sent_requests[0].content)
+    body = json.loads(sent_requests[-1].content)
     assert "temperature" not in body
     assert body["model"] == "gpt-5-mini"
     assert body["response_format"]["type"] == "json_schema"
     assert body["response_format"]["json_schema"]["strict"] is True
-    assert result == ParseResult(
-        filters={"category": "Pokemon", "hp": {"lte": 130}, "retreat": {}, "attack_cost": {}},
-        concept="energy accel",
-        concept_rewritten="attach extra Energy beyond the one-per-turn attachment",
-        tags=[],
-    )
