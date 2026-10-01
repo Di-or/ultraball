@@ -89,7 +89,7 @@ The ~120-card, human-hand-labeled, hard-case-stratified reference set — the gr
 _Avoid_: test set, sample.
 
 **LLM-as-judge**:
-An independent, cross-family stronger model (Claude Sonnet) that re-tags every unique text and rubric-grades the descriptions, feeding the disagreement queue. Cross-family so its errors decorrelate from the GPT-4.1-mini taggee; itself validated against the gold set before being trusted at scale.
+An independent, cross-family model (an OpenAI flagship reasoning model) that re-tags every unique text and rubric-grades the descriptions, feeding the disagreement queue. Cross-family so its errors decorrelate from the Claude Sonnet 5.5 taggee; itself validated against the gold set before being trusted at scale.
 _Avoid_: validator, grader, second model.
 
 **Hero set**:
