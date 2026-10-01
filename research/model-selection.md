@@ -23,7 +23,7 @@ Only work that scales with the corpus is affected:
 
 **The temperature-0 argument is dropped.** It was the main reason GPT-4.1-mini beat reasoning models, but `CONTEXT.md` (Enrichment identity) already treats temperature-0 output as not bit-deterministic, and re-enrichment is keyed on inputs plus the `(taxonomy_version, prompt_version)` stamp. Determinism was never load-bearing.
 
-**Known issue, parse client:** `app/clients/parse_client.py` sends `"temperature": 0` to `gpt-5-mini`. GPT-5 reasoning models are expected to reject non-default temperature with a 400. Unverified against a live call; tests use stubs.
+**Resolved, parse client (#80):** `app/clients/parse_client.py` used to send `"temperature": 0` to `gpt-5-mini`. GPT-5 reasoning models are expected to reject non-default temperature with a 400, so the field was removed. The 400 itself is still unverified against a live call; tests mock the HTTP layer.
 
 ---
 
