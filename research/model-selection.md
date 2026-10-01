@@ -92,7 +92,7 @@ The original 2026-08-28 analysis follows. Where it conflicts with the revision a
 
 **Model-size note within Voyage:** `voyage-4-lite` ($0.02) and `voyage-3.5` ($0.06) are also viable; all voyage-4-series vectors share an embedding space (index with one, query with another). `voyage-4` (standard) is the balanced quality/cost default. Given the corpus is tiny and cost is free-tier-covered, prefer the higher-quality `voyage-4` over `-lite`.
 
-**Revised 2026-09-30:** embed documents with `voyage-4-large` ($0.12) and keep `voyage-4` for queries, using the shared embedding space. Switching the document model needs a full re-embed and a bump to `EMBED_VERSION` in `app/search/embedding_cache.py`.
+**Revised 2026-09-30:** embed documents with `voyage-4-large` ($0.12) and keep `voyage-4` for queries, using the shared embedding space. `EMBED_VERSION` in `app/search/embedding_cache.py` covers only the query-side cache, so it doesn't change while queries stay on `voyage-4`. Document vectors carry no model stamp: `run_embedding_pass` only embeds rows whose vector is null, so switching models after real ingest would leave old and new vectors mixed unless the vectors are cleared first. Switching before the first real embedding run avoids that.
 
 ---
 
