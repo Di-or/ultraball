@@ -7,9 +7,10 @@ from app.search.models import Filters
 
 logger = logging.getLogger(__name__)
 
-# Bumped whenever the filters schema changes (a new enum value, a new field) —
-# invalidates the lexical parse cache without an explicit flush (CONTEXT.md: Parse cache).
-PARSE_VERSION = "v1"
+# Bumped whenever the filters schema or the parse prompt changes (a new enum value, a new
+# field, new tag definitions) — invalidates the lexical parse cache without an explicit
+# flush (CONTEXT.md: Parse cache).
+PARSE_VERSION = "v2"
 
 
 def normalize_query(query: str) -> str:

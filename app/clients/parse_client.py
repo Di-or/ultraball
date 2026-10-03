@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 import httpx
 
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
 
 _OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 _PARSE_MODEL = "gpt-5-mini"
@@ -71,7 +71,12 @@ _PARSE_JSON_SCHEMA = {
     "additionalProperties": False,
 }
 
-_SYSTEM_PROMPT = """You split a Pokémon TCG search query into a hard filter zone and a soft \
+_TAG_GLOSSARY = (
+    "Functional tags (what a card does). The card tagger uses these same definitions, so pick a "
+    "tag only when the query asks for that effect as defined here:\n" + render_tag_glossary()
+)
+
+_INSTRUCTIONS = """You split a Pokémon TCG search query into a hard filter zone and a soft \
 concept, and return exactly one JSON object matching the given schema.
 
 `filters` is closed and positive-only: fill only fields the query states explicitly (leave the \
@@ -84,8 +89,11 @@ format, leave format null (the caller defaults it to Standard).
 (empty string if the query is filters-only). `concept_rewritten` restates that concept in \
 mechanical, card-text register (e.g. "energy accel" -> "attach extra Energy from your hand or \
 deck beyond the one-per-turn attachment"), for embedding — never invent an effect the query \
-didn't ask for. `tags` lists any of the fixed functional-tag enum the concept clearly matches \
+didn't ask for. `tags` lists any of the functional tags above that the concept clearly matches \
 (empty array if none clearly match)."""
+
+# The glossary leads: it is static, so it stays inside the cached prompt prefix.
+_SYSTEM_PROMPT = _TAG_GLOSSARY + "\n\n" + _INSTRUCTIONS
 
 
 @dataclass(frozen=True)
