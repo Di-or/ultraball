@@ -111,7 +111,7 @@ def _drop_nulls(obj: dict) -> dict:
 
 
 class HostedParseClient(ParseClient):
-    """Calls the hosted parse/rewrite model (GPT-5-mini, strict JSON, temp 0)."""
+    """Calls the hosted parse/rewrite model (GPT-5-mini, strict JSON)."""
 
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key
@@ -123,7 +123,6 @@ class HostedParseClient(ParseClient):
                 headers={"Authorization": f"Bearer {self._api_key}"},
                 json={
                     "model": _PARSE_MODEL,
-                    "temperature": 0,
                     "messages": [
                         {"role": "system", "content": _SYSTEM_PROMPT},
                         {"role": "user", "content": query},
