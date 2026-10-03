@@ -19,8 +19,10 @@ class TagExample:
 
 
 # One-line definitions, word for word from research/tag-taxonomy-v1.md (a test holds
-# the two together). The enrichment and parse prompts both render from this, so the
-# tagger and the parser draw the same line between neighbouring tags.
+# the two together). The parse prompt renders from this, and the enrichment prompt
+# (#77) is to render from it too, so the enrichment pass and the parser draw the same
+# line between neighbouring tags. Changing a definition or example changes both
+# prompts: bump PARSE_VERSION (app.search.parse) and PROMPT_VERSION.
 TAG_DEFINITIONS: dict[str, str] = {
     # Card advantage (resources)
     "draw": "Net-positive draw: puts cards from your deck into your hand.",
@@ -78,7 +80,7 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     "draw": (TagExample("Dudunsparce", "sv05-129"), TagExample("Carmine", "sv06-145")),
     "search": (TagExample("Nest Ball", "sv01-181"), TagExample("Pidgeot ex", "sv03-164")),
     "recovery": (TagExample("Pal Pad", "sv01-182"), TagExample("Night Stretcher", "sv06.5-061")),
-    "acceleration": (TagExample("Baxcalibur", "sv02-060"), TagExample("Grumpig", "sv03-091")),
+    "acceleration": (TagExample("Baxcalibur", "sv02-060"), TagExample("Barbaracle", "me03-043")),
     "energy-search": (TagExample("Earthen Vessel", "sv04-163"),),
     "energy-recovery": (
         TagExample("Energy Retrieval", "sv01-171"),

@@ -72,8 +72,9 @@ _PARSE_JSON_SCHEMA = {
 }
 
 _TAG_GLOSSARY = (
-    "Functional tags (what a card does). The card tagger uses these same definitions, so pick a "
-    "tag only when the query asks for that effect as defined here:\n" + render_tag_glossary()
+    "Functional tags (what a card does). The enrichment pass tags cards with these same "
+    "definitions, so pick a tag only when the query asks for that effect as defined here:\n"
+    + render_tag_glossary()
 )
 
 _INSTRUCTIONS = """You split a Pokémon TCG search query into a hard filter zone and a soft \

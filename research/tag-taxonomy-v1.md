@@ -57,7 +57,7 @@ card text; none come from the gold or hero set.
 
 | tag | definition | example |
 |-----|------------|---------|
-| `acceleration` | Attach Energy beyond your one normal manual attachment per turn. | Baxcalibur (`sv02-060`), Grumpig (`sv03-091`) |
+| `acceleration` | Attach Energy beyond your one normal manual attachment per turn. | Baxcalibur (`sv02-060`), Barbaracle (`me03-043`) |
 | `energy-search` | Search your deck specifically for Energy cards. | Earthen Vessel (`sv04-163`) |
 | `energy-recovery` | Return Energy from your discard pile to hand or deck. | Energy Retrieval (`sv01-171`), Energy Recycler (`sv10-164`) |
 | `energy-removal` | Discard or move Energy off the *opponent's* Pokémon. | Enhanced Hammer (`sv06-148`), Crushing Hammer (`sv01-168`) |
