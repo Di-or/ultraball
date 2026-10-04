@@ -43,7 +43,8 @@ Families organize this document for humans; they are **not** stored (Q4). Each d
 one-liner the enricher and the query-rewriter share. Definitions and examples are mirrored in
 `app/enrichment/taxonomy.py` (`TAG_DEFINITIONS`, `TAG_EXAMPLES`), and a test keeps the two in step.
 Examples are real Scarlet & Violet–Mega Evolution cards cited by TCGdex id, checked against their
-card text; none come from the gold or hero set.
+card text; none come from the gold or hero set. Each example carries only the tag it illustrates,
+across all of its attacks and Abilities, so the effect is shown in isolation.
 
 ### 1 · Card advantage (resources)
 
@@ -51,7 +52,7 @@ card text; none come from the gold or hero set.
 |-----|------------|---------|
 | `draw` | Net-positive draw: puts cards from your deck into your hand. | Dudunsparce (`sv05-129`), Carmine (`sv06-145`) |
 | `search` | Fetch a specific card (by name, type, or trait) from your deck to hand or Bench. | Nest Ball (`sv01-181`), Pidgeot ex (`sv03-164`) |
-| `recovery` | Return Pokémon or Trainer cards from your discard pile to hand or deck. | Pal Pad (`sv01-182`), Night Stretcher (`sv06.5-061`) |
+| `recovery` | Return Pokémon or Trainer cards from your discard pile to hand or deck. | Pal Pad (`sv01-182`), Miracle Headset (`sv08-183`) |
 
 ### 2 · Energy
 
@@ -66,29 +67,29 @@ card text; none come from the gold or hero set.
 
 | tag | definition | example |
 |-----|------------|---------|
-| `spread` | Deal damage to multiple of the opponent's Pokémon at once. | Lapras (`sv03-045`), Team Rocket's Arbok (`sv10-113`) |
-| `snipe` | Deal damage to a chosen *Benched* Pokémon, bypassing the Active. | Kilowattrel (`sv01-079`) |
-| `damage-scaling` | Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. | Arcanine ex (`sv01-032`), Chandelure (`sv03-038`) |
-| `recoil` | Attack costs damage to, or discards Energy from, *your own* Pokémon. | Skeledirge (`sv01-038`), Koraidon (`sv01-124`) |
+| `spread` | Deal damage to multiple of the opponent's Pokémon at once. | Lapras (`sv03-045`), Regice (`sv09-042`) |
+| `snipe` | Deal damage to a chosen *Benched* Pokémon, bypassing the Active. | Golbat (`sv03.5-042`), Elekid (`sv04-059`) |
+| `damage-scaling` | Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. | Chandelure (`sv03-038`), Drampa (`sv03-161`) |
+| `recoil` | Attack costs damage to, or discards Energy from, *your own* Pokémon. | Koraidon (`sv01-124`), Primeape (`sv01-108`) |
 
 ### 4 · Disruption — control
 
 | tag | definition | example |
 |-----|------------|---------|
-| `hand-disruption` | Shrink, shuffle away, or force a reveal of the opponent's hand. | Judge (`sv01-176`), Arbok ex (`sv03.5-024`) |
-| `mill` | Make the opponent discard cards from their deck (deck-out pressure). | Hydreigon ex (`sv08-119`) |
-| `ability-lock` | Turn off the opponent's Abilities. | Flutter Mane (`sv05-078`), Klefki (`sv01-096`) |
-| `item-lock` | Prevent the opponent from playing Item cards. | Budew (`sv08.5-004`), Jellicent ex (`sv10.5w-045`) |
+| `hand-disruption` | Shrink, shuffle away, or force a reveal of the opponent's hand. | Grabber (`sv03.5-162`), Krokorok (`sv10.5b-058`) |
+| `mill` | Make the opponent discard cards from their deck (deck-out pressure). | Zweilous (`sv08-118`) |
+| `ability-lock` | Turn off the opponent's Abilities. | Klefki (`sv01-096`) |
+| `item-lock` | Prevent the opponent from playing Item cards. | Budew (`sv08.5-004`) |
 | `special-condition` | Inflict Asleep, Burned, Confused, Paralyzed, or Poisoned. | Toedscool (`sv01-025`) |
-| `movement-lock` | Prevent the opponent from retreating or switching. | Bombirdier (`sv01-138`) |
+| `movement-lock` | Prevent the opponent from retreating or switching. | Tarountula (`sv02-016`), Corvisquire (`sv02-165`) |
 
 ### 5 · Tempo & positioning
 
 | tag | definition | example |
 |-----|------------|---------|
-| `gust` | Force the opponent to switch — drag a Benched Pokémon into the Active spot. | Pokémon Catcher (`sv01-187`), Prime Catcher (`sv05-157`) |
+| `gust` | Force the opponent to switch — drag a Benched Pokémon into the Active spot. | Pokémon Catcher (`sv01-187`), Gloom (`sv03-002`) |
 | `switch` | Move *your own* Active to the Bench, or reduce your retreat cost. | Switch (`sv01-194`), Big Air Balloon (`sv03.5-155`) |
-| `evolution-accel` | Evolve faster or skip an evolution step / turn-in-play rule. | Rare Candy (`sv01-191`), Salvatore (`sv05-160`) |
+| `evolution-accel` | Evolve faster or skip an evolution step / turn-in-play rule. | Rare Candy (`sv01-191`), Scatterbug (`sv01-008`) |
 
 ### 6 · Defense & survivability
 
@@ -96,8 +97,8 @@ card text; none come from the gold or hero set.
 |-----|------------|---------|
 | `healing` | Remove damage counters from your Pokémon. | Potion (`sv01-188`), Cook (`sv06-147`) |
 | `condition-heal` | Remove Special Conditions from your Pokémon. | Blissey (`sv01-145`), Therapeutic Energy (`sv02-193`) |
-| `damage-reduction` | Reduce the damage your Pokémon take from the opponent's attacks. | Rock Chestplate (`sv01-192`), Copperajah ex (`sv02-150`) |
-| `damage-prevention` | Fully prevent damage or effects under a condition (protect the Bench, block next turn). | Mimikyu (`sv02-097`), Shaymin (`sv10-010`) |
+| `damage-reduction` | Reduce the damage your Pokémon take from the opponent's attacks. | Rock Chestplate (`sv01-192`), Stonjourner (`sv01-121`) |
+| `damage-prevention` | Fully prevent damage or effects under a condition (protect the Bench, block next turn). | Shaymin (`sv10-010`), Hoppip (`sv02-001`) |
 | `counter-damage` | Deal damage back to an attacker when your Pokémon is hit. | Rocky Helmet (`sv01-193`), Cacturne (`sv01-006`) |
 
 ### 7 · Prize & win condition
@@ -105,7 +106,7 @@ card text; none come from the gold or hero set.
 | tag | definition | example |
 |-----|------------|---------|
 | `prize-manipulation` | Change how Prizes are taken — extra Prizes on KO, or denying the opponent Prizes. | Iron Hands ex (`sv04-070`), Legacy Energy (`sv06-167`) |
-| `stall` | Waste the opponent's turn or stall the game without trading KOs — block attacks, force skips, run the clock. | Lickitung (`sv03.5-108`), Beartic (`sv10.5b-026`) |
+| `stall` | Waste the opponent's turn or stall the game without trading KOs — block attacks, force skips, run the clock. | Lickitung (`sv03.5-108`), Frosmoth (`sv05-046`) |
 
 ## Enum (flat, for the enricher schema)
 

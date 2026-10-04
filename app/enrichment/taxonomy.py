@@ -72,14 +72,16 @@ TAG_DEFINITIONS: dict[str, str] = {
 FUNCTIONAL_TAGS: frozenset[str] = frozenset(TAG_DEFINITIONS)
 
 # 1–2 cards per tag from Scarlet & Violet through Mega Evolution, checked against
-# TCGdex card text. Where a confusion pair exists, the examples sit on opposite sides
-# of it (Baxcalibur attaches without searching; Earthen Vessel searches without
-# attaching). Never the gold or hero set (CONTEXT.md: Quality validation): an example
-# in the prompt would inflate the score that set measures.
+# TCGdex card text. Every example carries only its own tag across all of its attacks
+# and Abilities (and none of #83's proposed damage-counter tag), so each one shows the
+# tag's effect in isolation; that also keeps confusion pairs apart (Baxcalibur attaches
+# without searching; Earthen Vessel searches without attaching). Never the gold or
+# hero set (CONTEXT.md: Quality validation): an example in the prompt would inflate
+# the score that set measures.
 TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     "draw": (TagExample("Dudunsparce", "sv05-129"), TagExample("Carmine", "sv06-145")),
     "search": (TagExample("Nest Ball", "sv01-181"), TagExample("Pidgeot ex", "sv03-164")),
-    "recovery": (TagExample("Pal Pad", "sv01-182"), TagExample("Night Stretcher", "sv06.5-061")),
+    "recovery": (TagExample("Pal Pad", "sv01-182"), TagExample("Miracle Headset", "sv08-183")),
     "acceleration": (TagExample("Baxcalibur", "sv02-060"), TagExample("Barbaracle", "me03-043")),
     "energy-search": (TagExample("Earthen Vessel", "sv04-163"),),
     "energy-recovery": (
@@ -90,19 +92,19 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
         TagExample("Enhanced Hammer", "sv06-148"),
         TagExample("Crushing Hammer", "sv01-168"),
     ),
-    "spread": (TagExample("Lapras", "sv03-045"), TagExample("Team Rocket's Arbok", "sv10-113")),
-    "snipe": (TagExample("Kilowattrel", "sv01-079"),),
-    "damage-scaling": (TagExample("Arcanine ex", "sv01-032"), TagExample("Chandelure", "sv03-038")),
-    "recoil": (TagExample("Skeledirge", "sv01-038"), TagExample("Koraidon", "sv01-124")),
-    "hand-disruption": (TagExample("Judge", "sv01-176"), TagExample("Arbok ex", "sv03.5-024")),
-    "mill": (TagExample("Hydreigon ex", "sv08-119"),),
-    "ability-lock": (TagExample("Flutter Mane", "sv05-078"), TagExample("Klefki", "sv01-096")),
-    "item-lock": (TagExample("Budew", "sv08.5-004"), TagExample("Jellicent ex", "sv10.5w-045")),
+    "spread": (TagExample("Lapras", "sv03-045"), TagExample("Regice", "sv09-042")),
+    "snipe": (TagExample("Golbat", "sv03.5-042"), TagExample("Elekid", "sv04-059")),
+    "damage-scaling": (TagExample("Chandelure", "sv03-038"), TagExample("Drampa", "sv03-161")),
+    "recoil": (TagExample("Koraidon", "sv01-124"), TagExample("Primeape", "sv01-108")),
+    "hand-disruption": (TagExample("Grabber", "sv03.5-162"), TagExample("Krokorok", "sv10.5b-058")),
+    "mill": (TagExample("Zweilous", "sv08-118"),),
+    "ability-lock": (TagExample("Klefki", "sv01-096"),),
+    "item-lock": (TagExample("Budew", "sv08.5-004"),),
     "special-condition": (TagExample("Toedscool", "sv01-025"),),
-    "movement-lock": (TagExample("Bombirdier", "sv01-138"),),
-    "gust": (TagExample("Pokémon Catcher", "sv01-187"), TagExample("Prime Catcher", "sv05-157")),
+    "movement-lock": (TagExample("Tarountula", "sv02-016"), TagExample("Corvisquire", "sv02-165")),
+    "gust": (TagExample("Pokémon Catcher", "sv01-187"), TagExample("Gloom", "sv03-002")),
     "switch": (TagExample("Switch", "sv01-194"), TagExample("Big Air Balloon", "sv03.5-155")),
-    "evolution-accel": (TagExample("Rare Candy", "sv01-191"), TagExample("Salvatore", "sv05-160")),
+    "evolution-accel": (TagExample("Rare Candy", "sv01-191"), TagExample("Scatterbug", "sv01-008")),
     "healing": (TagExample("Potion", "sv01-188"), TagExample("Cook", "sv06-147")),
     "condition-heal": (
         TagExample("Blissey", "sv01-145"),
@@ -110,15 +112,15 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     ),
     "damage-reduction": (
         TagExample("Rock Chestplate", "sv01-192"),
-        TagExample("Copperajah ex", "sv02-150"),
+        TagExample("Stonjourner", "sv01-121"),
     ),
-    "damage-prevention": (TagExample("Mimikyu", "sv02-097"), TagExample("Shaymin", "sv10-010")),
+    "damage-prevention": (TagExample("Shaymin", "sv10-010"), TagExample("Hoppip", "sv02-001")),
     "counter-damage": (TagExample("Rocky Helmet", "sv01-193"), TagExample("Cacturne", "sv01-006")),
     "prize-manipulation": (
         TagExample("Iron Hands ex", "sv04-070"),
         TagExample("Legacy Energy", "sv06-167"),
     ),
-    "stall": (TagExample("Lickitung", "sv03.5-108"), TagExample("Beartic", "sv10.5b-026")),
+    "stall": (TagExample("Lickitung", "sv03.5-108"), TagExample("Frosmoth", "sv05-046")),
 }
 
 
