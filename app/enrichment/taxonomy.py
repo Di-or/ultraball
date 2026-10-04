@@ -97,7 +97,7 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     "hand-disruption": (TagExample("Judge", "sv01-176"), TagExample("Arbok ex", "sv03.5-024")),
     "mill": (TagExample("Hydreigon ex", "sv08-119"),),
     "ability-lock": (TagExample("Flutter Mane", "sv05-078"), TagExample("Klefki", "sv01-096")),
-    "item-lock": (TagExample("Tyranitar", "sv09-095"), TagExample("Jellicent ex", "sv10.5w-045")),
+    "item-lock": (TagExample("Budew", "sv08.5-004"), TagExample("Jellicent ex", "sv10.5w-045")),
     "special-condition": (TagExample("Toedscool", "sv01-025"),),
     "movement-lock": (TagExample("Bombirdier", "sv01-138"),),
     "gust": (TagExample("Pokémon Catcher", "sv01-187"), TagExample("Prime Catcher", "sv05-157")),

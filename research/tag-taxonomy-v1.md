@@ -78,7 +78,7 @@ card text; none come from the gold or hero set.
 | `hand-disruption` | Shrink, shuffle away, or force a reveal of the opponent's hand. | Judge (`sv01-176`), Arbok ex (`sv03.5-024`) |
 | `mill` | Make the opponent discard cards from their deck (deck-out pressure). | Hydreigon ex (`sv08-119`) |
 | `ability-lock` | Turn off the opponent's Abilities. | Flutter Mane (`sv05-078`), Klefki (`sv01-096`) |
-| `item-lock` | Prevent the opponent from playing Item cards. | Tyranitar (`sv09-095`), Jellicent ex (`sv10.5w-045`) |
+| `item-lock` | Prevent the opponent from playing Item cards. | Budew (`sv08.5-004`), Jellicent ex (`sv10.5w-045`) |
 | `special-condition` | Inflict Asleep, Burned, Confused, Paralyzed, or Poisoned. | Toedscool (`sv01-025`) |
 | `movement-lock` | Prevent the opponent from retreating or switching. | Bombirdier (`sv01-138`) |
 
