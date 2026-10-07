@@ -55,7 +55,7 @@ The original 2026-08-28 analysis follows. Where it conflicts with the revision a
 ## Role 2 — Enrichment model
 
 > **Superseded 2026-09-30: Claude Sonnet 5.5.** With ~2–2.5k cards, a stronger model costs about $10–20 per full run, so cost no longer decides this role. Sonnet 5.5 fits the existing seam:
-> - **Strict structured outputs** (`output_config.format`) constrain `tags` to the 27-tag enum, as OpenAI strict mode did.
+> - **Strict structured outputs** (`output_config.format`) constrain `tags` to the functional-tag enum, as OpenAI strict mode did.
 > - **Message Batches** (50% off) match `EnrichmentClient`'s submit / poll / fetch shape. Results come back in any order, keyed by `custom_id` (use the `dedupe_key`).
 > - **Request constraints:** a non-default `temperature` returns a 400, thinking is always on and depth is set with `output_config.effort` (default `high`; compare `medium` vs `high` on the gold set), and forced `tool_choice` returns a 400 (use `output_config.format` instead).
 > - **Refusals:** check `stop_reason == "refusal"` per result. Server-side fallbacks are not available on Batches, so the repair path handles them.

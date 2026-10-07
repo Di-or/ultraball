@@ -1,11 +1,8 @@
-# Functional-Tag Taxonomy — v1 (LOCKED)
+# Functional-Tag Taxonomy — v2
 
-> **Superseded by [v2](tag-taxonomy-v2.md)**, which adds `counter-placement`. The code and its
-> doc-sync test follow v2; this file is kept as the record of the v1 lock.
-
-> Resolves [issue #2 — Draft the v1 functional-tag taxonomy](https://github.com/Di-or/ultraball/issues/2),
-> a child of [the MVP-spec map (#1)](https://github.com/Di-or/ultraball/issues/1).
-> React-to draft (as presented for the lock): https://claude.ai/code/artifact/7b003c76-3159-43d3-99f5-0f34e3e6db8f
+> v1 ([`tag-taxonomy-v1.md`](tag-taxonomy-v1.md), resolving [issue #2](https://github.com/Di-or/ultraball/issues/2)) plus one tag,
+> `counter-placement`, from [issue #83](https://github.com/Di-or/ultraball/issues/83). Every other tag and definition is unchanged from
+> v1. See [What changed from v1](#what-changed-from-v1).
 
 The curated, enum-constrained vocabulary of **what a card does**. The offline enrichment pass
 tags every card *from this list only*; the query rewriter reuses the same words, so a search for
@@ -13,7 +10,7 @@ tags every card *from this list only*; the query rewriter reuses the same words,
 conceptual-search differentiator.
 
 Bootstrapped **propose → cluster → curate** from recurring Standard-format mechanics.
-**27 tags across 7 families.**
+**28 tags across 7 families.**
 
 ## Vocabulary contracts
 
@@ -25,7 +22,7 @@ Bootstrapped **propose → cluster → curate** from recurring Standard-format m
    re-encodes them. *(Q1)*
 4. **`suggested_new_tag` escape hatch.** When a card's effect fits nothing, the pass emits a
    free-text `suggested_new_tag`. It never enters the live enum — it feeds a review queue that
-   grows v2 (ties to the fall-through-logging story).
+   grows later versions, as it was meant to grow v2 (ties to the fall-through-logging story).
 5. **Versioned.** Each card stores the `taxonomy_version` it was tagged under. A version bump
    re-tags only affected cards — idempotent, incremental, resumable.
 
@@ -36,9 +33,46 @@ Bootstrapped **propose → cluster → curate** from recurring Standard-format m
 | Q1 | Effects vs. attributes | **Effects only.** No structural attribute enters the enum; those are filter-gate DB fields. |
 | Q2 | Quantitative "power" tags | **Excluded.** No `high-damage`/`OHKO`. Raw damage → numeric field + semantic search; the vocabulary stays qualitative. |
 | Q3 | `gust` vs. `switch` | **Split.** They target opposite sides — `gust` drags the opponent's Bench up; `switch` retreats your own. |
-| Q4 | Enum shape | **Flat.** The model emits a flat list of slugs. The 7 families are **documentation only** — no `category` field is stored in v1. Revisit in v2 only if the UI wants family grouping. |
+| Q4 | Enum shape | **Flat.** The model emits a flat list of slugs. The 7 families are **documentation only** — no `category` field is stored. Revisit only if the UI wants family grouping. |
 | Q5 | Card-type coverage | **One unified list** across all supertypes (Pokémon / Trainer / Energy). |
-| Q6 | Tag count | **Ship 27.** Every tag maps to a real, queryable archetype; `suggested_new_tag` grows the rest from real data. |
+| Q6 | Tag count | **Ship 27.** Every tag maps to a real, queryable archetype; `suggested_new_tag` grows the rest from real data. v2 adds one (below). |
+
+## What changed from v1
+
+v2 adds `counter-placement` to the Offense family. No v1 tag or definition changed.
+
+In the rules, putting damage counters on a Pokémon is not damage. Weakness, Resistance and
+damage-reduction don't apply to it, and effects that only prevent damage don't stop it. v1 had no
+tag for it. The nearest tags, `spread` and `snipe`, both say "deal damage", so the enricher and the
+parser could each read Dragapult ex's Phantom Dive as `snipe`, as `spread`, or as neither. It is
+also an archetype players search for by name ("bench damage counters", "Dusknoir"). About 39
+Scarlet & Violet–Mega Evolution cards place counters on the opponent's Pokémon, through attacks,
+Abilities, Pokémon Checkup effects and one Item (Team Rocket's Venture Bomb `sv10-179`).
+
+It ships ahead of `suggested_new_tag` data (contract 4) on that evidence, since no enrichment run
+has happened yet. Decisions:
+
+- **Name.** `counter-placement`, not `damage-counters`, which reads too close to `counter-damage`.
+- **Orthogonal to `spread` and `snipe`.** Those still mean damage. A card that only places counters
+  on the Bench (Dragapult ex `sv06-130`) carries `counter-placement`, not `snipe`. An attack that
+  both deals damage and places counters carries both tags. A query that doesn't say which ("hit the
+  bench") can be parsed to both.
+- **Not retaliation.** In Scarlet & Violet, retaliation is almost always counters on the
+  Attacking Pokémon (Rocky Helmet, Cacturne). That stays `counter-damage` only, which the definition
+  says, so `counter-placement` doesn't swallow `counter-damage`.
+- **Timing.** Delayed counters (Glaceon `sv06-054`) and Pokémon Checkup counters (Trevenant
+  `sv03-012`) count, because the effect is the same.
+- **Opponent's side only.** Moving or removing damage counters among your own Pokémon is out of
+  scope. Moving counters from your Pokémon onto the opponent's (Munkidori `sv06-095`) does put them
+  on the opponent's Pokémon.
+- **Re-tag scope.** Contract 5 asks a bump to re-tag only affected cards, but the enrichment queue
+  keys on one global `(taxonomy_version, prompt_version)` stamp (CONTEXT.md: Enrichment identity),
+  so the v2 bump re-queues every card. That costs nothing before the first real enrichment run.
+  Narrowing it to cards whose text places counters is left for when a re-run has a real cost.
+- **Examples.** Mimikyu `sv02-097` (Ghost Eye) and Flutter Mane `sv05-078` (Hex Hurl) also place
+  counters, which is fine under multi-label (contract 1), but they also carry other tags, so they
+  aren't examples here. Nor is Dusknoir `sv06.5-020`: its Shadow Bind is `movement-lock`. Dragapult
+  ex is left out as a likely hero-set card.
 
 ## The tags
 
@@ -74,6 +108,12 @@ across all of its attacks and Abilities, so the effect is shown in isolation.
 | `snipe` | Deal damage to a chosen *Benched* Pokémon, bypassing the Active. | Golbat (`sv03.5-042`), Elekid (`sv04-059`) |
 | `damage-scaling` | Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. | Chandelure (`sv03-038`), Drampa (`sv03-161`) |
 | `recoil` | Attack costs damage to, or discards Energy from, *your own* Pokémon. | Koraidon (`sv01-124`), Primeape (`sv01-108`) |
+| `counter-placement` | Put damage counters directly on the opponent's Pokémon, rather than dealing damage, so Weakness, Resistance and damage-reduction don't apply. Retaliation when your Pokémon is hit is `counter-damage`. | Drifblim (`sv01-090`), Dusclops (`sv06.5-019`) |
+
+**Confusion pairs.** `spread` and `snipe` deal damage; `counter-placement` puts damage counters on
+the opponent's Pokémon without dealing damage. `counter-damage` covers hitting back when your
+Pokémon is hit, whether by damage or counters. Drifblim's Curse Spreading shows the attack form and
+Dusclops's Cursed Blast the Ability form.
 
 ### 4 · Disruption — control
 
@@ -116,7 +156,7 @@ across all of its attacks and Abilities, so the effect is shown in isolation.
 ```
 draw, search, recovery,
 acceleration, energy-search, energy-recovery, energy-removal,
-spread, snipe, damage-scaling, recoil,
+spread, snipe, damage-scaling, recoil, counter-placement,
 hand-disruption, mill, ability-lock, item-lock, special-condition, movement-lock,
 gust, switch, evolution-accel,
 healing, condition-heal, damage-reduction, damage-prevention, counter-damage,
@@ -127,7 +167,7 @@ Plus the reserved out-of-band field `suggested_new_tag` (free text, never part o
 
 ## Downstream consumers
 
-- **#5 — offline enrichment pipeline**: tags cards from this enum; carries `taxonomy_version`.
+- **#5 — offline enrichment pipeline**: tags cards from this enum; carries `taxonomy_version` (`v2`).
 - **#8 — query parse & concept rewrite**: rewrites use this vocabulary/definitions so queries
   align with both the tag layer and the embedded descriptions.
-- **v2 growth**: `suggested_new_tag` + fall-through query logging (fogged on the map).
+- **Later versions**: `suggested_new_tag` + fall-through query logging (fogged on the map).
