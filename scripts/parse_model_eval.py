@@ -163,6 +163,9 @@ def summarise(calls: list[Call], queries: list[dict]) -> Summary:
     """
     by_query = {q["query"]: q for q in queries}
     answered = _answered(calls)
+    if not answered:
+        nan = math.nan
+        return Summary(len(calls), len(calls), nan, nan, dict.fromkeys(_CUTOFFS, 0.0), nan, nan, nan, nan, nan, nan, nan)
     latencies = [answer.latency for _, answer in answered]
     usages = [answer.usage for _, answer in answered]
 
@@ -205,6 +208,9 @@ def disagreements(calls: list[Call]) -> dict[str, dict[Config, list[Outcome]]]:
         outcomes = grouped.setdefault(call.query, {}).setdefault(call.config, [])
         if _outcome(answer) not in outcomes:
             outcomes.append(_outcome(answer))
+    for by_config in grouped.values():
+        for outcomes in by_config.values():
+            outcomes.sort(key=lambda outcome: json.dumps(outcome, sort_keys=True))
     return {
         query: by_config
         for query, by_config in grouped.items()
@@ -307,7 +313,7 @@ def report(calls: list[Call], queries: list[dict]) -> str:
             f"| ${s.cost_per_1000:.3f} |"
         )
 
-    answers = [(c, a) for c, a in _answered(calls)]
+    answers = _answered(calls)
     prompt = sum(a.usage["prompt_tokens"] for _, a in answers)
     cached = sum(a.usage["prompt_tokens_details"]["cached_tokens"] for _, a in answers)
     completion = sum(a.usage["completion_tokens"] for _, a in answers)
@@ -338,7 +344,7 @@ def report(calls: list[Call], queries: list[dict]) -> str:
         lines += [
             f"**{query}** (expected {_render_outcome(want)})",
             "",
-            "| Configuration | Distinct outputs across 3 runs |",
+            f"| Configuration | Distinct outputs across {_RUNS} runs |",
             "| --- | --- |",
         ]
         for config in CONFIGS:

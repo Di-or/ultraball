@@ -8,7 +8,7 @@ This file holds measurements only. It does not choose the parse model or change 
 
 ## Method
 
-- **Request:** the production parse request. System prompt and strict JSON schema are imported from `app/clients/parse_client.py`, plus an explicit `reasoning_effort`. Input is ~1,430 tokens per call.
+- **Request:** the production parse request. System prompt and strict JSON schema are imported from `app/clients/parse_client.py`, plus an explicit `reasoning_effort`. Input measured 1,429–1,437 tokens per call. That is below the ~1,670 estimated in #85; the gap is most likely the estimate's count for the schema.
 - **Queries:** the 25 queries in `scripts/parse_eval_queries.json`, each with an expected `filters` object and expected tags. Some queries also list alternative accepted `filters`. For example, "supporters" may or may not also set `category: Trainer`; both search the same cards.
 - **Runs:** 6 configurations × 25 queries × 3 runs = 450 measured calls, plus one warm-up call per configuration so that the measured calls hit a cached prompt prefix. The timeout is 60s, so slow configurations still finish and get measured.
 - **Latency:** wall-clock time around the HTTP call, using a fresh `httpx.AsyncClient` per call as `HostedParseClient` does, so connection setup is included. The configurations ran side by side, while calls within one configuration ran one after another. All calls came from one Windows machine on a home connection, in one session.
@@ -57,11 +57,11 @@ With the longer glossary prompt from #84 and #83, gpt-5-mini uses fewer reasonin
 **Tag quality.**
 - gpt-5-mini/`minimal` is the only noisy configuration, with precision 0.79. It again over-tagged #80's query "stadium that punishes ex" with 1 to 3 wrong tags on every run, and sometimes listed six control tags for "stall the opponent".
 - The glossary from #84 did not fix `minimal`'s noise. Every other configuration has tag precision 1.00.
-- Luna's tag recall (0.95 to 0.97) is slightly below gpt-5-mini/`low` and `medium` (1.00). Nearly all of Luna's misses are on "retreat for free": in some runs Luna read it as a `retreat` = 0 filter with no tag, instead of the `switch` effect. That query is ambiguous (see below).
+- Luna's tag recall (0.95 to 0.97) is slightly below gpt-5-mini/`low` and `medium` (1.00). All of Luna's tag misses are on "retreat for free": in some runs Luna read it as a `retreat` = 0 filter with no tag, instead of the `switch` effect. That query is ambiguous (see below).
 
 **Filters.**
 - gpt-5-mini/`minimal` invents filters the query didn't state, e.g. `hp.gte` 150 or 200 for "big hp basic", and a 0-retreat filter for "retreat for free". Its exact-match rate is 73%.
-- The others score 93% to 95%. Their misses are mostly the `set_id` problem below plus "retreat for free".
+- The others score 93% to 95%. Their misses are the `set_id` problem below (3 calls each), "retreat for free", and a stray `category: Pokemon` on one run each: "attacker that does more damage for each energy attached" (gpt-5-mini `low` and `medium`) and "get pokemon back from the discard pile" (Luna/`medium`).
 
 **Rewrites.**
 - Luna's `concept_rewritten` is short and close to the tag definitions.
@@ -71,7 +71,9 @@ With the longer glossary prompt from #84 and #83, gpt-5-mini uses fewer reasonin
 **Cost per 1,000 queries.**
 - Luna: $0.16 to $0.19 at every effort.
 - gpt-5-mini: $0.40 (`minimal`), $0.63 (`low`), $1.42 (`medium`).
-- Luna has the lower token prices and also writes shorter outputs. Its cached share was 100% after warm-up, against 87% to 88% for gpt-5-mini. Luna's cache-write charge falls almost entirely on warm-ups.
+- Luna has the lower token prices and also writes shorter outputs.
+- Luna cached nearly the whole prompt (1,420 to 1,431 tokens) on every measured call. gpt-5-mini cached it in 128-token blocks, 1,280 tokens on 220 of its 225 calls, which explains its 87% to 88% cached share.
+- Luna's cache writes came to only 684 tokens across the run (651 on measured calls). Their cost is negligible.
 
 ## Findings outside the model choice
 
@@ -85,7 +87,7 @@ With the longer glossary prompt from #84 and #83, gpt-5-mini uses fewer reasonin
 
 - One session from one network, on one day. Absolute latencies depend on the region and on OpenAI's load. The relative order is the stronger result.
 - 75 calls per configuration, so p95 rests on the 4th-slowest call.
-- Six configurations ran at the same time, so up to six requests were in flight together.
+- Six configurations ran at the same time, so up to six requests were in flight together. The three Luna configurations share a prefix cache, so even their warm-ups were already cached; this has no effect on the measured calls, which all came after the warm-ups.
 - `gpt-5.6-luna` is an alias with no dated snapshot, so these results may not hold if OpenAI updates the model behind it.
 
 ## Run details
@@ -166,7 +168,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{"hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags)<br>`{"category": "Pokemon", "hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags) |
+| `gpt-5-mini / minimal` | `{"category": "Pokemon", "hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags)<br>`{"hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags) |
 | `gpt-5-mini / low` | `{"category": "Pokemon", "hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags) |
 | `gpt-5-mini / medium` | `{"category": "Pokemon", "hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags) |
 | `gpt-5.6-luna / none` | `{"category": "Pokemon", "hp": {"lte": 130}, "retreat": {"gte": 1, "lte": 1}}` · (no tags) |
@@ -177,7 +179,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{}` · stall<br>`{}` · ability-lock, damage-prevention, damage-reduction, item-lock, movement-lock, stall |
+| `gpt-5-mini / minimal` | `{}` · ability-lock, damage-prevention, damage-reduction, item-lock, movement-lock, stall<br>`{}` · stall |
 | `gpt-5-mini / low` | `{}` · stall |
 | `gpt-5-mini / medium` | `{}` · stall |
 | `gpt-5.6-luna / none` | `{}` · stall |
@@ -188,12 +190,12 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{}` · recovery<br>`{"category": "Trainer"}` · recovery |
+| `gpt-5-mini / minimal` | `{"category": "Trainer"}` · recovery<br>`{}` · recovery |
 | `gpt-5-mini / low` | `{}` · recovery |
 | `gpt-5-mini / medium` | `{}` · recovery |
 | `gpt-5.6-luna / none` | `{}` · recovery |
 | `gpt-5.6-luna / low` | `{}` · recovery |
-| `gpt-5.6-luna / medium` | `{}` · recovery<br>`{"category": "Pokemon"}` · recovery |
+| `gpt-5.6-luna / medium` | `{"category": "Pokemon"}` · recovery<br>`{}` · recovery |
 
 **stop them from playing items** (expected `{}` · item-lock)
 
@@ -210,7 +212,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{}` · healing<br>`{}` · condition-heal, healing |
+| `gpt-5-mini / minimal` | `{}` · condition-heal, healing<br>`{}` · healing |
 | `gpt-5-mini / low` | `{}` · healing |
 | `gpt-5-mini / medium` | `{}` · healing |
 | `gpt-5.6-luna / none` | `{}` · healing |
@@ -234,7 +236,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 | --- | --- |
 | `gpt-5-mini / minimal` | `{}` · damage-scaling |
 | `gpt-5-mini / low` | `{"category": "Pokemon"}` · damage-scaling<br>`{}` · damage-scaling |
-| `gpt-5-mini / medium` | `{}` · damage-scaling<br>`{"category": "Pokemon"}` · damage-scaling |
+| `gpt-5-mini / medium` | `{"category": "Pokemon"}` · damage-scaling<br>`{}` · damage-scaling |
 | `gpt-5.6-luna / none` | `{}` · damage-scaling |
 | `gpt-5.6-luna / low` | `{}` · damage-scaling |
 | `gpt-5.6-luna / medium` | `{}` · damage-scaling |
@@ -243,7 +245,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{"types": ["Fire"]}` · energy-search<br>`{"category": "Pokemon", "types": ["Fire"]}` · energy-search |
+| `gpt-5-mini / minimal` | `{"category": "Pokemon", "types": ["Fire"]}` · energy-search<br>`{"types": ["Fire"]}` · energy-search |
 | `gpt-5-mini / low` | `{"category": "Pokemon", "types": ["Fire"]}` · energy-search |
 | `gpt-5-mini / medium` | `{"category": "Pokemon", "types": ["Fire"]}` · energy-search |
 | `gpt-5.6-luna / none` | `{"category": "Pokemon", "types": ["Fire"]}` · energy-search |
@@ -267,16 +269,16 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 | --- | --- |
 | `gpt-5-mini / minimal` | `{"category": "Pokemon", "retreat": {"gte": 0, "lte": 0}}` · switch<br>`{"retreat": {"gte": 0, "lte": 0}}` · switch<br>`{"retreat": {"lte": 0}}` · switch |
 | `gpt-5-mini / low` | `{}` · switch |
-| `gpt-5-mini / medium` | `{}` · switch<br>`{"retreat": {"lte": 0}}` · switch |
+| `gpt-5-mini / medium` | `{"retreat": {"lte": 0}}` · switch<br>`{}` · switch |
 | `gpt-5.6-luna / none` | `{"retreat": {"gte": 0, "lte": 0}}` · (no tags)<br>`{}` · (no tags) |
 | `gpt-5.6-luna / low` | `{"retreat": {"gte": 0, "lte": 0}}` · (no tags)<br>`{}` · switch |
-| `gpt-5.6-luna / medium` | `{}` · switch<br>`{"retreat": {"gte": 0, "lte": 0}}` · (no tags)<br>`{}` · (no tags) |
+| `gpt-5.6-luna / medium` | `{"retreat": {"gte": 0, "lte": 0}}` · (no tags)<br>`{}` · switch<br>`{}` · (no tags) |
 
 **hit their bench for damage** (expected `{}` · snipe)
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{}` · snipe<br>`{}` · snipe, spread |
+| `gpt-5-mini / minimal` | `{}` · snipe, spread<br>`{}` · snipe |
 | `gpt-5-mini / low` | `{}` · snipe |
 | `gpt-5-mini / medium` | `{}` · snipe |
 | `gpt-5.6-luna / none` | `{}` · snipe |
@@ -287,7 +289,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{}` · spread<br>`{"category": "Pokemon"}` · spread |
+| `gpt-5-mini / minimal` | `{"category": "Pokemon"}` · spread<br>`{}` · spread |
 | `gpt-5-mini / low` | `{}` · spread |
 | `gpt-5-mini / medium` | `{}` · spread |
 | `gpt-5.6-luna / none` | `{}` · spread |
@@ -298,7 +300,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{"category": "Trainer", "trainer_type": "Stadium"}` · ability-lock, damage-reduction, prize-manipulation<br>`{"category": "Trainer", "trainer_type": "Stadium"}` · prize-manipulation<br>`{"category": "Trainer", "trainer_type": "Stadium"}` · counter-placement, damage-reduction |
+| `gpt-5-mini / minimal` | `{"category": "Trainer", "trainer_type": "Stadium"}` · ability-lock, damage-reduction, prize-manipulation<br>`{"category": "Trainer", "trainer_type": "Stadium"}` · counter-placement, damage-reduction<br>`{"category": "Trainer", "trainer_type": "Stadium"}` · prize-manipulation |
 | `gpt-5-mini / low` | `{"category": "Trainer", "trainer_type": "Stadium"}` · (no tags) |
 | `gpt-5-mini / medium` | `{"category": "Trainer", "trainer_type": "Stadium"}` · (no tags) |
 | `gpt-5.6-luna / none` | `{"category": "Trainer", "trainer_type": "Stadium"}` · (no tags) |
@@ -309,7 +311,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
-| `gpt-5-mini / minimal` | `{"category": "Pokemon", "hp": {"gte": 200}, "stage": "Basic"}` · (no tags)<br>`{"category": "Pokemon", "hp": {"gte": 150}, "stage": "Basic"}` · (no tags) |
+| `gpt-5-mini / minimal` | `{"category": "Pokemon", "hp": {"gte": 150}, "stage": "Basic"}` · (no tags)<br>`{"category": "Pokemon", "hp": {"gte": 200}, "stage": "Basic"}` · (no tags) |
 | `gpt-5-mini / low` | `{"category": "Pokemon", "stage": "Basic"}` · (no tags) |
 | `gpt-5-mini / medium` | `{"category": "Pokemon", "stage": "Basic"}` · (no tags) |
 | `gpt-5.6-luna / none` | `{"category": "Pokemon", "stage": "Basic"}` · (no tags) |

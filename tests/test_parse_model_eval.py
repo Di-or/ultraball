@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -168,6 +169,27 @@ def test_disagreements_list_queries_whose_outputs_differ_between_configurations(
             luna: [({}, ("item-lock", "stall"))],
         }
     }
+
+
+def test_configurations_with_the_same_outcomes_in_a_different_order_agree() -> None:
+    mini, luna = Config("gpt-5-mini", "low"), Config("gpt-5.6-luna", "low")
+    calls = [
+        _call("heal my pokemon", config=mini, tags=["healing"]),
+        _call("heal my pokemon", config=mini, tags=["condition-heal"]),
+        _call("heal my pokemon", config=luna, tags=["condition-heal"]),
+        _call("heal my pokemon", config=luna, tags=["healing"]),
+    ]
+
+    assert disagreements(calls) == {}
+
+
+def test_summary_of_a_configuration_whose_calls_all_failed_reports_only_errors() -> None:
+    summary = summarise([_call(error="timeout"), _call(error="timeout")], [{"query": "energy accel", "tags": []}])
+
+    assert summary.calls == summary.errors == 2
+    assert summary.within == {2: 0.0, 3: 0.0, 4: 0.0, 6: 0.0, 8: 0.0}
+    assert math.isnan(summary.median_latency)
+    assert math.isnan(summary.tag_precision)
 
 
 def test_query_set_uses_only_known_tags_and_filter_fields() -> None:
