@@ -22,7 +22,7 @@ Bootstrapped **propose → cluster → curate** from recurring Standard-format m
    re-encodes them. *(Q1)*
 4. **`suggested_new_tag` escape hatch.** When a card's effect fits nothing, the pass emits a
    free-text `suggested_new_tag`. It never enters the live enum — it feeds a review queue that
-   grows v2 (ties to the fall-through-logging story).
+   grows later versions, as it was meant to grow v2 (ties to the fall-through-logging story).
 5. **Versioned.** Each card stores the `taxonomy_version` it was tagged under. A version bump
    re-tags only affected cards — idempotent, incremental, resumable.
 
@@ -33,7 +33,7 @@ Bootstrapped **propose → cluster → curate** from recurring Standard-format m
 | Q1 | Effects vs. attributes | **Effects only.** No structural attribute enters the enum; those are filter-gate DB fields. |
 | Q2 | Quantitative "power" tags | **Excluded.** No `high-damage`/`OHKO`. Raw damage → numeric field + semantic search; the vocabulary stays qualitative. |
 | Q3 | `gust` vs. `switch` | **Split.** They target opposite sides — `gust` drags the opponent's Bench up; `switch` retreats your own. |
-| Q4 | Enum shape | **Flat.** The model emits a flat list of slugs. The 7 families are **documentation only** — no `category` field is stored in v1. Revisit in v2 only if the UI wants family grouping. |
+| Q4 | Enum shape | **Flat.** The model emits a flat list of slugs. The 7 families are **documentation only** — no `category` field is stored. Revisit only if the UI wants family grouping. |
 | Q5 | Card-type coverage | **One unified list** across all supertypes (Pokémon / Trainer / Energy). |
 | Q6 | Tag count | **Ship 27.** Every tag maps to a real, queryable archetype; `suggested_new_tag` grows the rest from real data. v2 adds one (below). |
 
@@ -65,6 +65,10 @@ has happened yet. Decisions:
 - **Opponent's side only.** Moving or removing damage counters among your own Pokémon is out of
   scope. Moving counters from your Pokémon onto the opponent's (Munkidori `sv06-095`) does put them
   on the opponent's Pokémon.
+- **Re-tag scope.** Contract 5 asks a bump to re-tag only affected cards, but the enrichment queue
+  keys on one global `(taxonomy_version, prompt_version)` stamp (CONTEXT.md: Enrichment identity),
+  so the v2 bump re-queues every card. That costs nothing before the first real enrichment run.
+  Narrowing it to cards whose text places counters is left for when a re-run has a real cost.
 - **Examples.** Mimikyu `sv02-097` (Ghost Eye) and Flutter Mane `sv05-078` (Hex Hurl) also place
   counters, which is fine under multi-label (contract 1), but they also carry other tags, so they
   aren't examples here. Nor is Dusknoir `sv06.5-020`: its Shadow Bind is `movement-lock`. Dragapult
@@ -166,4 +170,4 @@ Plus the reserved out-of-band field `suggested_new_tag` (free text, never part o
 - **#5 — offline enrichment pipeline**: tags cards from this enum; carries `taxonomy_version` (`v2`).
 - **#8 — query parse & concept rewrite**: rewrites use this vocabulary/definitions so queries
   align with both the tag layer and the embedded descriptions.
-- **v2 growth**: `suggested_new_tag` + fall-through query logging (fogged on the map).
+- **Later versions**: `suggested_new_tag` + fall-through query logging (fogged on the map).

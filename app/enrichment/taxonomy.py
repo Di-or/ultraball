@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-# The v2 functional-tag taxonomy — 28 effects-only tags across 7
-# documentation-only families (v1 plus `counter-placement`, #83). Flat enum in code (Q4): the enricher and the query
-# rewriter share this exact vocabulary. See CONTEXT.md: Functional tag.
+# The v2 functional-tag taxonomy — 28 effects-only tags across 7 documentation-only
+# families (v1 plus `counter-placement`, #83). Flat enum in code (Q4): the enricher
+# and the query rewriter share this exact vocabulary. See CONTEXT.md: Functional tag.
 TAXONOMY_VERSION = "v2"
 
 # Bumping the prompt independently of the taxonomy (a wording fix, a confusion-pair
 # clarification) still forces a re-pass without needing a taxonomy version bump.
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 
 
 @dataclass(frozen=True)
@@ -78,10 +78,10 @@ FUNCTIONAL_TAGS: frozenset[str] = frozenset(TAG_DEFINITIONS)
 
 # 1–2 cards per tag from Scarlet & Violet through Mega Evolution, checked against
 # TCGdex card text. Every example carries only its own tag across all of its attacks
-# and Abilities, so each one shows the tag's effect in isolation; that also keeps confusion pairs apart (Baxcalibur attaches
-# without searching; Earthen Vessel searches without attaching). Never the gold or
-# hero set (CONTEXT.md: Quality validation): an example in the prompt would inflate
-# the score that set measures.
+# and Abilities, so each one shows the tag's effect in isolation; that also keeps
+# confusion pairs apart (Baxcalibur attaches without searching; Earthen Vessel searches
+# without attaching). Never the gold or hero set (CONTEXT.md: Quality validation): an
+# example in the prompt would inflate the score that set measures.
 TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     "draw": (TagExample("Dudunsparce", "sv05-129"), TagExample("Carmine", "sv06-145")),
     "search": (TagExample("Nest Ball", "sv01-181"), TagExample("Pidgeot ex", "sv03-164")),
