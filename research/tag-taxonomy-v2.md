@@ -60,6 +60,10 @@ has happened yet. Decisions:
 - **Not retaliation.** In Scarlet & Violet, retaliation is almost always counters on the
   Attacking Pokémon (Rocky Helmet, Cacturne). That stays `counter-damage` only, which the definition
   says, so `counter-placement` doesn't swallow `counter-damage`.
+- **Any target.** Where the counters land doesn't matter: the Active only (Glaceon, Mimikyu), the
+  Bench only (Dragapult ex), or any of the opponent's Pokémon (Drifblim, Dusclops). The definition
+  names the Active and the Bench so neither reading is missed. One tag rather than a split by
+  target: a card's description still says where the counters go, which search can use.
 - **Timing.** Delayed counters (Glaceon `sv06-054`) and Pokémon Checkup counters (Trevenant
   `sv03-012`) count, because the effect is the same.
 - **Opponent's side only.** Moving or removing damage counters among your own Pokémon is out of
@@ -108,7 +112,7 @@ across all of its attacks and Abilities, so the effect is shown in isolation.
 | `snipe` | Deal damage to a chosen *Benched* Pokémon, bypassing the Active. | Golbat (`sv03.5-042`), Elekid (`sv04-059`) |
 | `damage-scaling` | Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. | Chandelure (`sv03-038`), Drampa (`sv03-161`) |
 | `recoil` | Attack costs damage to, or discards Energy from, *your own* Pokémon. | Koraidon (`sv01-124`), Primeape (`sv01-108`) |
-| `counter-placement` | Put damage counters directly on the opponent's Pokémon, rather than dealing damage, so Weakness, Resistance and damage-reduction don't apply. Retaliation when your Pokémon is hit is `counter-damage`. | Drifblim (`sv01-090`), Dusclops (`sv06.5-019`) |
+| `counter-placement` | Put damage counters directly on any of the opponent's Pokémon (Active, Benched, or both), rather than dealing damage, so Weakness, Resistance and damage-reduction don't apply. Retaliation when your Pokémon is hit is `counter-damage`. | Drifblim (`sv01-090`), Dusclops (`sv06.5-019`) |
 
 **Confusion pairs.** `spread` and `snipe` deal damage; `counter-placement` puts damage counters on
 the opponent's Pokémon without dealing damage. `counter-damage` covers hitting back when your

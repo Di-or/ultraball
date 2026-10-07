@@ -7,7 +7,7 @@ TAXONOMY_VERSION = "v2"
 
 # Bumping the prompt independently of the taxonomy (a wording fix, a confusion-pair
 # clarification) still forces a re-pass without needing a taxonomy version bump.
-PROMPT_VERSION = "v2"
+PROMPT_VERSION = "v3"
 
 
 @dataclass(frozen=True)
@@ -41,9 +41,9 @@ TAG_DEFINITIONS: dict[str, str] = {
     ),
     "recoil": "Attack costs damage to, or discards Energy from, *your own* Pokémon.",
     "counter-placement": (
-        "Put damage counters directly on the opponent's Pokémon, rather than dealing damage, "
-        "so Weakness, Resistance and damage-reduction don't apply. Retaliation when your Pokémon "
-        "is hit is `counter-damage`."
+        "Put damage counters directly on any of the opponent's Pokémon (Active, Benched, or both), "
+        "rather than dealing damage, so Weakness, Resistance and damage-reduction don't apply. "
+        "Retaliation when your Pokémon is hit is `counter-damage`."
     ),
     # Disruption — control
     "hand-disruption": "Shrink, shuffle away, or force a reveal of the opponent's hand.",
