@@ -63,7 +63,7 @@ _Avoid_: format rotation, cutoff change.
 ### Enrichment
 
 **Functional tag**:
-One of the 27 enum-constrained, effects-only labels (in 7 documentation-only families) describing what a card *does* — e.g. `acceleration`, `draw`, `gust`. The shared vocabulary produced by the enrichment pass and emitted query-side by the parser; the user-facing "what it does" layer. Multi-label and versioned by `taxonomy_version`.
+One of the 28 enum-constrained, effects-only labels (in 7 documentation-only families) describing what a card *does* — e.g. `acceleration`, `draw`, `gust`. The shared vocabulary produced by the enrichment pass and emitted query-side by the parser; the user-facing "what it does" layer. Multi-label and versioned by `taxonomy_version`.
 _Avoid_: keyword, category, attribute.
 
 **Canonical card text**:

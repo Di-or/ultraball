@@ -1,9 +1,10 @@
 import re
 from pathlib import Path
 
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, TAG_DEFINITIONS, TAG_EXAMPLES
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, TAG_DEFINITIONS, TAG_EXAMPLES, TAXONOMY_VERSION
 
-_TAXONOMY_DOC = Path(__file__).parents[2] / "research" / "tag-taxonomy-v1.md"
+# The doc for the current taxonomy version; earlier versions' docs stay as a record.
+_TAXONOMY_DOC = Path(__file__).parents[2] / "research" / f"tag-taxonomy-{TAXONOMY_VERSION}.md"
 
 # A tag row in one of the doc's family tables: | `tag` | definition | example |
 _TAG_ROW = re.compile(r"^\| `(?P<tag>[a-z-]+)` \| (?P<definition>.+?) \| (?P<examples>.+?) \|$")
@@ -22,7 +23,7 @@ def _doc_rows() -> dict[str, tuple[str, str]]:
 
 def test_functional_tags_are_derived_from_the_definitions() -> None:
     assert FUNCTIONAL_TAGS == set(TAG_DEFINITIONS)
-    assert len(FUNCTIONAL_TAGS) == 27
+    assert len(FUNCTIONAL_TAGS) == 28
 
 
 def test_every_tag_has_a_definition_and_a_current_range_example() -> None:
