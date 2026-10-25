@@ -33,8 +33,8 @@ export function App() {
 
     search(
       {
-        // `query` is only ever non-null the one tick right after an NL submit — the
-        // reducer clears it once resolved, so a later filter/facet edit never re-parses.
+        // Non-null right after an NL submit and on every page change while the concept is
+        // active; the reducer clears it otherwise, so a filter/facet edit never re-parses.
         query: state.query,
         filters: state.filters,
         facets: state.facets,
@@ -48,7 +48,8 @@ export function App() {
         // The parse ticked these filters on — surface them in the panel (CONTEXT.md: Filter
         // panel). Reconciling this into state deliberately doesn't bump `fetchRevision`
         // (see its doc comment), so this never causes a second, ranking-downgrading fetch.
-        if (state.query) {
+        // Only the submit's own response does this — a paged re-fetch leaves the panel alone.
+        if (state.parsePending) {
           dispatch({ type: "query-resolved", filters: result.filters });
         }
       })

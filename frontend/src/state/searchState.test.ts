@@ -416,4 +416,53 @@ describe("searchStateReducer", () => {
     const paged = searchStateReducer(faceted, { type: "page-changed", offset: 30 });
     expect(paged.fetchRevision).toBe(faceted.fetchRevision + 1);
   });
+
+  describe("paging", () => {
+    const resolved = () =>
+      searchStateReducer(
+        searchStateReducer(initialSearchState, { type: "query-submitted", query: "energy acceleration" }),
+        { type: "query-resolved", filters: { format: "standard", category: "Pokemon" } }
+      );
+
+    it("resends the last query while the concept is active so every page keeps the same ranking", () => {
+      const next = searchStateReducer(resolved(), { type: "page-changed", offset: 30 });
+
+      expect(next.query).toBe("energy acceleration");
+      expect(next.conceptActive).toBe(true);
+      expect(next.offset).toBe(30);
+      expect(next.filters).toEqual({ format: "standard", category: "Pokemon" });
+    });
+
+    it("never marks a paged re-fetch as a pending parse, so its response can't touch the panel", () => {
+      const submitted = searchStateReducer(initialSearchState, { type: "query-submitted", query: "acceleration" });
+      expect(submitted.parsePending).toBe(true);
+
+      const settled = searchStateReducer(submitted, { type: "query-resolved", filters: { format: "standard" } });
+      expect(settled.parsePending).toBe(false);
+
+      const paged = searchStateReducer(settled, { type: "page-changed", offset: 30 });
+      expect(paged.parsePending).toBe(false);
+    });
+
+    it("sends no query once the concept is gone", () => {
+      const removed = searchStateReducer(resolved(), { type: "concept-removed" });
+      const filtered = searchStateReducer(resolved(), { type: "filter-changed", patch: { stage: "Basic" } });
+      const faceted = searchStateReducer(resolved(), { type: "facet-changed", patch: { rarity: ["Rare"] } });
+
+      for (const state of [removed, filtered, faceted]) {
+        const next = searchStateReducer(state, { type: "page-changed", offset: 30 });
+        expect(next.query).toBeNull();
+        expect(next.conceptActive).toBe(false);
+      }
+    });
+
+    it("keeps facets when paging", () => {
+      const faceted = searchStateReducer(initialSearchState, { type: "facet-changed", patch: { rarity: ["Rare"] } });
+
+      const next = searchStateReducer(faceted, { type: "page-changed", offset: 30 });
+
+      expect(next.facets).toEqual({ rarity: ["Rare"] });
+      expect(next.query).toBeNull();
+    });
+  });
 });

@@ -1,13 +1,20 @@
 import { EMPTY_FACETS, EMPTY_FILTERS, type Facets, type Filters } from "../lib/types";
 
 export interface SearchState {
-  /** Set only right after an NL submit; the effect sends it once, then clears it on
-   * resolution so a later filter/facet edit never re-triggers a parse. */
+  /** What the next fetch sends as `query`. Set by an NL submit, and set again to `lastQuery` by
+   * every page change while the concept is active, so each page is a slice of the same ranked
+   * list. Cleared on resolution and by any filter/facet edit, so those never re-parse. Resending
+   * is cheap: the backend's parse and query-embedding caches make a repeat a database-only
+   * re-rank. */
   query: string | null;
-  /** The last submitted NL text, kept only for display in the search box / concept indicator. */
+  /** The last submitted NL text, shown in the search box / concept indicator and resent by
+   * `page-changed` while the concept is active. */
   lastQuery: string;
+  /** True from an NL submit until its response resolves. App reconciles the filter panel from
+   * that one response only, so a paged re-fetch of the same query never touches the panel. */
+  parsePending: boolean;
   /** Whether the concept indicator (CONTEXT.md: Concept indicator) is showing — i.e. whether
-   * the *next* fetch still carries `query` and can therefore rank by tag/semantic match. The
+   * page changes still carry `query` and can therefore rank by tag/semantic match. The
    * backend's gate (`resolve_search_gate`) ignores `filters` entirely whenever `query` is set,
    * so any filter/facet edit — not just an explicit removal — has to drop the concept to let
    * the edit take effect. */
@@ -31,6 +38,7 @@ export const DEFAULT_LIMIT = 30;
 export const initialSearchState: SearchState = {
   query: null,
   lastQuery: "",
+  parsePending: false,
   conceptActive: false,
   filters: EMPTY_FILTERS,
   facets: EMPTY_FACETS,
@@ -43,12 +51,13 @@ export type SearchAction =
   // The NL box was submitted — a fresh query replaces the whole panel (filters + facets)
   // rather than compounding with whatever was there before.
   | { type: "query-submitted"; query: string }
-  // The backend parsed `query` into a gate — ticks the panel's controls on and stops
-  // resending `query`, so subsequent edits never re-invoke the parser.
+  // The backend parsed `query` into a gate — ticks the panel's controls on and clears `query`,
+  // so filter/facet edits never re-invoke the parser (page changes re-stage it themselves).
   | { type: "query-resolved"; filters: Filters }
   // A chip/facet edit — patches filter state directly, no re-parse.
   | { type: "filter-changed"; patch: Partial<Filters> }
   | { type: "facet-changed"; patch: Partial<Facets> }
+  // Another page of the same results — resends the concept's query while it's active.
   | { type: "page-changed"; offset: number }
   // The user dismissed the concept indicator — drops semantic/tag ranking, keeps the
   // filters the parse already ticked on, and falls back to plain filter/browse.
@@ -110,6 +119,7 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         ...state,
         query: action.query,
         lastQuery: action.query,
+        parsePending: true,
         conceptActive: true,
         filters: EMPTY_FILTERS,
         facets: {},
@@ -123,6 +133,7 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
       return {
         ...state,
         query: null,
+        parsePending: false,
         filters: action.filters,
       };
     case "filter-changed":
@@ -144,7 +155,12 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         fetchRevision: state.fetchRevision + 1,
       };
     case "page-changed":
-      return { ...state, offset: action.offset, fetchRevision: state.fetchRevision + 1 };
+      return {
+        ...state,
+        query: state.conceptActive ? state.lastQuery : null,
+        offset: action.offset,
+        fetchRevision: state.fetchRevision + 1,
+      };
     case "concept-removed":
       return { ...state, query: null, conceptActive: false, fetchRevision: state.fetchRevision + 1 };
   }
