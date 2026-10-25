@@ -398,8 +398,8 @@ describe("FilterPanel Trainer and Energy chips", () => {
 
 describe("FilterPanel set dropdown", () => {
   const sets = [
-    { id: "sv1", code: "SVI", release_date: "2023-03-31" },
-    { id: "base1", code: "BS", release_date: "1999-01-09" },
+    { id: "sv1", code: "SVI", name: "Scarlet & Violet", release_date: "2023-03-31" },
+    { id: "base1", code: "BS", name: "Base Set", release_date: "1999-01-09" },
   ];
 
   it("offers Any plus every set labelled by code", () => {

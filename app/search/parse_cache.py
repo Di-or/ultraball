@@ -1,3 +1,5 @@
+import hashlib
+from collections.abc import Iterable
 from datetime import datetime
 
 from sqlalchemy import ARRAY, DateTime, String, func
@@ -5,6 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from app.catalog.set_models import CatalogSet, render_set_lines
 from app.clients.parse_client import ParseResult
 
 
@@ -15,9 +18,10 @@ class Base(DeclarativeBase):
 class ParseCacheEntry(Base):
     """Lexical memo of the parse step only, not results (CONTEXT.md: Parse cache).
 
-    Keyed on normalize(query)+parse_version so a repeat query skips the hosted
-    model entirely; a `parse_version` bump changes the key rather than requiring
-    an explicit flush, so stale entries simply stop being hit.
+    Keyed on normalize(query)+parse_version+set-list hash so a repeat query skips
+    the hosted model entirely; a `parse_version` bump or a newly ingested set
+    changes the key rather than requiring an explicit flush, so stale entries
+    simply stop being hit.
     """
 
     __tablename__ = "parse_cache"
@@ -32,8 +36,10 @@ class ParseCacheEntry(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-def make_cache_key(normalized_query: str, parse_version: str) -> str:
-    return f"{normalized_query}:{parse_version}"
+def make_cache_key(normalized_query: str, parse_version: str, sets: Iterable[CatalogSet]) -> str:
+    # The set list is part of the parse prompt and schema (issue #90), so it's part of the key.
+    set_list_hash = hashlib.sha256(render_set_lines(sets).encode()).hexdigest()[:16]
+    return f"{normalized_query}:{parse_version}:{set_list_hash}"
 
 
 async def get_cached_parse(session: AsyncSession, cache_key: str) -> ParseResult | None:

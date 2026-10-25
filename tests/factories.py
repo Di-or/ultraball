@@ -12,6 +12,7 @@ def make_card(**overrides: object) -> Card:
         id=overrides.pop("id", "swsh1-1"),
         set_id="swsh1",
         set_code="SWSH1",
+        set_name="Sword & Shield",
         local_id="1",
         name="Charizard",
         category="Pokemon",

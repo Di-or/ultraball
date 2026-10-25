@@ -27,6 +27,7 @@ export interface Filters {
 export interface SetSummary {
   id: string;
   code: string;
+  name: string;
   release_date: string;
 }
 

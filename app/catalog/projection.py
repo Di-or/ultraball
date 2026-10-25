@@ -15,6 +15,7 @@ class CardProjection:
     id: str
     set_id: str
     set_code: str
+    set_name: str
     local_id: str
     name: str
     category: str
@@ -46,6 +47,7 @@ def project_card(
     standard_legal_marks: Collection[str],
     banned_dedupe_keys: Set[str],
     official_abbreviation: str | None = None,
+    set_name: str = "",
 ) -> CardProjection:
     attacks = raw.get("attacks") or []
     identity = build_card_identity(raw)
@@ -54,6 +56,7 @@ def project_card(
         id=raw["id"],
         set_id=set_id,
         set_code=derive_set_code(set_id, official_abbreviation),
+        set_name=set_name,
         local_id=str(raw.get("localId", "")),
         name=raw["name"],
         category=raw["category"],

@@ -1,9 +1,11 @@
 import json
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import httpx
 
+from app.catalog.set_models import CatalogSet, render_set_lines
 from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
 
 _OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
@@ -41,7 +43,7 @@ _FILTERS_SCHEMA = {
             "enum": ["Item", "Supporter", "Stadium", "Tool", None],
         },
         "energy_type": {"type": ["string", "null"]},
-        "set_id": {"type": ["string", "null"]},
+        # `set_id` is added per set list by `build_parse_json_schema`.
     },
     "required": [
         "format",
@@ -59,17 +61,29 @@ _FILTERS_SCHEMA = {
     "additionalProperties": False,
 }
 
-_PARSE_JSON_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "filters": _FILTERS_SCHEMA,
-        "concept": {"type": "string"},
-        "concept_rewritten": {"type": "string"},
-        "tags": {"type": "array", "items": {"type": "string", "enum": sorted(FUNCTIONAL_TAGS)}},
-    },
-    "required": ["filters", "concept", "concept_rewritten", "tags"],
-    "additionalProperties": False,
-}
+
+def build_parse_json_schema(sets: Sequence[CatalogSet]) -> dict:
+    """The strict response schema, with `set_id` limited to the listed set ids (or null)."""
+    set_ids = sorted(s.id for s in sets)
+    filters = {
+        **_FILTERS_SCHEMA,
+        "properties": {
+            **_FILTERS_SCHEMA["properties"],
+            "set_id": {"type": ["string", "null"], "enum": [*set_ids, None]},
+        },
+    }
+    return {
+        "type": "object",
+        "properties": {
+            "filters": filters,
+            "concept": {"type": "string"},
+            "concept_rewritten": {"type": "string"},
+            "tags": {"type": "array", "items": {"type": "string", "enum": sorted(FUNCTIONAL_TAGS)}},
+        },
+        "required": ["filters", "concept", "concept_rewritten", "tags"],
+        "additionalProperties": False,
+    }
+
 
 _TAG_GLOSSARY = (
     "Functional tags (what a card does). The enrichment pass tags cards with these same "
@@ -89,6 +103,10 @@ the query states a number or describes the card's printed stat ("0 retreat", "no
 effect, so it goes to `concept` and `tags`, never to a numeric filter. If the query does not name \
 a format, leave format null (the caller defaults it to Standard).
 
+If the query names a set — by its name, its PTCGL code or its id — fill `set_id` with that \
+set's id from the list above (e.g. "Twilight Masquerade", "TWM" and "sv06" all mean \
+set_id="sv06"). Never fill `set_id` with a value that isn't a listed id.
+
 Never encode the same words in both `filters` and `concept`: each part of the query lands in \
 exactly one of the two.
 
@@ -99,8 +117,18 @@ deck beyond the one-per-turn attachment"), for embedding — never invent an eff
 didn't ask for. `tags` lists any of the functional tags above that the concept clearly matches \
 (empty array if none clearly match)."""
 
-# The glossary leads: it is static, so it stays inside the cached prompt prefix.
-_SYSTEM_PROMPT = _TAG_GLOSSARY + "\n\n" + _INSTRUCTIONS
+
+def build_system_prompt(sets: Sequence[CatalogSet]) -> str:
+    """The parse system prompt: tag glossary, then the catalog's set list, then the instructions.
+
+    The glossary and set list lead because they only change on a taxonomy bump or a
+    restart after ingest, so they stay inside the hosted model's cached prompt prefix.
+    """
+    set_list = (
+        "Sets in the catalog, one per line as `id — PTCGL code — name`. `set_id` takes the id:\n"
+        + (render_set_lines(sets) or "(none)")
+    )
+    return _TAG_GLOSSARY + "\n\n" + set_list + "\n\n" + _INSTRUCTIONS
 
 
 @dataclass(frozen=True)
@@ -117,7 +145,8 @@ class ParseClient(ABC):
     """Seam between the request path and the hosted parse/rewrite model."""
 
     @abstractmethod
-    async def parse(self, query: str) -> ParseResult: ...
+    async def parse(self, query: str, sets: Sequence[CatalogSet]) -> ParseResult:
+        """Parses `query`, resolving a named set against `sets` (the catalog's set list)."""
 
 
 def _drop_nulls(obj: dict) -> dict:
@@ -131,7 +160,7 @@ class HostedParseClient(ParseClient):
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key
 
-    async def parse(self, query: str) -> ParseResult:
+    async def parse(self, query: str, sets: Sequence[CatalogSet]) -> ParseResult:
         async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
             response = await client.post(
                 _OPENAI_CHAT_URL,
@@ -139,7 +168,7 @@ class HostedParseClient(ParseClient):
                 json={
                     "model": _PARSE_MODEL,
                     "messages": [
-                        {"role": "system", "content": _SYSTEM_PROMPT},
+                        {"role": "system", "content": build_system_prompt(sets)},
                         {"role": "user", "content": query},
                     ],
                     "response_format": {
@@ -147,7 +176,7 @@ class HostedParseClient(ParseClient):
                         "json_schema": {
                             "name": "parse_object",
                             "strict": True,
-                            "schema": _PARSE_JSON_SCHEMA,
+                            "schema": build_parse_json_schema(sets),
                         },
                     },
                 },

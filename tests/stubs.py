@@ -1,3 +1,6 @@
+from collections.abc import Sequence
+
+from app.catalog.set_models import CatalogSet
 from app.clients.catalog_client import CatalogClient, SetSnapshot
 from app.clients.embedding_client import EMBEDDING_DIM, EmbeddingClient
 from app.clients.enrichment_client import EnrichmentClient, EnrichmentRequest, EnrichmentResult
@@ -11,7 +14,7 @@ class StubParseClient(ParseClient):
     def __init__(self, canned: ParseResult | None = None) -> None:
         self._canned = canned or ParseResult()
 
-    async def parse(self, query: str) -> ParseResult:
+    async def parse(self, query: str, sets: Sequence[CatalogSet]) -> ParseResult:
         return self._canned
 
 
