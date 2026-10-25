@@ -23,7 +23,7 @@ def _doc_rows() -> dict[str, tuple[str, str]]:
 
 def test_functional_tags_are_derived_from_the_definitions() -> None:
     assert FUNCTIONAL_TAGS == set(TAG_DEFINITIONS)
-    assert len(FUNCTIONAL_TAGS) == 28
+    assert len(FUNCTIONAL_TAGS) == 29
 
 
 def test_every_tag_has_a_definition_and_a_current_range_example() -> None:
@@ -34,6 +34,12 @@ def test_every_tag_has_a_definition_and_a_current_range_example() -> None:
         for example in TAG_EXAMPLES[tag]:
             assert example.name.strip(), tag
             assert _SV_OR_ME_CARD_ID.match(example.card_id), (tag, example.card_id)
+
+
+def test_no_card_is_the_example_for_two_tags() -> None:
+    # Each example carries only its own tag, so a card can illustrate at most one.
+    card_ids = [example.card_id for examples in TAG_EXAMPLES.values() for example in examples]
+    assert len(card_ids) == len(set(card_ids))
 
 
 def test_taxonomy_doc_definitions_match_the_code_word_for_word() -> None:

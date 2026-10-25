@@ -83,8 +83,14 @@ concept, and return exactly one JSON object matching the given schema.
 `filters` is closed and positive-only: fill only fields the query states explicitly (leave the \
 rest null), never infer or negate. Numeric fields (hp, retreat, attack_cost) are inclusive \
 {gte, lte} ranges — "under 130 HP" is hp.lte=130, "at least 2 retreat" is retreat.gte=2. \
-attack_cost matches if ANY of the card's attacks falls in range. If the query does not name a \
-format, leave format null (the caller defaults it to Standard).
+attack_cost matches if ANY of the card's attacks falls in range. Fill a numeric field only when \
+the query states a number or describes the card's printed stat ("0 retreat", "no retreat cost", \
+"free retreat Pokémon"); phrasing about doing something ("retreat for free", "switch out") is an \
+effect, so it goes to `concept` and `tags`, never to a numeric filter. If the query does not name \
+a format, leave format null (the caller defaults it to Standard).
+
+Never encode the same words in both `filters` and `concept`: each part of the query lands in \
+exactly one of the two.
 
 `concept` is the residual natural-language intent not captured by filters, verbatim in spirit \
 (empty string if the query is filters-only). `concept_rewritten` restates that concept in \
