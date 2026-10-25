@@ -22,12 +22,12 @@ This file holds measurements only. It does not choose the parse model or change 
 
 | Configuration | Calls | Errors | Median | p95 | ≤2s | ≤3s | ≤4s | ≤6s | ≤8s | Reasoning tok | Completion tok | Cached | Filters exact | Tag P | Tag R | $ / 1k queries |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `gpt-5-mini / minimal` | 75 | 0 | 1.83s | 2.96s | 64% | 96% | 97% | 100% | 100% | 0 | 164 | 88% | 73% | 0.79 | 1.00 | $0.402 |
-| `gpt-5-mini / low` | 75 | 0 | 2.55s | 3.71s | 11% | 72% | 97% | 100% | 100% | 96 | 274 | 87% | 95% | 1.00 | 1.00 | $0.625 |
-| `gpt-5-mini / medium` | 75 | 0 | 4.92s | 7.60s | 0% | 0% | 23% | 72% | 99% | 496 | 672 | 87% | 93% | 1.00 | 1.00 | $1.422 |
+| `gpt-5-mini / minimal` | 75 | 0 | 1.83s | 2.96s | 64% | 96% | 97% | 100% | 100% | 0 | 164 | 88% | 73% | 0.76 | 0.97 | $0.402 |
+| `gpt-5-mini / low` | 75 | 0 | 2.55s | 3.71s | 11% | 72% | 97% | 100% | 100% | 96 | 274 | 87% | 95% | 0.95 | 0.95 | $0.625 |
+| `gpt-5-mini / medium` | 75 | 0 | 4.92s | 7.60s | 0% | 0% | 23% | 72% | 99% | 496 | 672 | 87% | 93% | 0.95 | 0.95 | $1.422 |
 | `gpt-5.6-luna / none` | 75 | 0 | 1.97s | 2.34s | 57% | 100% | 100% | 100% | 100% | 0 | 106 | 100% | 93% | 1.00 | 0.95 | $0.157 |
-| `gpt-5.6-luna / low` | 75 | 0 | 1.92s | 2.54s | 72% | 100% | 100% | 100% | 100% | 2 | 108 | 100% | 93% | 1.00 | 0.97 | $0.160 |
-| `gpt-5.6-luna / medium` | 75 | 0 | 2.17s | 3.42s | 36% | 91% | 99% | 100% | 100% | 22 | 131 | 100% | 93% | 1.00 | 0.97 | $0.187 |
+| `gpt-5.6-luna / low` | 75 | 0 | 1.92s | 2.54s | 72% | 100% | 100% | 100% | 100% | 2 | 108 | 100% | 93% | 0.98 | 0.95 | $0.160 |
+| `gpt-5.6-luna / medium` | 75 | 0 | 2.17s | 3.42s | 36% | 91% | 99% | 100% | 100% | 22 | 131 | 100% | 93% | 0.98 | 0.95 | $0.187 |
 
 
 `≤Ns` is the share of calls that finished within N seconds. `Reasoning tok` and `Completion tok` are means per call. `Cached` is the share of input tokens served from cache.
@@ -55,12 +55,13 @@ With the longer glossary prompt from #84 and #83, gpt-5-mini uses fewer reasonin
 - Luna barely reasons at `none` and `low` (0 to 2 reasoning tokens on average), and only lightly at `medium` (22).
 
 **Tag quality.**
-- gpt-5-mini/`minimal` is the only noisy configuration, with precision 0.79. It again over-tagged #80's query "stadium that punishes ex" with 1 to 3 wrong tags on every run, and sometimes listed six control tags for "stall the opponent".
-- The glossary from #84 did not fix `minimal`'s noise. Every other configuration has tag precision 1.00.
-- Luna's tag recall (0.95 to 0.97) is slightly below gpt-5-mini/`low` and `medium` (1.00). All of Luna's tag misses are on "retreat for free": in some runs Luna read it as a `retreat` = 0 filter with no tag, instead of the `switch` effect. That query is ambiguous (see below).
+- gpt-5-mini/`minimal` is the only noisy configuration, with precision 0.76. It again over-tagged #80's query "stadium that punishes ex" with 1 to 3 wrong tags on every run, and sometimes listed six control tags for "stall the opponent". The glossary from #84 did not fix this.
+- The other configurations have precision 0.95 to 1.00. Their only wrong tag is `switch` for "retreat for free": gpt-5-mini on every run, Luna/`low` and `medium` once each. Retreat-cost effects aren't `switch` (#89).
+- Every configuration has recall 0.95, except gpt-5-mini/`minimal` at 0.97. The misses are all on "hit their bench for damage": every configuration answered `snipe` alone, and only `minimal`, once, added `spread`. The query doesn't say one target or several, so it expects both.
 
 **Filters.**
 - gpt-5-mini/`minimal` invents filters the query didn't state, e.g. `hp.gte` 150 or 200 for "big hp basic", and a 0-retreat filter for "retreat for free". Its exact-match rate is 73%.
+- "Retreat for free" got a `retreat` = 0 filter from every configuration except gpt-5-mini/`low`, often with an empty concept. Filters are a hard gate and Trainers have no retreat value, so that filter removes every Switch-type and retreat-cost Trainer the query is looking for (#89).
 - The others score 93% to 95%. Their misses are the `set_id` problem below (3 calls each), "retreat for free", and a stray `category: Pokemon` on one run each: "attacker that does more damage for each energy attached" (gpt-5-mini `low` and `medium`) and "get pokemon back from the discard pile" (Luna/`medium`).
 
 **Rewrites.**
@@ -77,11 +78,12 @@ With the longer glossary prompt from #84 and #83, gpt-5-mini uses fewer reasonin
 
 ## Findings outside the model choice
 
-- **`set_id` can't come from the parser as it stands.** No configuration returned the TCGdex id `sv06` for "supporters from Twilight Masquerade". They returned the set name, `TWM`, or `sv6`, because the prompt doesn't list the sets or their ids. So a set named in a query would never match through `filters.set_id`. This costs every configuration 4 points of filter match.
-- **Expected outputs to review** (the maintainer should review all of `parse_eval_queries.json`, as with the #81 examples):
-  - "retreat for free" expects the `switch` tag and no filter. Reading it as "Pokémon with no retreat cost" (`retreat` = 0) is also defensible, and that reading is what moves Luna's recall.
-  - "get energy out of my deck" expects `energy-search`. No configuration disagreed.
-  - "hit their bench for damage" expects `snipe` only. gpt-5-mini/`minimal` sometimes added `spread`.
+- **`set_id` can't come from the parser as it stands** (#90). No configuration returned the TCGdex id `sv06` for "supporters from Twilight Masquerade". They returned the set name, `TWM` or `sv6`, because the prompt doesn't list the sets or their ids. So a set typed into a query never matches through `filters.set_id`. Missing catalog data isn't the cause, and the filter panel is unaffected. This costs every configuration 4 points of filter match.
+- **`switch` mixes switching with retreat cost, and `retreat` filters swallow effect queries** (#89). `switch` is narrowed to switching your Active with a Benched Pokémon, which still works when retreat is blocked, and retreat-cost effects get their own tag in v3. The parse prompt is also to fill numeric filters only for stated numbers or printed stats.
+- **Expected answers** were reviewed with the maintainer on 2026-10-25, and the results above are rescored against them (`--report`, no new API calls):
+  - "Retreat for free" now expects no tag and no filter. It will expect `retreat-reduction` once #89 lands.
+  - "Hit their bench for damage" now expects `snipe` and `spread`.
+  - The rest stand as written, including the accepted alternative filters where a category is implied ("supporters" with or without `category: Trainer`).
 
 ## Caveats
 
@@ -263,7 +265,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 | `gpt-5.6-luna / low` | `{"category": "Trainer", "trainer_type": "Item"}` · search |
 | `gpt-5.6-luna / medium` | `{"category": "Trainer", "trainer_type": "Item"}` · search |
 
-**retreat for free** (expected `{}` · switch)
+**retreat for free** (expected `{}` · (no tags))
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
@@ -274,7 +276,7 @@ Whole run (456 calls including warm-ups, 0 failed): 653,166 input tokens (606,81
 | `gpt-5.6-luna / low` | `{"retreat": {"gte": 0, "lte": 0}}` · (no tags)<br>`{}` · switch |
 | `gpt-5.6-luna / medium` | `{"retreat": {"gte": 0, "lte": 0}}` · (no tags)<br>`{}` · switch<br>`{}` · (no tags) |
 
-**hit their bench for damage** (expected `{}` · snipe)
+**hit their bench for damage** (expected `{}` · snipe, spread)
 
 | Configuration | Distinct outputs across 3 runs |
 | --- | --- |
