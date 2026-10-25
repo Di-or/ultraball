@@ -86,9 +86,10 @@ tag meant a search for one returned the other. In the #85 parse eval, "retreat f
   enrichment run. Narrowing it to cards whose text switches or changes a Retreat Cost is left for
   when a re-run has a real cost.
 - **Examples.** Big Air Balloon moves from `switch` to `retreat-reduction`, beside Toedscruel
-  `sv09-089` for the Ability form. `switch` keeps Switch and gains Magnemite. Surfer, Kieran
-  `sv08.5-113` and Gengar `sv04.5-057` also switch but carry other tags too (`draw`, a damage boost,
-  `special-condition`), so they aren't examples. Nor is Latias ex `sv08-076`, a likely hero-set card.
+  `sv09-089` for the Ability form. `switch` keeps Switch and gains Magnemite. Surfer and Gengar
+  `sv04.5-057` also switch but carry other tags too (`draw`, `special-condition`), and Kieran
+  `sv08.5-113` offers switching as one of two modes, so none of them shows the effect in isolation.
+  Latias ex `sv08-076` (Skyliner, `retreat-reduction`) is left out as a likely hero-set card.
 
 ## The tags
 

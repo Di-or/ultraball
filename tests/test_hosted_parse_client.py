@@ -82,10 +82,10 @@ async def test_hosted_parse_system_prompt_keeps_effect_phrasing_out_of_numeric_f
     await HostedParseClient(api_key="test-key").parse("retreat for free")
 
     system_prompt = json.loads(sent_requests[-1].content)["messages"][0]["content"]
-    # Rule A: numeric filters only for a stated number or the card's printed stat.
+    # Numeric filters only for a stated number or the card's printed stat.
     for stat_phrase in ('"0 retreat"', '"no retreat cost"', '"free retreat Pokémon"'):
         assert stat_phrase in system_prompt
     for effect_phrase in ('"retreat for free"', '"switch out"'):
         assert effect_phrase in system_prompt
-    # Rule B: the same words never land in both zones.
+    # No overlap: the same words never land in both filters and concept.
     assert "Never encode the same words in both `filters` and `concept`" in system_prompt
