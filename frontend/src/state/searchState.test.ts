@@ -444,6 +444,18 @@ describe("searchStateReducer", () => {
       expect(paged.parsePending).toBe(false);
     });
 
+    it("an edit before the submit resolves cancels the pending parse, so the edit's response can't overwrite the panel", () => {
+      const submitted = searchStateReducer(initialSearchState, { type: "query-submitted", query: "acceleration" });
+
+      const edits = [
+        searchStateReducer(submitted, { type: "concept-removed" }),
+        searchStateReducer(submitted, { type: "filter-changed", patch: { stage: "Basic" } }),
+        searchStateReducer(submitted, { type: "facet-changed", patch: { rarity: ["Rare"] } }),
+      ];
+
+      for (const state of edits) expect(state.parsePending).toBe(false);
+    });
+
     it("sends no query once the concept is gone", () => {
       const removed = searchStateReducer(resolved(), { type: "concept-removed" });
       const filtered = searchStateReducer(resolved(), { type: "filter-changed", patch: { stage: "Basic" } });

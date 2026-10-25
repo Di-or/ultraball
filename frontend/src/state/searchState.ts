@@ -3,15 +3,17 @@ import { EMPTY_FACETS, EMPTY_FILTERS, type Facets, type Filters } from "../lib/t
 export interface SearchState {
   /** What the next fetch sends as `query`. Set by an NL submit, and set again to `lastQuery` by
    * every page change while the concept is active, so each page is a slice of the same ranked
-   * list. Cleared on resolution and by any filter/facet edit, so those never re-parse. Resending
+   * list. Cleared on resolution, by any filter/facet edit, and by removing the concept, so those
+   * never re-parse. Resending
    * is cheap: the backend's parse and query-embedding caches make a repeat a database-only
    * re-rank. */
   query: string | null;
   /** The last submitted NL text, shown in the search box / concept indicator and resent by
    * `page-changed` while the concept is active. */
   lastQuery: string;
-  /** True from an NL submit until its response resolves. App reconciles the filter panel from
-   * that one response only, so a paged re-fetch of the same query never touches the panel. */
+  /** True from an NL submit until its parse resolves; a filter/facet edit or removing the
+   * concept first cancels it (the submit's fetch gets aborted). App reconciles the filter panel
+   * only while this is set, so neither a paged re-fetch nor an edit's response touches it. */
   parsePending: boolean;
   /** Whether the concept indicator (CONTEXT.md: Concept indicator) is showing — i.e. whether
    * page changes still carry `query` and can therefore rank by tag/semantic match. The
@@ -140,6 +142,7 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
       return {
         ...state,
         query: null,
+        parsePending: false,
         conceptActive: false,
         filters: clearInapplicableFilters(state.filters, { ...state.filters, ...action.patch }),
         offset: 0,
@@ -149,6 +152,7 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
       return {
         ...state,
         query: null,
+        parsePending: false,
         conceptActive: false,
         facets: { ...state.facets, ...action.patch },
         offset: 0,
@@ -162,6 +166,12 @@ export function searchStateReducer(state: SearchState, action: SearchAction): Se
         fetchRevision: state.fetchRevision + 1,
       };
     case "concept-removed":
-      return { ...state, query: null, conceptActive: false, fetchRevision: state.fetchRevision + 1 };
+      return {
+        ...state,
+        query: null,
+        parsePending: false,
+        conceptActive: false,
+        fetchRevision: state.fetchRevision + 1,
+      };
   }
 }
