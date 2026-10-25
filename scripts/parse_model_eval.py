@@ -1,13 +1,18 @@
 """Measure the hosted parse call across models and reasoning efforts (#85).
 
-Run by hand: `uv run python -m scripts.parse_model_eval`. Needs OPENAI_API_KEY (env or
-`.env`). Not part of the app or CI; costs roughly $0.25–0.75 per run.
+Run by hand: `uv run python -m scripts.parse_model_eval`. Needs OPENAI_API_KEY and
+CLAUDE_API_KEY (or ANTHROPIC_API_KEY), from the env or `.env`, plus CLAUDE_WORKSPACE_ID when
+the Claude key isn't scoped to a workspace. Not part of the app or CI; costs well under $1
+per run.
 
-Sends the production parse request (system prompt and schema imported from
-`app.clients.parse_client`, so it tracks prompt changes) for every query in
-`parse_eval_queries.json`, 3 runs per configuration after one warm-up call, with a 60s
-timeout instead of the client's 4s so slow configurations still get measured. Raw calls
-go to `research/parse-model-eval-raw.json`; the report tables are printed as Markdown.
+Sends the production parse request (system prompt and schema built by
+`app.clients.parse_client` from the fixed set list in `parse_eval_sets.json`, so it tracks
+prompt changes) for every query in `parse_eval_queries.json`, 3 runs per configuration after
+one warm-up call, with a 60s timeout instead of the client's 4s so slow configurations still
+get measured. Claude models get the same prompt and schema through the Messages API, with the
+system prompt marked for caching. Queries marked `"difficulty": "hard"` are scored in their
+own row so they don't move the standard numbers. Raw calls go to `--raw` (default
+`research/parse-model-eval-haiku-raw.json`); the report tables are printed as Markdown.
 `--report` re-renders the tables from the raw file without calling the API.
 """
 
@@ -22,18 +27,24 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import anthropic
 import httpx
 
-from app.clients.parse_client import _OPENAI_CHAT_URL, _PARSE_JSON_SCHEMA, _SYSTEM_PROMPT
+from app.catalog.set_models import CatalogSet
+from app.clients.parse_client import _OPENAI_CHAT_URL, build_parse_json_schema, build_system_prompt
 from app.config import Settings
 
 QUERIES_PATH = Path(__file__).with_name("parse_eval_queries.json")
-RAW_PATH = Path(__file__).parents[1] / "research" / "parse-model-eval-raw.json"
+SETS_PATH = Path(__file__).with_name("parse_eval_sets.json")
+RAW_PATH = Path(__file__).parents[1] / "research" / "parse-model-eval-haiku-raw.json"
 
 _TIMEOUT_SECONDS = 60.0
 _RUNS = 3
 _CUTOFFS = (2, 3, 4, 6, 8)
 _MAX_RATE_LIMIT_RETRIES = 3
+# Thinking counts against max_tokens; the parse object itself is ~100 tokens.
+_CLAUDE_MAX_TOKENS = 8192
+DIFFICULTIES = ("standard", "hard")
 
 
 @dataclass(frozen=True)
@@ -41,24 +52,27 @@ class Config:
     model: str
     effort: str
 
+    @property
+    def is_claude(self) -> bool:
+        return self.model.startswith("claude-")
+
     def __str__(self) -> str:
         return f"{self.model} / {self.effort}"
 
 
-# `medium` is each model's default; it is sent explicitly so the request says what ran.
+# Efforts are sent explicitly: both models default to `medium`, and the request should say what ran.
 CONFIGS = [
-    Config("gpt-5-mini", "minimal"),
-    Config("gpt-5-mini", "low"),
-    Config("gpt-5-mini", "medium"),
-    Config("gpt-5.6-luna", "none"),
     Config("gpt-5.6-luna", "low"),
     Config("gpt-5.6-luna", "medium"),
+    Config("claude-haiku-5-5", "low"),
+    Config("claude-haiku-5-5", "medium"),
 ]
 
 # USD per 1M tokens: (uncached input, cached input, output). Reasoning tokens bill as output.
 _PRICES = {
     "gpt-5-mini": (0.25, 0.025, 2.00),
     "gpt-5.6-luna": (0.20, 0.02, 1.20),
+    "claude-haiku-5-5": (0.10, 0.01, 0.50),
 }
 _CACHE_WRITE_MULTIPLIER = 1.25
 
@@ -100,19 +114,64 @@ class Summary:
     cost_per_1000: float
 
 
-def request_body(config: Config, query: str) -> dict:
+class _EvalSettings(Settings):
+    """The app's settings plus the Claude key, which only this script needs."""
+
+    claude_api_key: str | None = None
+    anthropic_api_key: str | None = None
+    # Sent as `anthropic-workspace-id`; only needed for a key not scoped to a workspace.
+    claude_workspace_id: str | None = None
+
+
+def load_sets() -> tuple[CatalogSet, ...]:
+    """The catalog's set list as of the SV-to-Mega corpus, fixed so runs are comparable."""
+    return tuple(CatalogSet(**s) for s in json.loads(SETS_PATH.read_text(encoding="utf-8")))
+
+
+def request_body(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> dict:
     """The production parse request, plus an explicit `reasoning_effort`."""
     return {
         "model": config.model,
         "reasoning_effort": config.effort,
         "messages": [
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": build_system_prompt(sets)},
             {"role": "user", "content": query},
         ],
         "response_format": {
             "type": "json_schema",
-            "json_schema": {"name": "parse_object", "strict": True, "schema": _PARSE_JSON_SCHEMA},
+            "json_schema": {"name": "parse_object", "strict": True, "schema": build_parse_json_schema(sets)},
         },
+    }
+
+
+def claude_request(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> dict:
+    """The same prompt and schema as a Messages API request, with the system prompt cached."""
+    return {
+        "model": config.model,
+        "max_tokens": _CLAUDE_MAX_TOKENS,
+        "system": [{"type": "text", "text": build_system_prompt(sets), "cache_control": {"type": "ephemeral"}}],
+        "messages": [{"role": "user", "content": query}],
+        "output_config": {
+            "effort": config.effort,
+            "format": {"type": "json_schema", "schema": build_parse_json_schema(sets)},
+        },
+    }
+
+
+def claude_usage(usage: dict) -> dict:
+    """Anthropic's usage in the Chat Completions shape the summary reads, keeping the original.
+
+    Anthropic's `input_tokens` excludes cache reads and writes; Chat Completions'
+    `prompt_tokens` includes them.
+    """
+    cached, written = usage.get("cache_read_input_tokens") or 0, usage.get("cache_creation_input_tokens") or 0
+    thinking = (usage.get("output_tokens_details") or {}).get("thinking_tokens")
+    return {
+        "prompt_tokens": usage["input_tokens"] + cached + written,
+        "prompt_tokens_details": {"cached_tokens": cached, "cache_write_tokens": written},
+        "completion_tokens": usage["output_tokens"],
+        "completion_tokens_details": {"reasoning_tokens": thinking},
+        "anthropic": usage,
     }
 
 
@@ -139,7 +198,7 @@ def call_cost(model: str, usage: dict) -> float:
     uncached_price, cached_price, output_price = _PRICES[model]
     details = usage["prompt_tokens_details"]
     cached = details["cached_tokens"]
-    # Only gpt-5.6-luna reports cache writes; they bill at 1.25× the uncached input rate.
+    # gpt-5.6-luna and Claude report cache writes; they bill at 1.25× the uncached input rate.
     written = details.get("cache_write_tokens", 0)
     uncached = usage["prompt_tokens"] - cached - written
     input_cost = uncached * uncached_price + written * uncached_price * _CACHE_WRITE_MULTIPLIER + cached * cached_price
@@ -154,6 +213,10 @@ def _percentile(values: list[float], fraction: float) -> float:
 
 def _answered(calls: list[Call]) -> list[tuple[Call, Answer]]:
     return [(call, call.answer) for call in calls if call.answer is not None]
+
+
+def difficulty(query: dict) -> str:
+    return query.get("difficulty", "standard")
 
 
 def summarise(calls: list[Call], queries: list[dict]) -> Summary:
@@ -176,6 +239,7 @@ def summarise(calls: list[Call], queries: list[dict]) -> Summary:
         predicted += len(got)
         expected += len(want)
 
+    reasoning = [u["completion_tokens_details"]["reasoning_tokens"] for u in usages]
     prompt_tokens = sum(u["prompt_tokens"] for u in usages)
     return Summary(
         calls=len(calls),
@@ -183,9 +247,7 @@ def summarise(calls: list[Call], queries: list[dict]) -> Summary:
         median_latency=statistics.median(latencies),
         p95_latency=_percentile(latencies, 0.95),
         within={cutoff: sum(lat <= cutoff for lat in latencies) / len(calls) for cutoff in _CUTOFFS},
-        mean_reasoning_tokens=statistics.mean(
-            u["completion_tokens_details"]["reasoning_tokens"] for u in usages
-        ),
+        mean_reasoning_tokens=math.nan if None in reasoning else statistics.mean(reasoning),
         mean_completion_tokens=statistics.mean(u["completion_tokens"] for u in usages),
         cached_share=sum(u["prompt_tokens_details"]["cached_tokens"] for u in usages) / prompt_tokens,
         filter_match_rate=sum(filters_match(a.output["filters"], by_query[c.query]) for c, a in answered)
@@ -218,59 +280,95 @@ def disagreements(calls: list[Call]) -> dict[str, dict[Config, list[Outcome]]]:
     }
 
 
-async def _measure(config: Config, query: str, run: int, api_key: str, *, warmup: bool = False) -> Call:
+async def _post_openai(config: Config, query: str, sets: tuple[CatalogSet, ...], api_key: str) -> tuple[dict, dict] | None:
+    """(usage, parsed output), or None when rate-limited."""
+    async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
+        response = await client.post(
+            _OPENAI_CHAT_URL,
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=request_body(config, query, sets),
+        )
+    if response.status_code == 429:
+        return None
+    response.raise_for_status()
+    payload = response.json()
+    return payload["usage"], json.loads(payload["choices"][0]["message"]["content"])
+
+
+async def _post_claude(
+    config: Config, query: str, sets: tuple[CatalogSet, ...], auth: tuple[str, str | None]
+) -> tuple[dict, dict] | None:
+    """(usage, parsed output), or None when rate-limited or overloaded."""
+    api_key, workspace_id = auth
+    headers = {"anthropic-workspace-id": workspace_id} if workspace_id else None
+    async with anthropic.AsyncAnthropic(
+        api_key=api_key, timeout=_TIMEOUT_SECONDS, max_retries=0, default_headers=headers
+    ) as client:
+        try:
+            message = await client.messages.create(**claude_request(config, query, sets))
+        except anthropic.RateLimitError:
+            return None
+        except anthropic.APIStatusError as exc:
+            if exc.status_code == 529:
+                return None
+            raise
+    if message.stop_reason != "end_turn":
+        raise ValueError(f"stop_reason {message.stop_reason}")
+    text = next(block.text for block in message.content if block.type == "text")
+    return claude_usage(message.usage.to_dict()), json.loads(text)
+
+
+async def _measure(
+    config: Config, query: str, run: int, sets: tuple[CatalogSet, ...], auth, *, warmup: bool = False
+) -> Call:
     # A fresh client per call, as HostedParseClient does, so connection setup is included.
+    post = _post_claude if config.is_claude else _post_openai
     for attempt in range(_MAX_RATE_LIMIT_RETRIES + 1):
         started = time.perf_counter()
         try:
-            async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
-                response = await client.post(
-                    _OPENAI_CHAT_URL,
-                    headers={"Authorization": f"Bearer {api_key}"},
-                    json=request_body(config, query),
-                )
+            result = await post(config, query, sets, auth)
             latency = time.perf_counter() - started
-            if response.status_code == 429 and attempt < _MAX_RATE_LIMIT_RETRIES:
-                await asyncio.sleep(2**attempt * 5)
-                continue
-            response.raise_for_status()
-            payload = response.json()
-            output = json.loads(payload["choices"][0]["message"]["content"])
-            return Call(config, query, run, Answer(latency, payload["usage"], output), warmup=warmup)
-        except (httpx.HTTPError, KeyError, json.JSONDecodeError) as exc:
+            if result is None:
+                if attempt < _MAX_RATE_LIMIT_RETRIES:
+                    await asyncio.sleep(2**attempt * 5)
+                    continue
+                return Call(config, query, run, None, "rate-limited after retries", warmup)
+            usage, output = result
+            return Call(config, query, run, Answer(latency, usage, output), warmup=warmup)
+        except (httpx.HTTPError, anthropic.APIError, KeyError, StopIteration, ValueError) as exc:
             detail = exc.response.text[:300] if isinstance(exc, httpx.HTTPStatusError) else ""
             error = f"{type(exc).__name__}: {exc} {detail}".strip()
             return Call(config, query, run, None, error, warmup)
     raise AssertionError("unreachable")
 
 
-async def _measure_config(config: Config, queries: list[dict], api_key: str) -> list[Call]:
-    warmup = await _measure(config, queries[0]["query"], 0, api_key, warmup=True)
+async def _measure_config(config: Config, queries: list[dict], sets: tuple[CatalogSet, ...], auth) -> list[Call]:
+    warmup = await _measure(config, queries[0]["query"], 0, sets, auth, warmup=True)
     if warmup.error is not None:
         raise SystemExit(f"{config}: warm-up call failed: {warmup.error}")
     calls = [warmup]
     for run in range(1, _RUNS + 1):
         for query in queries:
-            calls.append(await _measure(config, query["query"], run, api_key))
+            calls.append(await _measure(config, query["query"], run, sets, auth))
         print(f"{config}: run {run}/{_RUNS} done", file=sys.stderr)
     return calls
 
 
-async def _run_all(queries: list[dict], api_key: str) -> list[Call]:
+async def _run_all(queries: list[dict], sets: tuple[CatalogSet, ...], keys: dict[bool, object]) -> list[Call]:
     # Configurations run side by side; calls within one run one at a time.
-    per_config = await asyncio.gather(*(_measure_config(c, queries, api_key) for c in CONFIGS))
+    per_config = await asyncio.gather(*(_measure_config(c, queries, sets, keys[c.is_claude]) for c in CONFIGS))
     return [call for calls in per_config for call in calls]
 
 
-def _save(calls: list[Call]) -> None:
+def _save(calls: list[Call], path: Path) -> None:
     # One call per line: compact, and still readable in a diff.
     lines = ",\n".join(json.dumps(asdict(c), ensure_ascii=False) for c in calls)
-    RAW_PATH.write_text(f"[\n{lines}\n]\n", encoding="utf-8")
+    path.write_text(f"[\n{lines}\n]\n", encoding="utf-8")
 
 
-def _load() -> list[Call]:
+def _load(path: Path) -> list[Call]:
     calls = []
-    for c in json.loads(RAW_PATH.read_text(encoding="utf-8")):
+    for c in json.loads(path.read_text(encoding="utf-8")):
         answer = Answer(**c["answer"]) if c["answer"] is not None else None
         calls.append(Call(**{**c, "config": Config(**c["config"]), "answer": answer}))
     return calls
@@ -278,6 +376,10 @@ def _load() -> list[Call]:
 
 def _percent(value: float) -> str:
     return f"{value:.0%}"
+
+
+def _tokens(value: float) -> str:
+    return "n/a" if math.isnan(value) else f"{value:.0f}"
 
 
 def _render_outcome(outcome: Outcome) -> str:
@@ -291,33 +393,43 @@ _REWRITE_SAMPLES = (
     "stall the opponent",
     "put damage counters on their bench",
     "stadium that punishes ex",
-    "big hp basic",
+    "punish them for attacking me",
 )
 
 
 def report(calls: list[Call], queries: list[dict]) -> str:
     measured = [c for c in calls if not c.warmup]
+    # Configurations in the order they ran, so older raw files still render.
+    configs = list(dict.fromkeys(c.config for c in calls))
+    level = {q["query"]: difficulty(q) for q in queries}
+    counts = {d: sum(difficulty(q) == d for q in queries) for d in DIFFICULTIES}
     lines = [
-        "| Configuration | Calls | Errors | Median | p95 | ≤2s | ≤3s | ≤4s | ≤6s | ≤8s "
+        f"Standard: {counts['standard']} queries. Hard: {counts['hard']} queries, scored separately.",
+        "",
+        "| Configuration | Cases | Calls | Errors | Median | p95 | ≤2s | ≤3s | ≤4s | ≤6s | ≤8s "
         "| Reasoning tok | Completion tok | Cached | Filters exact | Tag P | Tag R | $ / 1k queries |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: "
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: "
         "| ---: | ---: | ---: |",
     ]
-    for config in CONFIGS:
-        s = summarise([c for c in measured if c.config == config], queries)
-        within = " | ".join(_percent(s.within[cutoff]) for cutoff in _CUTOFFS)
-        lines.append(
-            f"| `{config}` | {s.calls} | {s.errors} | {s.median_latency:.2f}s | {s.p95_latency:.2f}s | {within} "
-            f"| {s.mean_reasoning_tokens:.0f} | {s.mean_completion_tokens:.0f} | {_percent(s.cached_share)} "
-            f"| {_percent(s.filter_match_rate)} | {s.tag_precision:.2f} | {s.tag_recall:.2f} "
-            f"| ${s.cost_per_1000:.3f} |"
-        )
+    for config in configs:
+        for cases in DIFFICULTIES:
+            subset = [c for c in measured if c.config == config and level.get(c.query) == cases]
+            if not subset:
+                continue
+            s = summarise(subset, queries)
+            within = " | ".join(_percent(s.within[cutoff]) for cutoff in _CUTOFFS)
+            lines.append(
+                f"| `{config}` | {cases} | {s.calls} | {s.errors} | {s.median_latency:.2f}s | {s.p95_latency:.2f}s "
+                f"| {within} | {_tokens(s.mean_reasoning_tokens)} | {s.mean_completion_tokens:.0f} "
+                f"| {_percent(s.cached_share)} | {_percent(s.filter_match_rate)} | {s.tag_precision:.2f} "
+                f"| {s.tag_recall:.2f} | ${s.cost_per_1000:.3f} |"
+            )
 
     answers = _answered(calls)
     prompt = sum(a.usage["prompt_tokens"] for _, a in answers)
     cached = sum(a.usage["prompt_tokens_details"]["cached_tokens"] for _, a in answers)
     completion = sum(a.usage["completion_tokens"] for _, a in answers)
-    reasoning = sum(a.usage["completion_tokens_details"]["reasoning_tokens"] for _, a in answers)
+    reasoning = sum(a.usage["completion_tokens_details"]["reasoning_tokens"] or 0 for _, a in answers)
     total_cost = sum(call_cost(c.config.model, a.usage) for c, a in answers)
     lines += [
         "",
@@ -329,8 +441,10 @@ def report(calls: list[Call], queries: list[dict]) -> str:
         "",
     ]
     for query in _REWRITE_SAMPLES:
+        if query not in level:
+            continue
         lines += [f"**{query}**", "", "| Configuration | `concept_rewritten` |", "| --- | --- |"]
-        for config in CONFIGS:
+        for config in configs:
             sample = next((a for c, a in _answered(measured) if c.config == config and c.query == query), None)
             text = sample.output["concept_rewritten"] if sample else "(failed)"
             lines.append(f"| `{config}` | {text or '(empty)'} |")
@@ -341,13 +455,14 @@ def report(calls: list[Call], queries: list[dict]) -> str:
     for query, by_config in disagreements(measured).items():
         q = expected[query]
         want = (normalise_filters(q["filters"]), tuple(sorted(q["tags"])))
+        marker = " — hard" if difficulty(q) == "hard" else ""
         lines += [
-            f"**{query}** (expected {_render_outcome(want)})",
+            f"**{query}**{marker} (expected {_render_outcome(want)})",
             "",
             f"| Configuration | Distinct outputs across {_RUNS} runs |",
             "| --- | --- |",
         ]
-        for config in CONFIGS:
+        for config in configs:
             outcomes = by_config.get(config, [])
             rendered = "<br>".join(_render_outcome(o) for o in outcomes) or "(all failed)"
             lines.append(f"| `{config}` | {rendered} |")
@@ -363,17 +478,23 @@ def report(calls: list[Call], queries: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Measure the hosted parse call (#85).")
     parser.add_argument("--report", action="store_true", help="re-render from the saved raw results")
+    parser.add_argument("--raw", type=Path, default=RAW_PATH, help="raw results file to write or read")
     args = parser.parse_args()
 
     queries = json.loads(QUERIES_PATH.read_text(encoding="utf-8"))
     if args.report:
-        calls = _load()
+        calls = _load(args.raw)
     else:
-        api_key = Settings().openai_api_key
-        if not api_key:
+        settings = _EvalSettings()
+        claude_key = settings.claude_api_key or settings.anthropic_api_key
+        if not settings.openai_api_key:
             raise SystemExit("OPENAI_API_KEY is not set")
-        calls = asyncio.run(_run_all(queries, api_key))
-        _save(calls)
+        if not claude_key:
+            raise SystemExit("CLAUDE_API_KEY (or ANTHROPIC_API_KEY) is not set")
+        # OpenAI takes the bare key; Claude takes (key, workspace id).
+        keys = {False: settings.openai_api_key, True: (claude_key, settings.claude_workspace_id)}
+        calls = asyncio.run(_run_all(queries, load_sets(), keys))
+        _save(calls, args.raw)
     # The tables use non-ASCII (≤, ·); Windows consoles default to a legacy code page.
     out = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     out.write(report(calls, queries) + "\n")

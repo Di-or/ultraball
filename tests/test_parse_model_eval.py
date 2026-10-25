@@ -12,9 +12,13 @@ from scripts.parse_model_eval import (
     Call,
     Config,
     call_cost,
+    claude_request,
+    claude_usage,
     disagreements,
     filters_match,
+    load_sets,
     normalise_filters,
+    report,
     request_body,
     summarise,
 )
@@ -57,26 +61,59 @@ def _usage(prompt: int = 1000, cached: int = 800, completion: int = 100, reasoni
 
 
 def test_request_body_is_the_production_prompt_and_schema_with_an_explicit_effort() -> None:
-    body = request_body(Config("gpt-5.6-luna", "none"), "energy accel")
+    sets = load_sets()
+    body = request_body(Config("gpt-5.6-luna", "low"), "energy accel", sets)
 
     assert body["model"] == "gpt-5.6-luna"
-    assert body["reasoning_effort"] == "none"
+    assert body["reasoning_effort"] == "low"
     assert body["messages"] == [
-        {"role": "system", "content": parse_client._SYSTEM_PROMPT},
+        {"role": "system", "content": parse_client.build_system_prompt(sets)},
         {"role": "user", "content": "energy accel"},
     ]
-    assert body["response_format"]["json_schema"]["schema"] is parse_client._PARSE_JSON_SCHEMA
+    assert body["response_format"]["json_schema"]["schema"] == parse_client.build_parse_json_schema(sets)
     assert body["response_format"]["json_schema"]["strict"] is True
 
 
-def test_the_six_configurations_cover_both_models_at_three_efforts() -> None:
+def test_claude_request_sends_the_same_prompt_and_schema_with_a_cached_system_prompt() -> None:
+    sets = load_sets()
+    body = claude_request(Config("claude-haiku-5-5", "low"), "energy accel", sets)
+
+    assert body["model"] == "claude-haiku-5-5"
+    assert body["system"] == [
+        {"type": "text", "text": parse_client.build_system_prompt(sets), "cache_control": {"type": "ephemeral"}}
+    ]
+    assert body["messages"] == [{"role": "user", "content": "energy accel"}]
+    assert body["output_config"] == {
+        "effort": "low",
+        "format": {"type": "json_schema", "schema": parse_client.build_parse_json_schema(sets)},
+    }
+
+
+def test_claude_usage_counts_cache_reads_and_writes_as_prompt_tokens() -> None:
+    usage = claude_usage(
+        {
+            "input_tokens": 20,
+            "cache_read_input_tokens": 1500,
+            "cache_creation_input_tokens": 0,
+            "output_tokens": 300,
+            "output_tokens_details": {"thinking_tokens": 200},
+        }
+    )
+
+    assert usage["prompt_tokens"] == 1520
+    assert usage["prompt_tokens_details"] == {"cached_tokens": 1500, "cache_write_tokens": 0}
+    assert usage["completion_tokens"] == 300
+    assert usage["completion_tokens_details"] == {"reasoning_tokens": 200}
+    # Haiku 5.5: 20 × $0.10 + 1500 × $0.01 + 300 × $0.50, per 1M tokens.
+    assert call_cost("claude-haiku-5-5", usage) == pytest.approx((20 * 0.10 + 1500 * 0.01 + 300 * 0.50) / 1e6)
+
+
+def test_the_configurations_cover_luna_and_haiku_at_low_and_medium() -> None:
     assert CONFIGS == [
-        Config("gpt-5-mini", "minimal"),
-        Config("gpt-5-mini", "low"),
-        Config("gpt-5-mini", "medium"),
-        Config("gpt-5.6-luna", "none"),
         Config("gpt-5.6-luna", "low"),
         Config("gpt-5.6-luna", "medium"),
+        Config("claude-haiku-5-5", "low"),
+        Config("claude-haiku-5-5", "medium"),
     ]
 
 
@@ -192,13 +229,34 @@ def test_summary_of_a_configuration_whose_calls_all_failed_reports_only_errors()
     assert math.isnan(summary.tag_precision)
 
 
-def test_query_set_uses_only_known_tags_and_filter_fields() -> None:
+def test_query_set_uses_only_known_tags_filter_fields_and_set_ids() -> None:
     queries = json.loads(Path(QUERIES_PATH).read_text(encoding="utf-8"))
-    filter_fields = set(parse_client._FILTERS_SCHEMA["properties"])
+    filter_fields = set(parse_client._FILTERS_SCHEMA["properties"]) | {"set_id"}
+    set_ids = {s.id for s in load_sets()}
 
-    assert len(queries) == 25
-    assert len({q["query"] for q in queries}) == 25
+    assert len({q["query"] for q in queries}) == len(queries)
+    assert sum(q.get("difficulty") == "hard" for q in queries) >= 15
     for query in queries:
+        assert query.get("difficulty", "standard") in ("standard", "hard"), query["query"]
         assert set(query["tags"]) <= parse_client.FUNCTIONAL_TAGS, query["query"]
         for accepted in [query["filters"], *query.get("filters_also", [])]:
             assert set(accepted) <= filter_fields, query["query"]
+            assert accepted.get("set_id", "sv01") in set_ids, query["query"]
+
+
+def test_report_scores_hard_queries_in_their_own_row() -> None:
+    luna = Config("gpt-5.6-luna", "low")
+    queries = [
+        {"query": "energy accel", "filters": {}, "tags": ["acceleration"]},
+        {"query": "lock items and abilities", "filters": {}, "tags": ["ability-lock", "item-lock"], "difficulty": "hard"},
+    ]
+    calls = [
+        _call("energy accel", config=luna, tags=["acceleration"]),
+        _call("lock items and abilities", config=luna, tags=["item-lock"]),
+    ]
+
+    cells = [line.split(" | ") for line in report(calls, queries).splitlines()]
+
+    standard, hard = (row for row in cells if row[0] == "| `gpt-5.6-luna / low`" and row[1] in ("standard", "hard"))
+    assert standard[1] == "standard" and standard[-3:-1] == ["1.00", "1.00"]
+    assert hard[1] == "hard" and hard[-3:-1] == ["1.00", "0.50"]
