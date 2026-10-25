@@ -3,8 +3,9 @@ import json
 import httpx
 import pytest
 
+from app.catalog.set_models import CatalogSet
 from app.clients import parse_client
-from app.clients.parse_client import HostedParseClient
+from app.clients.parse_client import HostedParseClient, build_parse_json_schema, build_system_prompt
 from app.enrichment.taxonomy import TAG_DEFINITIONS, TAG_EXAMPLES
 
 _PARSE_OBJECT = {
@@ -50,7 +51,7 @@ async def test_hosted_parse_request_is_strict_gpt_5_mini_without_temperature(
     sent_requests: list[httpx.Request],
 ) -> None:
     # gpt-5-mini is a reasoning model: it only accepts the default temperature.
-    await HostedParseClient(api_key="test-key").parse("energy accel pokemon under 130 HP")
+    await HostedParseClient(api_key="test-key").parse("energy accel pokemon under 130 HP", ())
 
     body = json.loads(sent_requests[-1].content)
     assert "temperature" not in body
@@ -64,7 +65,7 @@ async def test_hosted_parse_system_prompt_carries_every_tag_definition(
 ) -> None:
     # The parser must draw the same line between tags as the enricher, so it reads the
     # same definitions (and examples) rather than bare tag names.
-    await HostedParseClient(api_key="test-key").parse("energy accel")
+    await HostedParseClient(api_key="test-key").parse("energy accel", ())
 
     body = json.loads(sent_requests[-1].content)
     system_prompt = body["messages"][0]["content"]
@@ -79,7 +80,7 @@ async def test_hosted_parse_system_prompt_keeps_effect_phrasing_out_of_numeric_f
 ) -> None:
     # A `retreat` filter is a hard gate and Trainers have no retreat value, so "retreat for
     # free" filled as retreat=0 drops every Switch-type and retreat-cost Trainer (#89).
-    await HostedParseClient(api_key="test-key").parse("retreat for free")
+    await HostedParseClient(api_key="test-key").parse("retreat for free", ())
 
     system_prompt = json.loads(sent_requests[-1].content)["messages"][0]["content"]
     # Numeric filters only for a stated number or the card's printed stat.
@@ -89,3 +90,60 @@ async def test_hosted_parse_system_prompt_keeps_effect_phrasing_out_of_numeric_f
         assert effect_phrase in system_prompt
     # No overlap: the same words never land in both filters and concept.
     assert "Never encode the same words in both `filters` and `concept`" in system_prompt
+
+
+_SETS = (
+    CatalogSet(id="sv06", code="TWM", name="Twilight Masquerade"),
+    CatalogSet(id="sv01", code="SVI", name="Scarlet & Violet"),
+)
+
+
+def test_system_prompt_lists_each_set_by_id_code_and_name_in_id_order() -> None:
+    system_prompt = build_system_prompt(_SETS)
+
+    first = system_prompt.index("sv01 — SVI — Scarlet & Violet")
+    second = system_prompt.index("sv06 — TWM — Twilight Masquerade")
+    assert first < second
+
+
+def test_system_prompt_is_identical_for_the_same_set_list() -> None:
+    # Byte-identical text keeps the hosted model's prompt cache warm, whatever order the sets arrive in.
+    assert build_system_prompt(_SETS) == build_system_prompt(tuple(reversed(_SETS)))
+
+
+def test_system_prompt_puts_the_set_list_ahead_of_the_instructions() -> None:
+    system_prompt = build_system_prompt(_SETS)
+
+    assert system_prompt.index("sv06 — TWM — Twilight Masquerade") < system_prompt.index("You split a")
+
+
+def test_system_prompt_tells_the_model_to_resolve_a_named_set_to_its_listed_id() -> None:
+    system_prompt = build_system_prompt(_SETS)
+
+    assert "fill `set_id` with that set's id from the list" in system_prompt
+    for phrase in ("name", "PTCGL code", "id"):
+        assert phrase in system_prompt
+
+
+def test_schema_limits_set_id_to_the_listed_ids_plus_null() -> None:
+    schema = build_parse_json_schema(_SETS)
+
+    assert schema["properties"]["filters"]["properties"]["set_id"]["enum"] == ["sv01", "sv06", None]
+
+
+def test_schema_with_an_empty_catalog_allows_only_a_null_set_id() -> None:
+    schema = build_parse_json_schema(())
+
+    set_id = schema["properties"]["filters"]["properties"]["set_id"]
+    assert set_id["enum"] == [None]
+    assert "set_id" in schema["properties"]["filters"]["required"]
+
+
+async def test_hosted_parse_request_carries_the_set_list_prompt_and_schema(
+    sent_requests: list[httpx.Request],
+) -> None:
+    await HostedParseClient(api_key="test-key").parse("supporters from Twilight Masquerade", _SETS)
+
+    body = json.loads(sent_requests[-1].content)
+    assert body["messages"][0]["content"] == build_system_prompt(_SETS)
+    assert body["response_format"]["json_schema"]["schema"] == build_parse_json_schema(_SETS)

@@ -17,7 +17,13 @@ from app.catalog.detail_models import CardDetail
 from app.catalog.energy_models import EnergyBasic, EnergyBasicsResponse
 from app.catalog.models import Base as CatalogBase
 from app.catalog.ptcgl_import import DeckImportError, resolve_ptcgl_import
-from app.catalog.queries import get_basic_energy_palette, get_cards_by_ids, get_printings, get_sets
+from app.catalog.queries import (
+    get_basic_energy_palette,
+    get_cards_by_ids,
+    get_printings,
+    get_set_list,
+    get_sets,
+)
 from app.catalog.set_models import SetSummary
 from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
@@ -50,9 +56,16 @@ def create_app(
         async with engine.begin() as conn:
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
             await conn.run_sync(CatalogBase.metadata.create_all)
+            # `create_all` never adds a column to an existing table; backfill `set_name` (issue #90)
+            # on a database from before it. Re-running ingest (or the seed script) fills real names.
+            await conn.execute(text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS set_name VARCHAR NOT NULL DEFAULT ''"))
             await conn.run_sync(EnrichmentBase.metadata.create_all)
             await conn.run_sync(ParseCacheBase.metadata.create_all)
             await conn.run_sync(QueryEmbeddingCacheBase.metadata.create_all)
+        # Loaded once: a set ingested while the app runs only reaches the parse prompt, schema
+        # and cache key after a restart (issue #90 — no live reload).
+        async with session_factory() as session:
+            app.state.set_list = await get_set_list(session)
         yield
         await engine.dispose()
 
@@ -73,7 +86,7 @@ def create_app(
         request: SearchRequest, session: AsyncSession = Depends(get_session)
     ) -> SearchResponse:
         gate = await resolve_search_gate(
-            session, parse_client, embedding_client, request.query, request.filters
+            session, parse_client, embedding_client, request.query, request.filters, app.state.set_list
         )
 
         if gate.tags and gate.query_vector is not None:

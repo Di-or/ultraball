@@ -7,7 +7,7 @@ async def test_stub_parse_client_returns_canned_result() -> None:
     canned = ParseResult(filters={"format": "standard"}, concept="acceleration", concept_rewritten="attach more Energy than the rule allows", tags=["acceleration"])
     stub: ParseClient = StubParseClient(canned)
 
-    result = await stub.parse("energy acceleration under 130 HP")
+    result = await stub.parse("energy acceleration under 130 HP", ())
 
     assert result is canned
 
@@ -15,7 +15,7 @@ async def test_stub_parse_client_returns_canned_result() -> None:
 async def test_stub_parse_client_defaults_to_empty_result() -> None:
     stub: ParseClient = StubParseClient()
 
-    result = await stub.parse("charizard")
+    result = await stub.parse("charizard", ())
 
     assert result == ParseResult()
 

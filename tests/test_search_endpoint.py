@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from contextlib import asynccontextmanager
 
 from httpx import ASGITransport, AsyncClient
@@ -6,12 +6,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.community.postgres import PostgresContainer
 
+from app.catalog.set_models import CatalogSet
 from app.clients.embedding_client import EmbeddingClient
 from app.clients.parse_client import ParseClient, ParseResult
 from app.config import Settings
 from app.main import create_app
 from app.search.embedding_cache import QueryEmbeddingCacheEntry
-from app.search.parse_cache import ParseCacheEntry
+from app.search.parse import PARSE_VERSION
+from app.search.parse_cache import ParseCacheEntry, make_cache_key
 from tests.factories import make_card as _card
 from tests.factories import make_enrichment as _enrichment
 from tests.stubs import StubEmbeddingClient, StubParseClient
@@ -23,14 +25,16 @@ class _CountingParseClient(ParseClient):
     def __init__(self, canned: ParseResult) -> None:
         self._stub = StubParseClient(canned)
         self.call_count = 0
+        self.sets_seen: list[Sequence[CatalogSet]] = []
 
-    async def parse(self, query: str) -> ParseResult:
+    async def parse(self, query: str, sets: Sequence[CatalogSet]) -> ParseResult:
         self.call_count += 1
-        return await self._stub.parse(query)
+        self.sets_seen.append(sets)
+        return await self._stub.parse(query, sets)
 
 
 class _FailingParseClient(ParseClient):
-    async def parse(self, query: str) -> ParseResult:
+    async def parse(self, query: str, sets: Sequence[CatalogSet]) -> ParseResult:
         raise RuntimeError("hosted parse model unavailable")
 
 
@@ -187,6 +191,31 @@ async def test_search_a_repeat_query_does_not_re_invoke_the_parse_model(
     assert counting_client.call_count == 1
     cached = await db_session.scalars(select(ParseCacheEntry))
     assert len(list(cached)) == 1
+
+
+async def test_search_parses_and_caches_against_the_set_list_loaded_at_startup(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="sv06-1", dedupe_key="a", set_id="sv06", set_code="TWM", set_name="Twilight Masquerade"),
+            _card(id="sv06-2", dedupe_key="b", set_id="sv06", set_code="TWM", set_name="Twilight Masquerade"),
+            _card(id="sv01-1", dedupe_key="c", set_id="sv01", set_code="SVI", set_name="Scarlet & Violet"),
+        ]
+    )
+    await db_session.commit()
+    counting_client = _CountingParseClient(ParseResult(filters={"set_id": "sv06"}))
+
+    async with _client_with_parse_client(postgres_container, counting_client) as client:
+        await client.post("/search", json={"query": "TWM supporters"})
+
+    expected_sets = (
+        CatalogSet(id="sv01", code="SVI", name="Scarlet & Violet"),
+        CatalogSet(id="sv06", code="TWM", name="Twilight Masquerade"),
+    )
+    assert [tuple(sets) for sets in counting_client.sets_seen] == [expected_sets]
+    cached = list(await db_session.scalars(select(ParseCacheEntry)))
+    assert [entry.cache_key for entry in cached] == [make_cache_key("twm supporters", PARSE_VERSION, expected_sets)]
 
 
 async def test_search_query_with_tags_routes_to_tag_match_ranking(

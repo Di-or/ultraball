@@ -87,6 +87,17 @@ async def test_ingest_projects_typed_scalar_and_jsonb_columns(db_session: AsyncS
     assert card.attacks[0]["name"] == "Fire Spin"
 
 
+async def test_ingest_stores_the_set_name_on_every_card_from_the_set(db_session: AsyncSession) -> None:
+    catalog_client = StubCatalogClient(
+        {"base1": SetSnapshot("base1", date(1999, 1, 9), [_CHARIZARD, _FIRE_ENERGY], name="Base Set")}
+    )
+
+    await run_ingest(db_session, catalog_client, "base1")
+
+    names = await db_session.scalars(select(Card.set_name).where(Card.set_id == "base1"))
+    assert list(names) == ["Base Set", "Base Set"]
+
+
 async def test_genuine_reprints_collapse_to_one_dedupe_key(db_session: AsyncSession) -> None:
     catalog_client = StubCatalogClient(
         {

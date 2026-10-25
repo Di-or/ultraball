@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.models import Card
-from app.catalog.set_models import SetSummary
+from app.catalog.set_models import CatalogSet, SetSummary
 
 
 async def get_representative_printing(session: AsyncSession, dedupe_key: str) -> Card | None:
@@ -71,11 +71,17 @@ async def get_basic_energy_palette(session: AsyncSession) -> list[Card]:
 async def get_sets(session: AsyncSession) -> list[SetSummary]:
     """Every distinct set in the catalog, newest first (feeds the Filter panel's set dropdown)."""
     stmt = (
-        select(Card.set_id, Card.set_code, func.max(Card.release_date).label("release_date"))
-        .group_by(Card.set_id, Card.set_code)
+        select(Card.set_id, Card.set_code, Card.set_name, func.max(Card.release_date).label("release_date"))
+        .group_by(Card.set_id, Card.set_code, Card.set_name)
         .order_by(func.max(Card.release_date).desc(), Card.set_id)
     )
     return [
-        SetSummary(id=row.set_id, code=row.set_code, release_date=row.release_date)
+        SetSummary(id=row.set_id, code=row.set_code, name=row.set_name, release_date=row.release_date)
         for row in await session.execute(stmt)
     ]
+
+
+async def get_set_list(session: AsyncSession) -> tuple[CatalogSet, ...]:
+    """The catalog's set list for the parse model, sorted by id (issue #90)."""
+    sets = await get_sets(session)
+    return tuple(sorted((CatalogSet(id=s.id, code=s.code, name=s.name) for s in sets), key=lambda s: s.id))

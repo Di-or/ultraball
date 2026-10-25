@@ -36,6 +36,7 @@ async def run_ingest(
         card = project_card(
             raw,
             set_id=snapshot.set_id,
+            set_name=snapshot.name,
             release_date=snapshot.release_date,
             standard_legal_marks=standard_legal_marks,
             banned_dedupe_keys=banned_dedupe_keys,

@@ -95,6 +95,7 @@ SNAPSHOTS: dict[str, SetSnapshot] = {
             _basic_energy("dummy1-8", "Water"),
         ],
         official_abbreviation="DM1",
+        name="Dummy Embers",
     ),
     "dummy2": SetSnapshot(
         "dummy2",
@@ -114,6 +115,7 @@ SNAPSHOTS: dict[str, SetSnapshot] = {
             _basic_energy("dummy2-9", "Psychic"),
         ],
         official_abbreviation="DM2",
+        name="Dummy Verdance",
     ),
     "dummy3": SetSnapshot(
         "dummy3",
@@ -131,6 +133,7 @@ SNAPSHOTS: dict[str, SetSnapshot] = {
             _basic_energy("dummy3-10", "Metal"),
         ],
         official_abbreviation="DM3",
+        name="Dummy Tempest",
     ),
 }
 

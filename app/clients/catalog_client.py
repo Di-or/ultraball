@@ -5,7 +5,7 @@ from datetime import date
 
 @dataclass(frozen=True)
 class SetSnapshot:
-    """One set's crawl result: its release date and raw per-printing JSON."""
+    """One set's crawl result: its name, release date and raw per-printing JSON."""
 
     set_id: str
     release_date: date
@@ -13,6 +13,9 @@ class SetSnapshot:
     official_abbreviation: str | None = None
     """`set.abbreviation.official` from TCGdex, the input to PTCGL set-code derivation
     (CONTEXT.md: catalog layer; issue #28)."""
+    name: str = ""
+    """The TCGdex set name (e.g. "Twilight Masquerade"), which the parse model resolves a
+    named set against (issue #90)."""
 
 
 class CatalogClient(ABC):

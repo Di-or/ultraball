@@ -1,8 +1,10 @@
 import logging
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.set_models import CatalogSet
 from app.clients.embedding_client import EmbeddingClient
 from app.clients.parse_client import ParseClient, ParseResult
 from app.search.embedding_cache import (
@@ -57,6 +59,7 @@ async def resolve_search_gate(
     embedding_client: EmbeddingClient,
     query: str | None,
     fallback_filters: Filters,
+    sets: Sequence[CatalogSet],
 ) -> ResolvedGate:
     """Fills the gate from a natural-language `query`, or passes structured filters through.
 
@@ -64,18 +67,20 @@ async def resolve_search_gate(
     A parse failure degrades to keyword search over `name` plus the default
     Standard gate — never a 500 (CONTEXT.md: Parse object). An empty
     `concept_rewritten` skips the semantic path entirely (CONTEXT.md: Semantic search).
+    The same `sets` go into the cache key and to the parse model, so a cached parse
+    always came from a prompt that listed exactly these sets.
     """
     if not query:
         return ResolvedGate(filters=fallback_filters)
 
-    cache_key = make_cache_key(normalize_query(query), PARSE_VERSION)
+    cache_key = make_cache_key(normalize_query(query), PARSE_VERSION, sets)
     cached = await get_cached_parse(session, cache_key)
     parsed: ParseResult
     if cached is not None:
         parsed = cached
     else:
         try:
-            parsed = await parse_client.parse(query)
+            parsed = await parse_client.parse(query, sets)
         except Exception:
             logger.exception("parse: degrading to keyword search for query=%r", query)
             return ResolvedGate(filters=Filters(format="standard"), keyword=query)
