@@ -62,7 +62,6 @@ _FILTERS_SCHEMA = {
 }
 
 
-
 def build_parse_json_schema(sets: Sequence[CatalogSet]) -> dict:
     """The strict response schema, with `set_id` limited to the listed set ids (or null)."""
     set_ids = sorted(s.id for s in sets)
@@ -117,7 +116,6 @@ mechanical, card-text register (e.g. "energy accel" -> "attach extra Energy from
 deck beyond the one-per-turn attachment"), for embedding — never invent an effect the query \
 didn't ask for. `tags` lists any of the functional tags above that the concept clearly matches \
 (empty array if none clearly match)."""
-
 
 
 def build_system_prompt(sets: Sequence[CatalogSet]) -> str:

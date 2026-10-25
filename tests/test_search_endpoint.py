@@ -213,7 +213,7 @@ async def test_search_parses_and_caches_against_the_set_list_loaded_at_startup(
         CatalogSet(id="sv01", code="SVI", name="Scarlet & Violet"),
         CatalogSet(id="sv06", code="TWM", name="Twilight Masquerade"),
     )
-    assert [tuple(sets) for sets in counting_client.sets_seen] == [expected_sets]
+    assert [set(sets) for sets in counting_client.sets_seen] == [set(expected_sets)]
     cached = list(await db_session.scalars(select(ParseCacheEntry)))
     assert [entry.cache_key for entry in cached] == [make_cache_key("twm supporters", PARSE_VERSION, expected_sets)]
 

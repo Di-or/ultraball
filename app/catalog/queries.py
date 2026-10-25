@@ -71,8 +71,14 @@ async def get_basic_energy_palette(session: AsyncSession) -> list[Card]:
 async def get_sets(session: AsyncSession) -> list[SetSummary]:
     """Every distinct set in the catalog, newest first (feeds the Filter panel's set dropdown)."""
     stmt = (
-        select(Card.set_id, Card.set_code, Card.set_name, func.max(Card.release_date).label("release_date"))
-        .group_by(Card.set_id, Card.set_code, Card.set_name)
+        select(
+            Card.set_id,
+            Card.set_code,
+            # max(): rows backfilled with '' (from before `set_name`) mustn't split a set in two.
+            func.max(Card.set_name).label("set_name"),
+            func.max(Card.release_date).label("release_date"),
+        )
+        .group_by(Card.set_id, Card.set_code)
         .order_by(func.max(Card.release_date).desc(), Card.set_id)
     )
     return [
@@ -82,6 +88,5 @@ async def get_sets(session: AsyncSession) -> list[SetSummary]:
 
 
 async def get_set_list(session: AsyncSession) -> tuple[CatalogSet, ...]:
-    """The catalog's set list for the parse model, sorted by id (issue #90)."""
-    sets = await get_sets(session)
-    return tuple(sorted((CatalogSet(id=s.id, code=s.code, name=s.name) for s in sets), key=lambda s: s.id))
+    """The catalog's set list for the parse model (issue #90); `render_set_lines` fixes its order."""
+    return tuple(CatalogSet(id=s.id, code=s.code, name=s.name) for s in await get_sets(session))

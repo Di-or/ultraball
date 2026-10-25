@@ -27,3 +27,20 @@ async def test_returns_each_distinct_set_newest_first(
         {"id": "swsh1", "code": "SSH", "name": "Sword & Shield", "release_date": "2020-02-07"},
         {"id": "base1", "code": "BS", "name": "Base Set", "release_date": "1999-01-09"},
     ]
+
+
+async def test_a_set_with_a_backfilled_blank_name_on_some_rows_is_listed_once(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # Rows from before `set_name` existed are backfilled with '' until the set is re-ingested.
+    db_session.add_all(
+        [
+            _card(id="sv06-1", dedupe_key="a", set_id="sv06", set_code="TWM", set_name="Twilight Masquerade"),
+            _card(id="sv06-2", dedupe_key="b", set_id="sv06", set_code="TWM", set_name=""),
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.get("/sets")
+
+    assert [(s["id"], s["name"]) for s in response.json()] == [("sv06", "Twilight Masquerade")]
