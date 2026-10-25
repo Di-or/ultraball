@@ -142,6 +142,108 @@ describe("App", () => {
     expect(fetchMock.mock.calls.filter((call) => call[0] === "/search")).toHaveLength(2);
   });
 
+  describe("paging", () => {
+    // `total` > `limit` so the pager renders; filters differ per call so a paged response that
+    // leaked into the panel would show up.
+    const pageable = (filters: SearchResponse["filters"]): SearchResponse => ({
+      results: [],
+      total: 90,
+      limit: 30,
+      offset: 0,
+      filters,
+    });
+
+    function searchBodies(fetchMock: ReturnType<typeof stubFetch>) {
+      return fetchMock.mock.calls
+        .filter((call) => call[0] === "/search")
+        .map((call) => JSON.parse(call[1]?.body as string));
+    }
+
+    async function submitQuery(text: string) {
+      render(<App />);
+      await waitFor(() => expect(screen.queryByText("Searching…")).not.toBeInTheDocument());
+      fireEvent.change(screen.getByLabelText("Search query"), { target: { value: text } });
+      fireEvent.click(screen.getByRole("button", { name: "Search" }));
+      await waitFor(() => expect(screen.getByRole("button", { name: "Next" })).toBeEnabled());
+    }
+
+    it("resends the query on Next and Prev while the concept is showing, leaving the panel alone", async () => {
+      const fetchMock = stubFetch([
+        pageable({ format: "standard" }),
+        pageable({ format: "standard", hp: { lte: 130 } }),
+        pageable({ format: "standard" }),
+        pageable({ format: "standard" }),
+      ]);
+      await submitQuery("energy acceleration under 130 HP");
+      await waitFor(() => expect(screen.getByLabelText("Maximum HP")).toHaveValue("130"));
+
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+      await waitFor(() => expect(screen.getByText("Page 2 of 3")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole("button", { name: "Next" })).toBeEnabled());
+
+      expect(searchBodies(fetchMock).at(-1)).toMatchObject({
+        query: "energy acceleration under 130 HP",
+        offset: 30,
+      });
+      expect(screen.getByLabelText("Maximum HP")).toHaveValue("130");
+      expect(screen.getByRole("status")).toHaveTextContent("Concept:energy acceleration under 130 HP");
+
+      fireEvent.click(screen.getByRole("button", { name: "Previous" }));
+      await waitFor(() => expect(screen.getByText("Page 1 of 3")).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole("button", { name: "Next" })).toBeEnabled());
+
+      expect(searchBodies(fetchMock).at(-1)).toMatchObject({
+        query: "energy acceleration under 130 HP",
+        offset: 0,
+      });
+      expect(screen.getByLabelText("Maximum HP")).toHaveValue("130");
+    });
+
+    it("a filter edit made while the submit is in flight is not overwritten by the edit's own response", async () => {
+      // Hold the submit's response open so the edit lands first and aborts it.
+      const fetchMock = stubFetch([pageable({ format: "standard" })]);
+      const defaultImpl = fetchMock.getMockImplementation()!;
+      fetchMock.mockImplementation((input, init) => {
+        const body = init?.body ? JSON.parse(init.body as string) : null;
+        if (input === "/search" && body?.query) return new Promise<Response>(() => {});
+        if (input === "/search" && body?.filters?.category === "Pokemon") {
+          return Promise.resolve(jsonResponse(pageable({ format: "standard", hp: { lte: 130 } })));
+        }
+        return defaultImpl(input, init);
+      });
+
+      render(<App />);
+      await waitFor(() => expect(screen.queryByText("Searching…")).not.toBeInTheDocument());
+      fireEvent.change(screen.getByLabelText("Search query"), { target: { value: "acceleration" } });
+      fireEvent.click(screen.getByRole("button", { name: "Search" }));
+      fireEvent.click(within(screen.getByRole("group", { name: "Category" })).getByRole("button", { name: "Pokémon" }));
+
+      await waitFor(() => expect(screen.getByRole("button", { name: "Next" })).toBeEnabled());
+      expect(screen.getByLabelText("Maximum HP")).not.toHaveValue("130");
+    });
+
+    it.each([
+      ["a filter edit", () => fireEvent.click(within(screen.getByRole("group", { name: "Category" })).getByRole("button", { name: "Pokémon" }))],
+      ["a facet edit", () => fireEvent.click(within(screen.getByRole("group", { name: "Regulation mark" })).getByRole("button", { name: "H" }))],
+      ["removing the concept", () => fireEvent.click(screen.getByRole("button", { name: "Remove concept" }))],
+    ])("sends no query on Next after %s", async (_label, dropConcept) => {
+      const fetchMock = stubFetch([
+        pageable({ format: "standard" }),
+        pageable({ format: "standard" }),
+        pageable({ format: "standard" }),
+        pageable({ format: "standard" }),
+      ]);
+      await submitQuery("acceleration");
+
+      dropConcept();
+      await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole("button", { name: "Next" })).toBeEnabled());
+
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+      await waitFor(() => expect(searchBodies(fetchMock).at(-1)).toMatchObject({ query: null, offset: 30 }));
+    });
+  });
+
   it("opens a card-detail modal from a result and closes it", async () => {
     stubFetch(
       [
