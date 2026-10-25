@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 
-# The v2 functional-tag taxonomy — 28 effects-only tags across 7 documentation-only
-# families (v1 plus `counter-placement`, #83). Flat enum in code (Q4): the enricher
-# and the query rewriter share this exact vocabulary. See CONTEXT.md: Functional tag.
-TAXONOMY_VERSION = "v2"
+# The v3 functional-tag taxonomy — 29 effects-only tags across 7 documentation-only
+# families (v2 with `switch` narrowed and `retreat-reduction` split out of it, #89).
+# Flat enum in code (Q4): the enricher and the query rewriter share this exact
+# vocabulary. See CONTEXT.md: Functional tag.
+TAXONOMY_VERSION = "v3"
 
 # Bumping the prompt independently of the taxonomy (a wording fix, a confusion-pair
 # clarification) still forces a re-pass without needing a taxonomy version bump.
-PROMPT_VERSION = "v3"
+PROMPT_VERSION = "v4"
 
 
 @dataclass(frozen=True)
@@ -18,7 +19,7 @@ class TagExample:
     card_id: str
 
 
-# One-line definitions, word for word from research/tag-taxonomy-v2.md (a test holds
+# One-line definitions, word for word from research/tag-taxonomy-v3.md (a test holds
 # the two together). The parse prompt renders from this, and the enrichment prompt
 # (#77) is to render from it too, so the enrichment pass and the parser draw the same
 # line between neighbouring tags. Changing a definition or example changes both
@@ -54,7 +55,11 @@ TAG_DEFINITIONS: dict[str, str] = {
     "movement-lock": "Prevent the opponent from retreating or switching.",
     # Tempo & positioning
     "gust": "Force the opponent to switch — drag a Benched Pokémon into the Active spot.",
-    "switch": "Move *your own* Active to the Bench, or reduce your retreat cost.",
+    "switch": (
+        "Switch your Active Pokémon with one of your Benched Pokémon. "
+        "Not retreating, so it works even when retreat is blocked."
+    ),
+    "retreat-reduction": "Reduce or remove your Pokémon's Retreat Cost.",
     "evolution-accel": "Evolve faster or skip an evolution step / turn-in-play rule.",
     # Defense & survivability
     "healing": "Remove damage counters from your Pokémon.",
@@ -108,7 +113,11 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     "special-condition": (TagExample("Toedscool", "sv01-025"),),
     "movement-lock": (TagExample("Tarountula", "sv02-016"), TagExample("Corvisquire", "sv02-165")),
     "gust": (TagExample("Pokémon Catcher", "sv01-187"), TagExample("Gloom", "sv03-002")),
-    "switch": (TagExample("Switch", "sv01-194"), TagExample("Big Air Balloon", "sv03.5-155")),
+    "switch": (TagExample("Switch", "sv01-194"), TagExample("Magnemite", "sv01-063")),
+    "retreat-reduction": (
+        TagExample("Big Air Balloon", "sv03.5-155"),
+        TagExample("Toedscruel", "sv09-089"),
+    ),
     "evolution-accel": (TagExample("Rare Candy", "sv01-191"), TagExample("Scatterbug", "sv01-008")),
     "healing": (TagExample("Potion", "sv01-188"), TagExample("Cook", "sv06-147")),
     "condition-heal": (
