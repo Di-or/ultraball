@@ -16,6 +16,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "anthropic>=1.0",
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "testcontainers[postgres]>=4.8",
