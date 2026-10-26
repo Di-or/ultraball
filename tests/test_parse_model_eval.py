@@ -13,6 +13,7 @@ from scripts.parse_model_eval import (
     Config,
     call_cost,
     claude_request,
+    claude_schema,
     claude_usage,
     disagreements,
     filters_match,
@@ -85,7 +86,27 @@ def test_claude_request_sends_the_same_prompt_and_schema_with_a_cached_system_pr
     assert body["messages"] == [{"role": "user", "content": "energy accel"}]
     assert body["output_config"] == {
         "effort": "low",
-        "format": {"type": "json_schema", "schema": parse_client.build_parse_json_schema(sets)},
+        "format": {"type": "json_schema", "schema": claude_schema(parse_client.build_parse_json_schema(sets))},
+    }
+
+
+def test_claude_schema_turns_nullable_type_lists_into_any_of() -> None:
+    schema = {
+        "type": "object",
+        "properties": {
+            "category": {"type": ["string", "null"], "enum": ["Pokemon", "Trainer", None]},
+            "types": {"type": ["array", "null"], "items": {"type": "string"}},
+            "concept": {"type": "string"},
+        },
+    }
+
+    assert claude_schema(schema) == {
+        "type": "object",
+        "properties": {
+            "category": {"anyOf": [{"type": "string", "enum": ["Pokemon", "Trainer"]}, {"type": "null"}]},
+            "types": {"anyOf": [{"type": "array", "items": {"type": "string"}}, {"type": "null"}]},
+            "concept": {"type": "string"},
+        },
     }
 
 

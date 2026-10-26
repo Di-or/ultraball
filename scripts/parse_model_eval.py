@@ -144,6 +144,27 @@ def request_body(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> di
     }
 
 
+def claude_schema(schema):
+    """The parse schema in the form Anthropic's structured outputs accept, allowing the same values.
+
+    Anthropic rejects a type list like `["string", "null"]` alongside an enum that includes
+    `null`; each nullable node becomes `anyOf: [<the non-null node>, {"type": "null"}]`.
+    """
+    if isinstance(schema, list):
+        return [claude_schema(item) for item in schema]
+    if not isinstance(schema, dict):
+        return schema
+    node = {key: claude_schema(value) for key, value in schema.items()}
+    types = node.get("type")
+    if isinstance(types, list) and "null" in types:
+        rest = [t for t in types if t != "null"]
+        node["type"] = rest[0] if len(rest) == 1 else rest
+        if "enum" in node:
+            node["enum"] = [v for v in node["enum"] if v is not None]
+        return {"anyOf": [node, {"type": "null"}]}
+    return node
+
+
 def claude_request(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> dict:
     """The same prompt and schema as a Messages API request, with the system prompt cached."""
     return {
@@ -153,7 +174,7 @@ def claude_request(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> 
         "messages": [{"role": "user", "content": query}],
         "output_config": {
             "effort": config.effort,
-            "format": {"type": "json_schema", "schema": build_parse_json_schema(sets)},
+            "format": {"type": "json_schema", "schema": claude_schema(build_parse_json_schema(sets))},
         },
     }
 
