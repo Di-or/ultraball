@@ -28,8 +28,8 @@ Everything else (3 runs per query after one warm-up per configuration, 60s timeo
 - So everything fits today's 4s timeout at 96% or better, but only Haiku `low` and Luna `low` would also fit a 3s one on both query sets (96–99%).
 
 **Quality, standard queries.**
-- Luna `medium` is exact on filters (100%) with tag precision 1.00. Luna `low` is at 97% / 1.00.
-- Both Haiku efforts are at 93% filters. The misses are mostly `category: Pokemon` added where the expectations leave it out ("get pokemon back from the discard pile", "attacker that does more damage for each energy attached"); see the note on expectations below.
+- Luna `medium` is exact on filters (100%) with tag precision 1.00. Luna `low` is at 99% / 1.00.
+- Both Haiku efforts are at 97% filters. Every miss is `category: Pokemon` on "get pokemon back from the discard pile", on all 6 runs; see the note on expectations below.
 - Haiku `low` over-tagged #80's noisy query "stadium that punishes ex" on 2 of 3 runs (`counter-damage`, `damage-scaling`), and both Haiku efforts sometimes added `snipe` to "put damage counters on their bench". Haiku `medium` once returned no tag for "bring up their bench".
 - Recall is 0.94–0.96 everywhere. The miss shared by every configuration is "hit their bench for damage", where all answered `snipe` without `spread`, as in the first run.
 - "retreat for free" now comes back as `retreat-reduction` with no filter from every configuration, and the three set queries (by name and by PTCGL code) resolve to the right ids on every run. The no-retreat-cost and `switch` follow-ups are also correct everywhere.
@@ -46,11 +46,10 @@ Everything else (3 runs per query after one warm-up per configuration, 60s timeo
 - Haiku sends more than twice as many input tokens, but at half Luna's rates, all cached, and with output at $0.50 against $1.20, it still comes out cheaper.
 - The whole run (568 calls) cost $0.10.
 
-**Note on expectations.** Some filter "misses" are arguable:
-- `category: Pokemon` for "attacker that does more damage for each energy attached" is defensible, since an attacker is a Pokémon.
-- `{"category": "Pokemon"}` for "get pokemon back from the discard pile" and "turbo evolve my pokemon" is wrong: those queries describe what the card does to your Pokémon, not the card itself, and the filter would hide Trainer cards like Pal Pad or Rare Candy.
+**Note on expectations.**
+- `category: Pokemon` is now accepted for "attacker that does more damage for each energy attached", since an attacker is a Pokémon. The tables below are scored with it accepted; the first render of this file scored it as a miss (Haiku 93%, Luna `low` 97% on standard filters).
+- `{"category": "Pokemon"}` for "get pokemon back from the discard pile" and "turbo evolve my pokemon" stays wrong: those queries describe what the card does to your Pokémon, not the card itself, and the filter would hide Trainer cards like Pal Pad or Rare Candy.
 - Haiku's `attack_cost: {lte: 1}` for "a 1-energy attack" is accepted.
-- The maintainer may want to accept the first case before reading too much into the filter gap between Luna and Haiku.
 
 ## Results
 
@@ -58,13 +57,13 @@ Standard: 30 queries. Hard: 17 queries, scored separately.
 
 | Configuration | Cases | Calls | Errors | Median | p95 | ≤2s | ≤3s | ≤4s | ≤6s | ≤8s | Reasoning tok | Completion tok | Cached | Filters exact | Tag P | Tag R | $ / 1k queries |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `gpt-5.6-luna / low` | standard | 90 | 0 | 1.87s | 2.36s | 71% | 98% | 98% | 99% | 100% | 4 | 109 | 100% | 97% | 1.00 | 0.96 | $0.172 |
+| `gpt-5.6-luna / low` | standard | 90 | 0 | 1.87s | 2.36s | 71% | 98% | 98% | 99% | 100% | 4 | 109 | 100% | 99% | 1.00 | 0.96 | $0.172 |
 | `gpt-5.6-luna / low` | hard | 51 | 0 | 1.92s | 2.58s | 65% | 96% | 100% | 100% | 100% | 16 | 127 | 100% | 98% | 0.98 | 1.00 | $0.193 |
 | `gpt-5.6-luna / medium` | standard | 90 | 0 | 2.20s | 3.08s | 34% | 93% | 100% | 100% | 100% | 22 | 129 | 100% | 100% | 1.00 | 0.96 | $0.195 |
 | `gpt-5.6-luna / medium` | hard | 51 | 0 | 2.59s | 3.93s | 8% | 76% | 96% | 98% | 100% | 54 | 168 | 100% | 100% | 1.00 | 1.00 | $0.243 |
-| `claude-haiku-5-5 / low` | standard | 90 | 0 | 1.41s | 2.42s | 83% | 99% | 100% | 100% | 100% | 6 | 177 | 100% | 93% | 0.96 | 0.96 | $0.135 |
+| `claude-haiku-5-5 / low` | standard | 90 | 0 | 1.41s | 2.42s | 83% | 99% | 100% | 100% | 100% | 6 | 177 | 100% | 97% | 0.96 | 0.96 | $0.135 |
 | `claude-haiku-5-5 / low` | hard | 51 | 0 | 1.59s | 2.30s | 94% | 98% | 100% | 100% | 100% | 4 | 187 | 100% | 90% | 0.92 | 1.00 | $0.140 |
-| `claude-haiku-5-5 / medium` | standard | 90 | 0 | 1.43s | 3.52s | 82% | 91% | 98% | 99% | 99% | 46 | 217 | 100% | 93% | 0.98 | 0.94 | $0.155 |
+| `claude-haiku-5-5 / medium` | standard | 90 | 0 | 1.43s | 3.52s | 82% | 91% | 98% | 99% | 99% | 46 | 217 | 100% | 97% | 0.98 | 0.94 | $0.155 |
 | `claude-haiku-5-5 / medium` | hard | 51 | 0 | 2.07s | 3.10s | 47% | 94% | 100% | 100% | 100% | 128 | 306 | 100% | 98% | 1.00 | 1.00 | $0.199 |
 
 Whole run (568 calls including warm-ups, 0 failed): 1,836,406 input tokens (1,826,064 cached), 97,504 output tokens (17,180 of them reasoning), **$0.10**.
@@ -216,4 +215,44 @@ Whole run (568 calls including warm-ups, 0 failed): 1,836,406 input tokens (1,82
 | `gpt-5.6-luna / medium` | `{}` · evolution-accel |
 | `claude-haiku-5-5 / low` | `{"category": "Pokemon"}` · evolution-accel<br>`{"category": "Trainer", "trainer_type": "Item"}` · evolution-accel |
 | `claude-haiku-5-5 / medium` | `{"category": "Pokemon"}` · evolution-accel<br>`{}` · evolution-accel |
+
+
+## Trial: candidate parse rules
+
+**Rerun:** `uv run python -m scripts.parse_model_eval --prompt rules` (raw calls in `parse-model-eval-haiku-rules-raw.json`).
+
+Four rules, appended after the production instructions (`_RULES` in `scripts/parse_model_eval.py`). Production is unchanged; adopting them is a `parse_client.py` change that bumps `PARSE_VERSION`.
+
+1. **Category:** fill `category` only when the query says what kind of card it wants. A Pokémon or Energy the effect acts on isn't the card's category.
+2. **Snipe and spread:** damage to the opponent's Bench without saying one Pokémon or several gets both `snipe` and `spread`.
+3. **No guessed mechanisms:** tag only effects the query describes. A goal without an effect ("good against big attackers") gets no tags; a described effect still gets its tag.
+4. **Counters aren't damage:** don't pair `counter-placement` with `snipe` or `spread`.
+
+The rules' examples deliberately avoid the eval queries' wording. A first draft quoted near-copies ("get pokemon back from the discard", "evolve my pokemon", "punishes ex") and scored Haiku at 100% standard filters. Its "no guessed mechanisms" example also made Luna drop the tag from "punish them for attacking me" on every run. Both results said more about the examples than the rules, so the draft was rewritten and rerun; only the rerun is recorded here.
+
+| Configuration | Cases | Median | p95 | ≤3s | Filters exact | Tag P | Tag R | $ / 1k |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `gpt-5.6-luna / low` | standard | 1.87s → 1.72s | 2.36s → 2.39s | 98% → 100% | 99% → 100% | 1.00 → 1.00 | 0.96 → 1.00 | $0.172 → $0.182 |
+| `gpt-5.6-luna / low` | hard | 1.92s → 1.92s | 2.58s → 2.66s | 96% → 98% | 98% → 100% | 0.98 → 1.00 | 1.00 → 1.00 | $0.193 → $0.202 |
+| `gpt-5.6-luna / medium` | standard | 2.20s → 1.82s | 3.08s → 2.52s | 93% → 99% | 100% → 100% | 1.00 → 1.00 | 0.96 → 1.00 | $0.195 → $0.201 |
+| `gpt-5.6-luna / medium` | hard | 2.59s → 2.11s | 3.93s → 2.80s | 76% → 98% | 100% → 98% | 1.00 → 0.98 | 1.00 → 1.00 | $0.243 → $0.241 |
+| `claude-haiku-5-5 / low` | standard | 1.41s → 1.45s | 2.42s → 1.96s | 99% → 100% | 97% → 90% | 0.96 → 1.00 | 0.96 → 1.00 | $0.135 → $0.140 |
+| `claude-haiku-5-5 / low` | hard | 1.59s → 1.48s | 2.30s → 2.32s | 98% → 100% | 90% → 100% | 0.92 → 0.96 | 1.00 → 1.00 | $0.140 → $0.145 |
+| `claude-haiku-5-5 / medium` | standard | 1.43s → 1.53s | 3.52s → 2.66s | 91% → 97% | 97% → 93% | 0.98 → 1.00 | 0.94 → 1.00 | $0.155 → $0.163 |
+| `claude-haiku-5-5 / medium` | hard | 2.07s → 2.05s | 3.10s → 3.17s | 94% → 92% | 98% → 100% | 1.00 → 1.00 | 1.00 → 1.00 | $0.199 → $0.206 |
+
+Before → after. "Before" is the baseline run above, scored against the same expected answers. The two runs were measured about an hour apart, so latency moves of a few hundred milliseconds are within run-to-run noise.
+
+**Tags: fixed for both models.**
+- Every configuration reaches tag recall 1.00 on standard queries, and precision is 1.00 except Haiku `low` on hard queries (0.96).
+- "hit their bench for damage" now gets `snipe` + `spread` from every configuration on every run.
+- "stadium that punishes ex" gets no tags, and nothing adds `snipe` to "put damage counters on their bench".
+- Luna `low` + rules is perfect on both query sets.
+
+**Filters: fixed for Luna, not for Haiku.**
+- Haiku still adds `category: Pokemon` to "get pokemon back from the discard pile" on all 6 runs, the miss the category rule targeted.
+- It also now adds `category: Pokemon` to "energy accel" (3 of 6 runs) and `category: Energy` to "get energy out of my deck" (4 of 6). Neither happened in the baseline, so the rule seems to draw Haiku's attention to the field without teaching it when to leave it empty.
+- Haiku `low` twice invented `hp ≥ 200` for "big hp basic", which the instructions already forbid.
+- On hard queries the rules helped Haiku (`low` 90% → 100%): "turbo evolve my pokemon" and the 151 set are now right. Haiku `low` still adds `retreat-reduction` to "151 pokemon with free retreat" on 2 runs, and Luna `medium` once read it as the tag instead of the filter.
+- With the draft examples, which nearly matched the eval queries, Haiku got these category cases right. So Haiku can follow the pattern from close examples but doesn't generalise it from the abstract rule. The likely next lever is a handful of worked examples (query → output) in the prompt covering when `category` stays empty, measured on held-out queries so the gain isn't the examples matching the test.
 

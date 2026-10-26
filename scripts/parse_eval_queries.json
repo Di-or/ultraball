@@ -10,7 +10,7 @@
   {"group": "concept only", "query": "stop them from playing items", "filters": {}, "tags": ["item-lock"]},
   {"group": "concept only", "query": "heal my pokemon", "filters": {}, "tags": ["healing"]},
   {"group": "concept only", "query": "make my opponent discard cards from their hand", "filters": {}, "tags": ["hand-disruption"]},
-  {"group": "concept only", "query": "attacker that does more damage for each energy attached", "filters": {}, "tags": ["damage-scaling"]},
+  {"group": "concept only", "query": "attacker that does more damage for each energy attached", "filters": {}, "filters_also": [{"category": "Pokemon"}], "tags": ["damage-scaling"], "note": "An attacker is a Pokémon, so `category: Pokemon` is accepted too."},
   {"group": "mixed", "query": "fire pokemon that search for energy", "filters": {"category": "Pokemon", "types": ["Fire"]}, "tags": ["energy-search"]},
   {"group": "mixed", "query": "items that search for a pokemon", "filters": {"trainer_type": "Item"}, "filters_also": [{"category": "Trainer", "trainer_type": "Item"}], "tags": ["search"]},
   {"group": "confusion: acceleration vs energy-search", "query": "get energy out of my deck", "filters": {}, "tags": ["energy-search"]},

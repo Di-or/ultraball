@@ -7,6 +7,7 @@ import pytest
 from app.clients import parse_client
 from scripts.parse_model_eval import (
     CONFIGS,
+    PROMPT_VARIANTS,
     QUERIES_PATH,
     Answer,
     Call,
@@ -127,6 +128,18 @@ def test_claude_usage_counts_cache_reads_and_writes_as_prompt_tokens() -> None:
     assert usage["completion_tokens_details"] == {"reasoning_tokens": 200}
     # Haiku 5.5: 20 × $0.10 + 1500 × $0.01 + 300 × $0.50, per 1M tokens.
     assert call_cost("claude-haiku-5-5", usage) == pytest.approx((20 * 0.10 + 1500 * 0.01 + 300 * 0.50) / 1e6)
+
+
+def test_a_prompt_variant_appends_its_rules_after_the_production_prompt() -> None:
+    sets = load_sets()
+    production = parse_client.build_system_prompt(sets)
+
+    luna = request_body(Config("gpt-5.6-luna", "low", "rules"), "energy accel", sets)
+    haiku = claude_request(Config("claude-haiku-5-5", "low", "rules"), "energy accel", sets)
+
+    assert luna["messages"][0]["content"] == production + "\n\n" + PROMPT_VARIANTS["rules"]
+    assert haiku["system"][0]["text"] == luna["messages"][0]["content"]
+    assert str(Config("claude-haiku-5-5", "low", "rules")) == "claude-haiku-5-5 / low + rules"
 
 
 def test_the_configurations_cover_luna_and_haiku_at_low_and_medium() -> None:

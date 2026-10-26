@@ -11,9 +11,11 @@ prompt changes) for every query in `parse_eval_queries.json`, 3 runs per configu
 one warm-up call, with a 60s timeout instead of the client's 4s so slow configurations still
 get measured. Claude models get the same prompt and schema through the Messages API, with the
 system prompt marked for caching. Queries marked `"difficulty": "hard"` are scored in their
-own row so they don't move the standard numbers. Raw calls go to `--raw` (default
-`research/parse-model-eval-haiku-raw.json`); the report tables are printed as Markdown.
-`--report` re-renders the tables from the raw file without calling the API.
+own row so they don't move the standard numbers. `--prompt rules` appends candidate parse rules
+(`_RULES`) to the system prompt, to trial them before changing production. Raw calls go to
+`--raw` (default `research/parse-model-eval-haiku-raw.json`, or
+`parse-model-eval-haiku-<prompt>-raw.json` for a variant); the report tables are printed as
+Markdown. `--report` re-renders the tables from the raw file without calling the API.
 """
 
 import argparse
@@ -51,14 +53,38 @@ DIFFICULTIES = ("standard", "hard")
 class Config:
     model: str
     effort: str
+    # A key of PROMPT_VARIANTS; "current" is the production prompt unchanged.
+    prompt: str = "current"
 
     @property
     def is_claude(self) -> bool:
         return self.model.startswith("claude-")
 
     def __str__(self) -> str:
-        return f"{self.model} / {self.effort}"
+        variant = "" if self.prompt == "current" else f" + {self.prompt}"
+        return f"{self.model} / {self.effort}{variant}"
 
+
+# Candidate parse rules, appended after the production instructions so the cached prefix is shared.
+# Trialled here before any change to `parse_client.py` (which would bump PARSE_VERSION).
+# The examples deliberately avoid the eval queries' wording, so the rules aren't taught the test.
+_RULES = """Further rules:
+- Fill `category` only when the query says what kind of card it wants ("grass pokemon with an \
+ability", "tools that boost damage"). A Pokémon or Energy the effect acts on ("shuffle my \
+pokemon back into the deck", "power up my pokemon", "the opponent's pokemon", "move energy \
+between my pokemon") is not the card's category, so leave `category` null.
+- If the query asks for damage to the opponent's Bench without saying whether one Pokémon or \
+several are hit, tag both `snipe` and `spread`.
+- Tag only effects the query describes. If it names a goal without describing any effect \
+("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
+might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \
+still gets its tag ("hurt them back when they hit me" describes damage back when hit, \
+`counter-damage`; "nothing can damage it next turn" describes damage being prevented, \
+`damage-prevention`).
+- Placing damage counters is not dealing damage: don't add `snipe` or `spread` to a query about \
+damage counters, or `counter-placement` to a query about dealing damage."""
+
+PROMPT_VARIANTS = {"current": "", "rules": _RULES}
 
 # Efforts are sent explicitly: both models default to `medium`, and the request should say what ran.
 CONFIGS = [
@@ -128,13 +154,19 @@ def load_sets() -> tuple[CatalogSet, ...]:
     return tuple(CatalogSet(**s) for s in json.loads(SETS_PATH.read_text(encoding="utf-8")))
 
 
+def system_prompt(config: Config, sets: tuple[CatalogSet, ...]) -> str:
+    """The production system prompt, with the configuration's prompt variant appended."""
+    extra = PROMPT_VARIANTS[config.prompt]
+    return build_system_prompt(sets) + (f"\n\n{extra}" if extra else "")
+
+
 def request_body(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> dict:
     """The production parse request, plus an explicit `reasoning_effort`."""
     return {
         "model": config.model,
         "reasoning_effort": config.effort,
         "messages": [
-            {"role": "system", "content": build_system_prompt(sets)},
+            {"role": "system", "content": system_prompt(config, sets)},
             {"role": "user", "content": query},
         ],
         "response_format": {
@@ -170,7 +202,7 @@ def claude_request(config: Config, query: str, sets: tuple[CatalogSet, ...]) -> 
     return {
         "model": config.model,
         "max_tokens": _CLAUDE_MAX_TOKENS,
-        "system": [{"type": "text", "text": build_system_prompt(sets), "cache_control": {"type": "ephemeral"}}],
+        "system": [{"type": "text", "text": system_prompt(config, sets), "cache_control": {"type": "ephemeral"}}],
         "messages": [{"role": "user", "content": query}],
         "output_config": {
             "effort": config.effort,
@@ -375,9 +407,11 @@ async def _measure_config(config: Config, queries: list[dict], sets: tuple[Catal
     return calls
 
 
-async def _run_all(queries: list[dict], sets: tuple[CatalogSet, ...], keys: dict[bool, object]) -> list[Call]:
+async def _run_all(
+    configs: list[Config], queries: list[dict], sets: tuple[CatalogSet, ...], keys: dict[bool, object]
+) -> list[Call]:
     # Configurations run side by side; calls within one run one at a time.
-    per_config = await asyncio.gather(*(_measure_config(c, queries, sets, keys[c.is_claude]) for c in CONFIGS))
+    per_config = await asyncio.gather(*(_measure_config(c, queries, sets, keys[c.is_claude]) for c in configs))
     return [call for calls in per_config for call in calls]
 
 
@@ -499,12 +533,14 @@ def report(calls: list[Call], queries: list[dict]) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Measure the hosted parse call (#85).")
     parser.add_argument("--report", action="store_true", help="re-render from the saved raw results")
-    parser.add_argument("--raw", type=Path, default=RAW_PATH, help="raw results file to write or read")
+    parser.add_argument("--raw", type=Path, help="raw results file to write or read (default depends on --prompt)")
+    parser.add_argument("--prompt", choices=PROMPT_VARIANTS, default="current", help="system prompt variant to send")
     args = parser.parse_args()
+    raw = args.raw or (RAW_PATH if args.prompt == "current" else RAW_PATH.with_name(f"parse-model-eval-haiku-{args.prompt}-raw.json"))
 
     queries = json.loads(QUERIES_PATH.read_text(encoding="utf-8"))
     if args.report:
-        calls = _load(args.raw)
+        calls = _load(raw)
     else:
         settings = _EvalSettings()
         claude_key = settings.claude_api_key or settings.anthropic_api_key
@@ -514,8 +550,9 @@ def main() -> None:
             raise SystemExit("CLAUDE_API_KEY (or ANTHROPIC_API_KEY) is not set")
         # OpenAI takes the bare key; Claude takes (key, workspace id).
         keys = {False: settings.openai_api_key, True: (claude_key, settings.claude_workspace_id)}
-        calls = asyncio.run(_run_all(queries, load_sets(), keys))
-        _save(calls, args.raw)
+        configs = [Config(c.model, c.effort, args.prompt) for c in CONFIGS]
+        calls = asyncio.run(_run_all(configs, queries, load_sets(), keys))
+        _save(calls, raw)
     # The tables use non-ASCII (≤, ·); Windows consoles default to a legacy code page.
     out = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     out.write(report(calls, queries) + "\n")
