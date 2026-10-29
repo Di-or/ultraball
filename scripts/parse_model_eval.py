@@ -93,11 +93,14 @@ CONFIGS = [
     Config("claude-haiku-5-5", "low"),
     Config("claude-haiku-5-5", "medium"),
 ]
+# `--model` swaps in other models, each at these efforts.
+EFFORTS = ("low", "medium")
 
 # USD per 1M tokens: (uncached input, cached input, output). Reasoning tokens bill as output.
 _PRICES = {
     "gpt-5-mini": (0.25, 0.025, 2.00),
     "gpt-5.6-luna": (0.20, 0.02, 1.20),
+    "gpt-6-luna": (0.10, 0.01, 0.50),
     "claude-haiku-5-5": (0.10, 0.01, 0.50),
 }
 _CACHE_WRITE_MULTIPLIER = 1.25
@@ -530,11 +533,21 @@ def report(calls: list[Call], queries: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def select_configs(models: list[str] | None, prompt: str, efforts: list[str] | None = None) -> list[Config]:
+    """`CONFIGS`, or each of `models` at `efforts` (default `EFFORTS`), all sending the `prompt` variant."""
+    chosen = CONFIGS if not models else [Config(m, e) for m in models for e in efforts or EFFORTS]
+    return [Config(c.model, c.effort, prompt) for c in chosen]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Measure the hosted parse call (#85).")
     parser.add_argument("--report", action="store_true", help="re-render from the saved raw results")
     parser.add_argument("--raw", type=Path, help="raw results file to write or read (default depends on --prompt)")
     parser.add_argument("--prompt", choices=PROMPT_VARIANTS, default="current", help="system prompt variant to send")
+    parser.add_argument(
+        "--model", action="append", choices=sorted(_PRICES), help="run this model at each effort (repeatable)"
+    )
+    parser.add_argument("--effort", action="append", help="with --model, the efforts to run (repeatable; default low, medium)")
     args = parser.parse_args()
     raw = args.raw or (RAW_PATH if args.prompt == "current" else RAW_PATH.with_name(f"parse-model-eval-haiku-{args.prompt}-raw.json"))
 
@@ -543,14 +556,14 @@ def main() -> None:
         calls = _load(raw)
     else:
         settings = _EvalSettings()
+        configs = select_configs(args.model, args.prompt, args.effort)
         claude_key = settings.claude_api_key or settings.anthropic_api_key
-        if not settings.openai_api_key:
+        if any(not c.is_claude for c in configs) and not settings.openai_api_key:
             raise SystemExit("OPENAI_API_KEY is not set")
-        if not claude_key:
+        if any(c.is_claude for c in configs) and not claude_key:
             raise SystemExit("CLAUDE_API_KEY (or ANTHROPIC_API_KEY) is not set")
         # OpenAI takes the bare key; Claude takes (key, workspace id).
         keys = {False: settings.openai_api_key, True: (claude_key, settings.claude_workspace_id)}
-        configs = [Config(c.model, c.effort, args.prompt) for c in CONFIGS]
         calls = asyncio.run(_run_all(configs, queries, load_sets(), keys))
         _save(calls, raw)
     # The tables use non-ASCII (≤, ·); Windows consoles default to a legacy code page.

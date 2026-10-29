@@ -22,6 +22,7 @@ from scripts.parse_model_eval import (
     normalise_filters,
     report,
     request_body,
+    select_configs,
     summarise,
 )
 
@@ -140,6 +141,24 @@ def test_a_prompt_variant_appends_its_rules_after_the_production_prompt() -> Non
     assert luna["messages"][0]["content"] == production + "\n\n" + PROMPT_VARIANTS["rules"]
     assert haiku["system"][0]["text"] == luna["messages"][0]["content"]
     assert str(Config("claude-haiku-5-5", "low", "rules")) == "claude-haiku-5-5 / low + rules"
+
+
+def test_chosen_models_each_run_at_low_and_medium_with_the_prompt_variant() -> None:
+    assert select_configs(["gpt-6-luna", "gpt-5.6-luna"], "rules") == [
+        Config("gpt-6-luna", "low", "rules"),
+        Config("gpt-6-luna", "medium", "rules"),
+        Config("gpt-5.6-luna", "low", "rules"),
+        Config("gpt-5.6-luna", "medium", "rules"),
+    ]
+    assert select_configs(None, "current") == CONFIGS
+    assert select_configs(["gpt-6-luna"], "rules", ["none"]) == [Config("gpt-6-luna", "none", "rules")]
+
+
+def test_call_cost_bills_gpt_6_luna_at_its_rates() -> None:
+    usage = _usage(prompt=1000, cached=800, completion=100)
+
+    # gpt-6-luna: 200 × $0.10 + 800 × $0.01 + 100 × $0.50, per 1M tokens.
+    assert call_cost("gpt-6-luna", usage) == pytest.approx((200 * 0.10 + 800 * 0.01 + 100 * 0.50) / 1e6)
 
 
 def test_the_configurations_cover_luna_and_haiku_at_low_and_medium() -> None:
