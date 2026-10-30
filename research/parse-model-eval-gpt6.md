@@ -2,7 +2,7 @@
 
 **Follows:** [Luna vs Haiku 5.5](parse-model-eval-haiku.md), which measured GPT-5.6 Luna, not GPT-6 Luna, and fed [#94](https://github.com/Di-or/ultraball/issues/94).
 **Date:** 2026-10-28, against `main` at `2f453d5` (`PARSE_VERSION` v6). Same 89 queries (44 standard, 45 hard), same scoring, 3 runs per query after a warm-up.
-**Rerun:** `uv run python -m scripts.parse_model_eval [--prompt rules] --model gpt-6-luna [--model gpt-5.6-luna] [--effort none --effort low] --raw <file>`. Raw calls are in `parse-model-eval-gpt6-*.json`; `--report --raw <file>` re-renders them.
+**Rerun:** `uv run python -m scripts.parse_model_eval [--prompt rules] --model gpt-6-luna [--model gpt-5.6-luna] [--effort none --effort low] --raw <file>`. Raw calls are in `parse-model-eval-gpt6-*.json`; `--report --raw <file>` re-renders them. Since #94 the rules are in the production prompt and the `rules` variant is gone; see [After #94](#after-94-production-prompt-v7) for the current command.
 
 `gpt-6-luna` costs $0.10 / $0.01 / $0.50 per 1M uncached input / cached input / output tokens, with cache writes at $0.125: half GPT-5.6 Luna's input price and under half its output price. It supports Chat Completions, Structured Outputs and prompt caching, with efforts `none` to `max` (default `medium`), and lists no dated snapshot ([model page](https://developers.openai.com/api/docs/models/gpt-6-luna)).
 
@@ -63,3 +63,28 @@ Three sets of runs, 1,876 calls in all, none failed, $0.33:
 | GPT-6 Luna `none` + rules | 84 of 89 fully right, 3 always wrong | 89–100% (cold-start burst) | ~1.4–1.5s | $0.07 |
 
 Choosing GPT-6 Luna `low` means either accepting that up to ~10% of searches degrade to keyword-only at 4s, or raising the timeout to about 6s.
+
+## After #94: production prompt v7
+
+**Date:** 2026-10-30, against `parse-gpt6-luna` at `26ccf06` (`PARSE_VERSION` v7). Same 89 queries, 3 runs after a warm-up, with #94's expected answers ("under" / "over" exclusive, `tags_also` for "basic energy acceleration from the discard").
+**Rerun:** `uv run python -m scripts.parse_model_eval --model gpt-6-luna --effort low --effort medium --raw research/parse-model-eval-gpt6-v7-raw.json`. Pass `--raw`: without it the run overwrites `parse-model-eval-haiku-raw.json`.
+
+#94 moved the four trialled rules into the production prompt, restricted `energy_type` to `Basic` / `Special`, made "under" and "over" exclusive, switched production to GPT-6 Luna at `low`, and raised the timeout to 6s. 536 calls, none failed, $0.06.
+
+| Configuration | Standard: filters / tag P / R | Hard: filters / tag P / R | Median std / hard | Within 4s std / hard | Within 6s std / hard | Fully right (std, hard) | Wrong every run | $ / 1k std |
+| --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
+| GPT-6 `low` (production) | 100% / 1.00 / 1.00 | 99% / 1.00 / 1.00 | 2.37s / 2.69s | 100% / 99% | 100% / 100% | **44/44, 44/45** | 0 | $0.099 |
+| GPT-6 `medium` | 100% / 1.00 / 1.00 | 100% / 1.00 / 1.00 | 2.39s / 2.77s | 98% / 95% | 100% / 100% | 44/44, 45/45 | 0 | $0.108 |
+
+**No regression against the `+ rules` rows above.**
+- GPT-6 `low` matched its best `+ rules` run: 88 of 89 queries right on every run.
+- The one miss was a single run of "stage 2 grass pokemon over 150 hp from Temporal Forces" picking `set_id` `sv06` (Twilight Masquerade) instead of `sv05`. It got the bound right (`hp.gte` 151) on all 3 runs.
+- The other two disagreements in the report ("attacker that does more damage…", "big hp basic") are both accepted answers (`filters_also`).
+
+**The targeted fixes held on every run, at both efforts.**
+- "special energy cards" returned `category: Energy, energy_type: Special`. The `+ rules` runs had missed `energy_type` once, and before the enum Luna had returned `"Special Energy"` / `"special"`.
+- "pokemon under 130 HP with 1 retreat" returned `hp.lte` 129, "pokemon under 100 hp with free attacks" `hp.lte` 99, and "stage 2 grass pokemon over 150 hp…" `hp.gte` 151. The prompt's examples ("under 90 HP", "over 200 HP", "3 retreat or less") deliberately avoid the eval's wording.
+- "hit their bench for damage" got `snipe` and `spread`.
+- "energy denial", missed once in the `+ rules` runs, got `energy-removal` on every run.
+
+**Latency fits the 6s timeout.** Every GPT-6 `low` call finished within 6s (≥98% required). In this run, 99–100% also finished within 4s, against 90–93% in the `+ rules` runs. Latency varies between runs, so the 6s timeout still leaves headroom for slow periods.
