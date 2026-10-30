@@ -504,10 +504,13 @@ def report(calls: list[Call], queries: list[dict]) -> str:
     lines += ["### Per-query disagreements", ""]
     for query, by_config in disagreements(measured).items():
         q = expected[query]
-        want = (normalise_filters(q["filters"]), tuple(sorted(q["tags"])))
+        # The first accepted filters, then each accepted tag set.
+        want_filters = json.dumps(normalise_filters(q["filters"]), ensure_ascii=False)
+        want_tags = " or ".join(", ".join(sorted(t)) or "(no tags)" for t in [q["tags"], *q.get("tags_also", [])])
+        want = f"`{want_filters}` · {want_tags}"
         marker = " — hard" if difficulty(q) == "hard" else ""
         lines += [
-            f"**{query}**{marker} (expected {_render_outcome(want)})",
+            f"**{query}**{marker} (expected {want})",
             "",
             f"| Configuration | Distinct outputs across {_RUNS} runs |",
             "| --- | --- |",

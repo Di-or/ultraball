@@ -308,6 +308,17 @@ def test_query_set_uses_only_known_tags_filter_fields_and_set_ids() -> None:
             assert accepted.get("set_id", "sv01") in set_ids, query["query"]
 
 
+def test_report_shows_every_accepted_tag_set_as_expected() -> None:
+    luna, mini = Config("gpt-6-luna", "low"), Config("gpt-5-mini", "low")
+    query = "basic energy acceleration from the discard"
+    queries = [
+        {"query": query, "filters": {}, "tags": ["acceleration"], "tags_also": [["acceleration", "energy-recovery"]]}
+    ]
+    calls = [_call(query, config=luna, tags=["acceleration"]), _call(query, config=mini, tags=["search"])]
+
+    assert f"**{query}** (expected `{{}}` · acceleration or acceleration, energy-recovery)" in report(calls, queries)
+
+
 def test_report_scores_hard_queries_in_their_own_row() -> None:
     luna = Config("gpt-5.6-luna", "low")
     queries = [
