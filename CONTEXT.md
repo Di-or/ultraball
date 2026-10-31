@@ -115,7 +115,7 @@ The `{filters, concept, concept_rewritten, tags}` output of the single parse cal
 _Avoid_: query object, parsed query.
 
 **Query/passage asymmetry**:
-Passages (card descriptions) are embedded `input_type=document` offline; queries are embedded `input_type=query` on the request path. voyage-4 is retrieval-tuned to land the two in the same neighborhood — the mechanism that makes a rewritten concept match real card text.
+Passages (card descriptions) are embedded `input_type=document` offline; queries are embedded `input_type=query` on the request path. Passages use `voyage-4-large` and queries `voyage-4`; the voyage-4 series share one embedding space and are retrieval-tuned to land the two in the same neighborhood — the mechanism that makes a rewritten concept match real card text.
 _Avoid_: query encoding.
 
 **Candidate pool**:
