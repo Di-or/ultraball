@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,3 +11,11 @@ class Settings(BaseSettings):
 
     openai_api_key: str | None = None
     voyage_api_key: str | None = None
+    # The enrichment pass (Claude Sonnet 5.5). `CLAUDE_API_KEY` is the name the parse eval used.
+    anthropic_api_key: str | None = Field(
+        default=None, validation_alias=AliasChoices("anthropic_api_key", "claude_api_key")
+    )
+    # Sent as `anthropic-workspace-id`; only needed for a key not scoped to a workspace.
+    anthropic_workspace_id: str | None = Field(
+        default=None, validation_alias=AliasChoices("anthropic_workspace_id", "claude_workspace_id")
+    )

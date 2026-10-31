@@ -126,3 +126,18 @@ async def test_a_refusal_is_applied_as_needs_repair_and_is_not_resubmitted(db_se
 
     next_batch_id = await submit_enrichment_batch(db_session, enrichment_client)
     assert next_batch_id is None
+
+
+async def test_a_card_the_batch_never_answered_is_marked_failed_and_resubmitted(db_session: AsyncSession) -> None:
+    # A request that errored, expired or was canceled comes back with no result. Left
+    # `pending`, it would never be resubmitted.
+    await _ingest_charizard(db_session)
+    enrichment_client = StubEnrichmentClient({})
+    batch_id = await submit_enrichment_batch(db_session, enrichment_client)
+
+    result_status = await poll_and_apply_batch(db_session, enrichment_client, batch_id)
+
+    assert result_status == status.COMPLETED
+    row = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == _CHARIZARD_KEY))
+    assert row is not None and row.status == status.FAILED
+    assert await submit_enrichment_batch(db_session, enrichment_client) is not None
