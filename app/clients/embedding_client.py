@@ -8,7 +8,9 @@ _VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings"
 _VOYAGE_DOCUMENT_MODEL = "voyage-4-large"
 _VOYAGE_QUERY_MODEL = "voyage-4"
 _VOYAGE_MAX_TEXTS_PER_REQUEST = 1000
-_VOYAGE_MAX_TOKENS_PER_REQUEST = {"voyage-4-large": 120_000, "voyage-4": 320_000}
+_VOYAGE_MAX_TOKENS_PER_REQUEST = {_VOYAGE_DOCUMENT_MODEL: 120_000, _VOYAGE_QUERY_MODEL: 320_000}
+# Covers what Voyage may add to each text: the `input_type` instruction and special tokens.
+_VOYAGE_TOKENS_ADDED_PER_TEXT = 16
 
 
 class EmbeddingClient(ABC):
@@ -53,7 +55,7 @@ class HostedEmbeddingClient(EmbeddingClient):
         """Embeds `texts` in order, split into requests Voyage will accept."""
         vectors: list[list[float]] = []
         async with httpx.AsyncClient() as client:
-            for chunk in _requests_within_limits(texts, max_tokens=_VOYAGE_MAX_TOKENS_PER_REQUEST[model]):
+            for chunk in _chunks_within_limits(texts, max_tokens=_VOYAGE_MAX_TOKENS_PER_REQUEST[model]):
                 response = await client.post(
                     _VOYAGE_API_URL,
                     headers={"Authorization": f"Bearer {self._api_key}"},
@@ -65,22 +67,23 @@ class HostedEmbeddingClient(EmbeddingClient):
         return vectors
 
 
-def _requests_within_limits(texts: list[str], *, max_tokens: int) -> Iterator[list[str]]:
+def _chunks_within_limits(texts: list[str], *, max_tokens: int) -> Iterator[list[str]]:
     """Packs `texts`, in order, into runs under Voyage's per-request text and token caps.
 
-    Voyage publishes no tokenizer we depend on, so a text's UTF-8 byte length stands in
-    for its token count: a tokenizer never makes more than one token per byte, so the
-    estimate only ever overshoots. A single text over the budget still goes alone, since
-    Voyage truncates each input to the model's context length.
+    Voyage publishes no tokenizer we depend on, so a text's token count is estimated as
+    its UTF-8 byte length plus a fixed allowance for what Voyage adds to each text. A
+    tokenizer never makes more than one token per byte, so the estimate errs high. A
+    single text over the budget still goes alone, since Voyage truncates each input to
+    the model's context length.
     """
     chunk: list[str] = []
-    chunk_tokens = 0
+    chunk_estimated_tokens = 0
     for text in texts:
-        text_tokens = len(text.encode())
-        if chunk and (len(chunk) == _VOYAGE_MAX_TEXTS_PER_REQUEST or chunk_tokens + text_tokens > max_tokens):
+        text_estimated_tokens = len(text.encode()) + _VOYAGE_TOKENS_ADDED_PER_TEXT
+        if chunk and (len(chunk) == _VOYAGE_MAX_TEXTS_PER_REQUEST or chunk_estimated_tokens + text_estimated_tokens > max_tokens):
             yield chunk
-            chunk, chunk_tokens = [], 0
+            chunk, chunk_estimated_tokens = [], 0
         chunk.append(text)
-        chunk_tokens += text_tokens
+        chunk_estimated_tokens += text_estimated_tokens
     if chunk:
         yield chunk

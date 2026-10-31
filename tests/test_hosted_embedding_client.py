@@ -69,12 +69,12 @@ async def test_hosted_embed_documents_keeps_each_request_inside_voyage_4_large_t
     sent_requests: list[httpx.Request],
 ) -> None:
     # voyage-4-large caps a request at 120K tokens, so 1,000 long descriptions would be
-    # rejected. A text never has more tokens than UTF-8 bytes, so 1,000-byte texts fit
-    # 120 to a request.
+    # rejected. A text is budgeted at its UTF-8 bytes plus 16 tokens Voyage may add, so
+    # 1,000-byte texts fit 118 to a request.
     texts = [f"card {n} ".ljust(1000, "x") for n in range(300)]
 
     vectors = await HostedEmbeddingClient(api_key="test-key").embed_documents(texts)
 
     batch_sizes = [len(json.loads(request.content)["input"]) for request in sent_requests]
-    assert batch_sizes == [120, 120, 60]
+    assert batch_sizes == [118, 118, 64]
     assert vectors == [[float(n)] for n in range(300)]
