@@ -5,6 +5,7 @@ import httpx
 EMBEDDING_DIM = 1024
 _VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings"
 _VOYAGE_MODEL = "voyage-4"
+_VOYAGE_MAX_TEXTS_PER_REQUEST = 1000
 
 
 class EmbeddingClient(ABC):
@@ -40,13 +41,21 @@ class HostedEmbeddingClient(EmbeddingClient):
         return await self._embed(texts, input_type="document")
 
     async def _embed(self, texts: list[str], *, input_type: str) -> list[list[float]]:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                _VOYAGE_API_URL,
-                headers={"Authorization": f"Bearer {self._api_key}"},
-                json={"input": texts, "model": _VOYAGE_MODEL, "input_type": input_type, "output_dimension": EMBEDDING_DIM},
-            )
-            response.raise_for_status()
+        """Embeds `texts` in order, split into requests Voyage will accept.
 
-        payload = response.json()
-        return [item["embedding"] for item in payload["data"]]
+        Voyage caps a request at 1,000 texts (and 320K tokens, which 1,000 short
+        normalized descriptions stay well under).
+        """
+        vectors: list[list[float]] = []
+        async with httpx.AsyncClient() as client:
+            for start in range(0, len(texts), _VOYAGE_MAX_TEXTS_PER_REQUEST):
+                chunk = texts[start : start + _VOYAGE_MAX_TEXTS_PER_REQUEST]
+                response = await client.post(
+                    _VOYAGE_API_URL,
+                    headers={"Authorization": f"Bearer {self._api_key}"},
+                    json={"input": chunk, "model": _VOYAGE_MODEL, "input_type": input_type, "output_dimension": EMBEDDING_DIM},
+                )
+                response.raise_for_status()
+                vectors.extend(item["embedding"] for item in response.json()["data"])
+
+        return vectors
