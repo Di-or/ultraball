@@ -1,4 +1,4 @@
-from sqlalchemy import update
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,7 +86,14 @@ async def poll_and_apply_batch(
         await session.commit()
         return batch_status
 
-    results = await enrichment_client.fetch_results(batch_id)
+    dedupe_keys = list(
+        await session.scalars(
+            select(CardEnrichment.dedupe_key).where(
+                CardEnrichment.batch_id == batch_id, CardEnrichment.status == status.PENDING
+            )
+        )
+    )
+    results = await enrichment_client.fetch_results(batch_id, dedupe_keys)
     for result in results:
         validated = validate_enrichment_result(result)
         values = {
@@ -106,5 +113,12 @@ async def poll_and_apply_batch(
             .on_conflict_do_update(index_elements=[CardEnrichment.dedupe_key], set_=values)
         )
 
+    # A request that errored, expired or was canceled has no result; still `pending`, it
+    # would never be resubmitted, so it fails like a whole failed batch does.
+    await session.execute(
+        update(CardEnrichment)
+        .where(CardEnrichment.batch_id == batch_id, CardEnrichment.status == status.PENDING)
+        .values(status=status.FAILED)
+    )
     await session.commit()
     return batch_status
