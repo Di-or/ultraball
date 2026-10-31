@@ -9,10 +9,14 @@ from app.catalog.set_models import CatalogSet, render_set_lines
 from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
 
 _OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
-_PARSE_MODEL = "gpt-5-mini"
-# Spec's ~3-4s degrade cutoff (target <1s) (CONTEXT.md / mvp-spec §9.5): a slow
-# hosted call must fail fast enough for the caller to still degrade gracefully.
-_TIMEOUT_SECONDS = 4.0
+_PARSE_MODEL = "gpt-6-luna"
+# Sent explicitly: gpt-6-luna defaults to `medium`. `low` was the most accurate configuration the
+# parse eval measured (#94); `none` was faster but got hard queries wrong on every run.
+_PARSE_REASONING_EFFORT = "low"
+# A slow hosted call must fail fast enough for the caller to still degrade gracefully
+# (CONTEXT.md / mvp-spec §9.5). Raised from the spec's ~3-4s cutoff to 6s because GPT-6 Luna
+# at low effort finishes only 90-93% of calls within 4s, but 98-100% within 6s (#94).
+_TIMEOUT_SECONDS = 6.0
 
 _RANGE_SCHEMA = {
     "type": "object",
@@ -42,7 +46,7 @@ _FILTERS_SCHEMA = {
             "type": ["string", "null"],
             "enum": ["Item", "Supporter", "Stadium", "Tool", None],
         },
-        "energy_type": {"type": ["string", "null"]},
+        "energy_type": {"type": ["string", "null"], "enum": ["Basic", "Special", None]},
         # `set_id` is added per set list by `build_parse_json_schema`.
     },
     "required": [
@@ -96,8 +100,10 @@ concept, and return exactly one JSON object matching the given schema.
 
 `filters` is closed and positive-only: fill only fields the query states explicitly (leave the \
 rest null), never infer or negate. Numeric fields (hp, retreat, attack_cost) are inclusive \
-{gte, lte} ranges — "under 130 HP" is hp.lte=130, "at least 2 retreat" is retreat.gte=2. \
-attack_cost matches if ANY of the card's attacks falls in range. Fill a numeric field only when \
+{gte, lte} ranges. "Under" and "over" exclude the number: "under 90 HP" is hp.lte=89, "over \
+200 HP" is hp.gte=201. "Or less", "or more", "at most" and "at least" include it: "3 retreat or \
+less" is retreat.lte=3, "at least 2 retreat" is retreat.gte=2. The same holds for retreat and \
+attack_cost. attack_cost matches if ANY of the card's attacks falls in range. Fill a numeric field only when \
 the query states a number or describes the card's printed stat ("0 retreat", "no retreat cost", \
 "free retreat Pokémon"); phrasing about doing something ("retreat for free", "switch out") is an \
 effect, so it goes to `concept` and `tags`, never to a numeric filter. If the query does not name \
@@ -115,7 +121,23 @@ exactly one of the two.
 mechanical, card-text register (e.g. "energy accel" -> "attach extra Energy from your hand or \
 deck beyond the one-per-turn attachment"), for embedding — never invent an effect the query \
 didn't ask for. `tags` lists any of the functional tags above that the concept clearly matches \
-(empty array if none clearly match)."""
+(empty array if none clearly match).
+
+Further rules:
+- Fill `category` only when the query says what kind of card it wants ("grass pokemon with an \
+ability", "tools that boost damage"). A Pokémon or Energy the effect acts on ("shuffle my \
+pokemon back into the deck", "power up my pokemon", "the opponent's pokemon", "move energy \
+between my pokemon") is not the card's category, so leave `category` null.
+- If the query asks for damage to the opponent's Bench without saying whether one Pokémon or \
+several are hit, tag both `snipe` and `spread`.
+- Tag only effects the query describes. If it names a goal without describing any effect \
+("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
+might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \
+still gets its tag ("hurt them back when they hit me" describes damage back when hit, \
+`counter-damage`; "nothing can damage it next turn" describes damage being prevented, \
+`damage-prevention`).
+- Placing damage counters is not dealing damage: don't add `snipe` or `spread` to a query about \
+damage counters, or `counter-placement` to a query about dealing damage."""
 
 
 def build_system_prompt(sets: Sequence[CatalogSet]) -> str:
@@ -155,7 +177,7 @@ def _drop_nulls(obj: dict) -> dict:
 
 
 class HostedParseClient(ParseClient):
-    """Calls the hosted parse/rewrite model (GPT-5-mini, strict JSON)."""
+    """Calls the hosted parse/rewrite model (GPT-6 Luna at low effort, strict JSON)."""
 
     def __init__(self, api_key: str) -> None:
         self._api_key = api_key
@@ -167,6 +189,7 @@ class HostedParseClient(ParseClient):
                 headers={"Authorization": f"Bearer {self._api_key}"},
                 json={
                     "model": _PARSE_MODEL,
+                    "reasoning_effort": _PARSE_REASONING_EFFORT,
                     "messages": [
                         {"role": "system", "content": build_system_prompt(sets)},
                         {"role": "user", "content": query},

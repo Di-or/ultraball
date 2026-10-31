@@ -131,27 +131,20 @@ def test_claude_usage_counts_cache_reads_and_writes_as_prompt_tokens() -> None:
     assert call_cost("claude-haiku-5-5", usage) == pytest.approx((20 * 0.10 + 1500 * 0.01 + 300 * 0.50) / 1e6)
 
 
-def test_a_prompt_variant_appends_its_rules_after_the_production_prompt() -> None:
-    sets = load_sets()
-    production = parse_client.build_system_prompt(sets)
-
-    luna = request_body(Config("gpt-5.6-luna", "low", "rules"), "energy accel", sets)
-    haiku = claude_request(Config("claude-haiku-5-5", "low", "rules"), "energy accel", sets)
-
-    assert luna["messages"][0]["content"] == production + "\n\n" + PROMPT_VARIANTS["rules"]
-    assert haiku["system"][0]["text"] == luna["messages"][0]["content"]
-    assert str(Config("claude-haiku-5-5", "low", "rules")) == "claude-haiku-5-5 / low + rules"
+def test_the_only_prompt_variant_is_the_production_prompt() -> None:
+    # The trialled rules are in the production prompt now (#94); a `rules` variant would send them twice.
+    assert PROMPT_VARIANTS == {"current": ""}
 
 
 def test_chosen_models_each_run_at_low_and_medium_with_the_prompt_variant() -> None:
-    assert select_configs(["gpt-6-luna", "gpt-5.6-luna"], "rules") == [
-        Config("gpt-6-luna", "low", "rules"),
-        Config("gpt-6-luna", "medium", "rules"),
-        Config("gpt-5.6-luna", "low", "rules"),
-        Config("gpt-5.6-luna", "medium", "rules"),
+    assert select_configs(["gpt-6-luna", "gpt-5.6-luna"], "current") == [
+        Config("gpt-6-luna", "low"),
+        Config("gpt-6-luna", "medium"),
+        Config("gpt-5.6-luna", "low"),
+        Config("gpt-5.6-luna", "medium"),
     ]
     assert select_configs(None, "current") == CONFIGS
-    assert select_configs(["gpt-6-luna"], "rules", ["none"]) == [Config("gpt-6-luna", "none", "rules")]
+    assert select_configs(["gpt-6-luna"], "current", ["none"]) == [Config("gpt-6-luna", "none")]
 
 
 def test_call_cost_bills_gpt_6_luna_at_its_rates() -> None:
@@ -161,13 +154,9 @@ def test_call_cost_bills_gpt_6_luna_at_its_rates() -> None:
     assert call_cost("gpt-6-luna", usage) == pytest.approx((200 * 0.10 + 800 * 0.01 + 100 * 0.50) / 1e6)
 
 
-def test_the_configurations_cover_luna_and_haiku_at_low_and_medium() -> None:
-    assert CONFIGS == [
-        Config("gpt-5.6-luna", "low"),
-        Config("gpt-5.6-luna", "medium"),
-        Config("claude-haiku-5-5", "low"),
-        Config("claude-haiku-5-5", "medium"),
-    ]
+def test_the_configurations_are_the_production_model_at_low_and_medium() -> None:
+    # Production sends gpt-6-luna at low (#94); medium is measured alongside for comparison.
+    assert CONFIGS == [Config("gpt-6-luna", "low"), Config("gpt-6-luna", "medium")]
 
 
 def test_normalised_filters_drop_strict_mode_nulls_and_empty_ranges() -> None:
@@ -244,6 +233,27 @@ def test_summary_reports_latency_tokens_quality_and_cost() -> None:
     assert summary.cost_per_1000 == pytest.approx(call_cost("gpt-5-mini", _usage()) * 1000)
 
 
+def test_tags_score_against_whichever_accepted_tag_set_fits_best() -> None:
+    queries = [
+        {
+            "query": "basic energy acceleration from the discard",
+            "filters": {},
+            "tags": ["acceleration"],
+            "tags_also": [["acceleration", "energy-recovery"]],
+        }
+    ]
+    query = queries[0]["query"]
+
+    # Either accepted set scores perfectly.
+    for tags in (["acceleration"], ["acceleration", "energy-recovery"]):
+        summary = summarise([_call(query, tags=tags)], queries)
+        assert (summary.tag_precision, summary.tag_recall) == (1.0, 1.0), tags
+
+    # An answer that fits neither scores against the closer one: `acceleration` alone.
+    summary = summarise([_call(query, tags=["acceleration", "search"])], queries)
+    assert (summary.tag_precision, summary.tag_recall) == (0.5, 1.0)
+
+
 def test_disagreements_list_queries_whose_outputs_differ_between_configurations() -> None:
     mini, luna = Config("gpt-5-mini", "low"), Config("gpt-5.6-luna", "low")
     calls = [
@@ -291,10 +301,22 @@ def test_query_set_uses_only_known_tags_filter_fields_and_set_ids() -> None:
     assert sum(q.get("difficulty") == "hard" for q in queries) >= 15
     for query in queries:
         assert query.get("difficulty", "standard") in ("standard", "hard"), query["query"]
-        assert set(query["tags"]) <= parse_client.FUNCTIONAL_TAGS, query["query"]
+        for accepted_tags in [query["tags"], *query.get("tags_also", [])]:
+            assert set(accepted_tags) <= parse_client.FUNCTIONAL_TAGS, query["query"]
         for accepted in [query["filters"], *query.get("filters_also", [])]:
             assert set(accepted) <= filter_fields, query["query"]
             assert accepted.get("set_id", "sv01") in set_ids, query["query"]
+
+
+def test_report_shows_every_accepted_tag_set_as_expected() -> None:
+    luna, mini = Config("gpt-6-luna", "low"), Config("gpt-5-mini", "low")
+    query = "basic energy acceleration from the discard"
+    queries = [
+        {"query": query, "filters": {}, "tags": ["acceleration"], "tags_also": [["acceleration", "energy-recovery"]]}
+    ]
+    calls = [_call(query, config=luna, tags=["acceleration"]), _call(query, config=mini, tags=["search"])]
+
+    assert f"**{query}** (expected `{{}}` · acceleration or acceleration, energy-recovery)" in report(calls, queries)
 
 
 def test_report_scores_hard_queries_in_their_own_row() -> None:

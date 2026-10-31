@@ -8,11 +8,12 @@ per run.
 Sends the production parse request (system prompt and schema built by
 `app.clients.parse_client` from the fixed set list in `parse_eval_sets.json`, so it tracks
 prompt changes) for every query in `parse_eval_queries.json`, 3 runs per configuration after
-one warm-up call, with a 60s timeout instead of the client's 4s so slow configurations still
+one warm-up call, with a 60s timeout instead of the client's 6s so slow configurations still
 get measured. Claude models get the same prompt and schema through the Messages API, with the
 system prompt marked for caching. Queries marked `"difficulty": "hard"` are scored in their
-own row so they don't move the standard numbers. `--prompt rules` appends candidate parse rules
-(`_RULES`) to the system prompt, to trial them before changing production. Raw calls go to
+own row so they don't move the standard numbers. `--prompt <variant>` appends candidate parse
+rules (`PROMPT_VARIANTS`) to the system prompt, to trial them before changing production. A
+query's `filters_also` and `tags_also` list other accepted answers. Raw calls go to
 `--raw` (default `research/parse-model-eval-haiku-raw.json`, or
 `parse-model-eval-haiku-<prompt>-raw.json` for a variant); the report tables are printed as
 Markdown. `--report` re-renders the tables from the raw file without calling the API.
@@ -65,33 +66,17 @@ class Config:
         return f"{self.model} / {self.effort}{variant}"
 
 
-# Candidate parse rules, appended after the production instructions so the cached prefix is shared.
-# Trialled here before any change to `parse_client.py` (which would bump PARSE_VERSION).
-# The examples deliberately avoid the eval queries' wording, so the rules aren't taught the test.
-_RULES = """Further rules:
-- Fill `category` only when the query says what kind of card it wants ("grass pokemon with an \
-ability", "tools that boost damage"). A Pokémon or Energy the effect acts on ("shuffle my \
-pokemon back into the deck", "power up my pokemon", "the opponent's pokemon", "move energy \
-between my pokemon") is not the card's category, so leave `category` null.
-- If the query asks for damage to the opponent's Bench without saying whether one Pokémon or \
-several are hit, tag both `snipe` and `spread`.
-- Tag only effects the query describes. If it names a goal without describing any effect \
-("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
-might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \
-still gets its tag ("hurt them back when they hit me" describes damage back when hit, \
-`counter-damage`; "nothing can damage it next turn" describes damage being prevented, \
-`damage-prevention`).
-- Placing damage counters is not dealing damage: don't add `snipe` or `spread` to a query about \
-damage counters, or `counter-placement` to a query about dealing damage."""
+# Text appended to the production system prompt, to trial candidate rules before changing
+# `parse_client.py` (which would bump PARSE_VERSION). Append after the production instructions so
+# the cached prefix is shared, and keep a trial's examples out of the eval queries' wording. The
+# `rules` trial (#94) is now in the production prompt.
+PROMPT_VARIANTS = {"current": ""}
 
-PROMPT_VARIANTS = {"current": "", "rules": _RULES}
-
-# Efforts are sent explicitly: both models default to `medium`, and the request should say what ran.
+# What production sends (gpt-6-luna at `low`), with `medium` for comparison. Efforts are sent
+# explicitly: the models default to `medium`, and the request should say what ran.
 CONFIGS = [
-    Config("gpt-5.6-luna", "low"),
-    Config("gpt-5.6-luna", "medium"),
-    Config("claude-haiku-5-5", "low"),
-    Config("claude-haiku-5-5", "medium"),
+    Config("gpt-6-luna", "low"),
+    Config("gpt-6-luna", "medium"),
 ]
 # `--model` swaps in other models, each at these efforts.
 EFFORTS = ("low", "medium")
@@ -250,6 +235,12 @@ def filters_match(filters: dict, query: dict) -> bool:
     return normalise_filters(filters) in [normalise_filters(f) for f in accepted]
 
 
+def expected_tags(tags: list[str], query: dict) -> set[str]:
+    """The accepted tag set (`tags` or one of `tags_also`) closest to `tags`; the first wins a tie."""
+    accepted = [set(query["tags"]), *(set(t) for t in query.get("tags_also", []))]
+    return min(accepted, key=lambda want: len(want ^ set(tags)))
+
+
 def call_cost(model: str, usage: dict) -> float:
     uncached_price, cached_price, output_price = _PRICES[model]
     details = usage["prompt_tokens_details"]
@@ -290,7 +281,8 @@ def summarise(calls: list[Call], queries: list[dict]) -> Summary:
 
     true_positives = predicted = expected = 0
     for call, answer in answered:
-        got, want = set(answer.output["tags"]), set(by_query[call.query]["tags"])
+        got = set(answer.output["tags"])
+        want = expected_tags(answer.output["tags"], by_query[call.query])
         true_positives += len(got & want)
         predicted += len(got)
         expected += len(want)
@@ -512,10 +504,13 @@ def report(calls: list[Call], queries: list[dict]) -> str:
     lines += ["### Per-query disagreements", ""]
     for query, by_config in disagreements(measured).items():
         q = expected[query]
-        want = (normalise_filters(q["filters"]), tuple(sorted(q["tags"])))
+        # The first accepted filters, then each accepted tag set.
+        want_filters = json.dumps(normalise_filters(q["filters"]), ensure_ascii=False)
+        want_tags = " or ".join(", ".join(sorted(t)) or "(no tags)" for t in [q["tags"], *q.get("tags_also", [])])
+        want = f"`{want_filters}` · {want_tags}"
         marker = " — hard" if difficulty(q) == "hard" else ""
         lines += [
-            f"**{query}**{marker} (expected {_render_outcome(want)})",
+            f"**{query}**{marker} (expected {want})",
             "",
             f"| Configuration | Distinct outputs across {_RUNS} runs |",
             "| --- | --- |",
