@@ -84,9 +84,10 @@ SYSTEM_PROMPT = (
 
 The user message is one card's text: its name, then its Abilities, attacks or effect.
 
-- `normalized_description`: restate everything the card does in plain, mechanical card-text \
-register, without the card's name. It is embedded for semantic search, so describe effects, not \
-flavour or strategy.
+- `normalized_description`: paraphrase everything the card does in plain game vocabulary. It is \
+embedded for semantic search, so describe effects, not flavour or strategy. Strip proper names \
+(the card's own and any it names) and numeric magnitudes ("deal damage", not "deal 120 damage"). \
+Keep energy types named inside an effect ("attach a Fire Energy"), but not the Pokémon's own type.
 - `tags`: every functional tag whose definition the card's effect meets, across all of its \
 attacks and Abilities. An empty array if none do (a vanilla attacker, a basic Energy).
 - `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null.
@@ -172,12 +173,13 @@ def _to_result(dedupe_key: str, message: Message) -> EnrichmentResult:
     text = next((block.text for block in message.content if block.type == "text"), "")
     try:
         output = json.loads(text)
-    except json.JSONDecodeError:
+        return EnrichmentResult(
+            dedupe_key=dedupe_key,
+            normalized_description=output["normalized_description"],
+            tags=output["tags"],
+            suggested_new_tag=output["suggested_new_tag"],
+            rationale=output["rationale"],
+        )
+    # Strict outputs should rule these out, but one bad answer must not sink the whole fetch.
+    except (json.JSONDecodeError, KeyError, TypeError):
         return EnrichmentResult(dedupe_key=dedupe_key)
-    return EnrichmentResult(
-        dedupe_key=dedupe_key,
-        normalized_description=output["normalized_description"],
-        tags=output["tags"],
-        suggested_new_tag=output["suggested_new_tag"],
-        rationale=output["rationale"],
-    )

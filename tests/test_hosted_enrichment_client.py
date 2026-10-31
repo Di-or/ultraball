@@ -212,6 +212,16 @@ async def test_fetch_leaves_out_requests_that_never_got_an_answer_so_they_are_re
     assert results == []
 
 
+async def test_fetch_turns_an_answer_missing_a_field_into_an_empty_result_rather_than_crashing(
+    batches_api: _FakeBatchesApi,
+) -> None:
+    batches_api.results = [_succeeded(_NEST_BALL.dedupe_key, {"tags": ["search"]})]
+
+    results = await HostedEnrichmentClient(api_key="test-key").fetch_results("msgbatch_1", [_NEST_BALL.dedupe_key])
+
+    assert results == [EnrichmentResult(dedupe_key=_NEST_BALL.dedupe_key)]
+
+
 @pytest.mark.parametrize("stop_reason", ["refusal", "max_tokens"])
 async def test_fetch_turns_a_refused_or_truncated_answer_into_an_empty_result_for_the_repair_path(
     batches_api: _FakeBatchesApi, stop_reason: str
