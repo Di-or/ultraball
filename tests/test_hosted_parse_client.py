@@ -121,12 +121,26 @@ def test_system_prompt_carries_the_parse_rules_the_eval_trialled_after_the_tag_g
 
     # Category only for the kind of card wanted, not what the effect acts on.
     assert "Fill `category` only when the query says what kind of card it wants" in instructions
-    # Bench damage with no count given gets both tags.
-    assert "tag both `snipe` and `spread`" in instructions
     # A goal with no described effect gets no guessed mechanism.
     assert "Tag only effects the query describes" in instructions
-    # Damage counters aren't damage.
-    assert "Placing damage counters is not dealing damage" in instructions
+
+
+def test_system_prompt_tags_a_bench_query_that_names_no_mechanism_with_all_three_bench_tags() -> None:
+    # A player asking for Pokémon that hit the Bench wants snipers, spreaders and counter placers
+    # alike: counters put damage on the Bench too, they just get past what blocks attack damage.
+    # Each thing the query does say narrows on its own: counters, one target, or several.
+    instructions = build_system_prompt(())
+    instructions = instructions[instructions.index("You split a") :]
+
+    assert "tag `snipe`, `spread` and `counter-placement`" in instructions
+    assert "naming damage counters keeps only `counter-placement`" in instructions
+    assert "one chosen Benched Pokémon drops `spread`" in instructions
+    assert "several or all of them at once drops `snipe`" in instructions
+    # A trial without this let `counter-placement` leak onto "damage all their Pokémon" queries.
+    assert "This is only for the Bench" in instructions
+    # The old rules kept counter placers out of a plain "hit the Bench" query.
+    assert "tag both `snipe` and `spread`" not in instructions
+    assert "`counter-placement` to a query about dealing damage" not in instructions
 
 
 _SETS = (

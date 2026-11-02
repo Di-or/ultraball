@@ -128,16 +128,18 @@ Further rules:
 ability", "tools that boost damage"). A Pokémon or Energy the effect acts on ("shuffle my \
 pokemon back into the deck", "power up my pokemon", "the opponent's pokemon", "move energy \
 between my pokemon") is not the card's category, so leave `category` null.
-- If the query asks for damage to the opponent's Bench without saying whether one Pokémon or \
-several are hit, tag both `snipe` and `spread`.
+- If the query asks to hit or damage the opponent's Bench without saying how, tag `snipe`, \
+`spread` and `counter-placement`: dealing damage and placing damage counters both put damage on \
+the Bench. Narrow it only by what the query says: naming damage counters keeps only \
+`counter-placement`, one chosen Benched Pokémon drops `spread`, and several or all of them at \
+once drops `snipe`. This is only for the Bench: damage to the Active or to all of their Pokémon \
+gets no `counter-placement` unless the query names damage counters.
 - Tag only effects the query describes. If it names a goal without describing any effect \
 ("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
 might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \
 still gets its tag ("hurt them back when they hit me" describes damage back when hit, \
 `counter-damage`; "nothing can damage it next turn" describes damage being prevented, \
-`damage-prevention`).
-- Placing damage counters is not dealing damage: don't add `snipe` or `spread` to a query about \
-damage counters, or `counter-placement` to a query about dealing damage."""
+`damage-prevention`)."""
 
 
 def build_system_prompt(sets: Sequence[CatalogSet]) -> str:
