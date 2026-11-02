@@ -7,7 +7,7 @@ import pytest
 from anthropic import DefaultAsyncHttpxClient
 
 from app.clients import enrichment_client
-from app.clients.enrichment_client import EnrichmentRequest, EnrichmentResult, HostedEnrichmentClient
+from app.clients.enrichment_client import SYSTEM_PROMPT, EnrichmentRequest, EnrichmentResult, HostedEnrichmentClient
 from app.enrichment import status
 from app.enrichment.taxonomy import FUNCTIONAL_TAGS, TAG_DEFINITIONS
 
@@ -146,6 +146,14 @@ async def test_submit_puts_the_tag_glossary_in_a_cached_system_prefix_shared_by_
     for tag, definition in TAG_DEFINITIONS.items():
         assert f"{tag}: {definition}" in system_block["text"]
     assert _NEST_BALL.canonical_card_text not in system_block["text"]
+
+
+def test_system_prompt_tells_the_model_that_placing_damage_counters_is_not_dealing_damage() -> None:
+    # Dragapult ex deals damage to the Active and puts counters on the Bench; the first live run
+    # tagged it `spread` as well as `counter-placement`. Counters get past effects that block
+    # attack damage (Shaymin), so a card that only places them must not be tagged as dealing damage.
+    assert "Placing damage counters is not dealing damage" in SYSTEM_PROMPT
+    assert "only damage counters count toward `counter-placement`" in SYSTEM_PROMPT
 
 
 async def test_every_call_carries_the_workspace_id_when_one_is_set(batches_api: _FakeBatchesApi) -> None:

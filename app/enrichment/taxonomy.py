@@ -8,7 +8,7 @@ TAXONOMY_VERSION = "v3"
 
 # Bumping the prompt independently of the taxonomy (a wording fix, a confusion-pair
 # clarification) still forces a re-pass without needing a taxonomy version bump.
-PROMPT_VERSION = "v4"
+PROMPT_VERSION = "v5"
 
 
 @dataclass(frozen=True)
