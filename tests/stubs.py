@@ -76,5 +76,10 @@ class StubEnrichmentClient(EnrichmentClient):
             return status.FAILED
         return status.COMPLETED
 
-    async def fetch_results(self, batch_id: str) -> list[EnrichmentResult]:
-        return [self._results_by_dedupe_key[dedupe_key] for dedupe_key in self._batches[batch_id]]
+    async def fetch_results(self, batch_id: str, dedupe_keys: list[str]) -> list[EnrichmentResult]:
+        # A dedupe_key with no canned result stands in for a request that never got an answer.
+        return [
+            self._results_by_dedupe_key[dedupe_key]
+            for dedupe_key in self._batches[batch_id]
+            if dedupe_key in self._results_by_dedupe_key
+        ]
