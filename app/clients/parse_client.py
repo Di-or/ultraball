@@ -128,16 +128,16 @@ Further rules:
 ability", "tools that boost damage"). A Pokémon or Energy the effect acts on ("shuffle my \
 pokemon back into the deck", "power up my pokemon", "the opponent's pokemon", "move energy \
 between my pokemon") is not the card's category, so leave `category` null.
-- If the query asks for damage to the opponent's Bench without saying whether one Pokémon or \
-several are hit, tag both `snipe` and `spread`.
+- Hitting the opponent's Pokémon: a plain Bench query is `bench-reach` ("attack the bench", \
+"snipe"); hitting several or all of their Pokémon is `multi-target` ("spread", "hit everything \
+they have"), plus `bench-reach` when the Bench is among them; naming damage counters adds \
+`counter-placement`.
 - Tag only effects the query describes. If it names a goal without describing any effect \
 ("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
 might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \
 still gets its tag ("hurt them back when they hit me" describes damage back when hit, \
 `counter-damage`; "nothing can damage it next turn" describes damage being prevented, \
-`damage-prevention`).
-- Placing damage counters is not dealing damage: don't add `snipe` or `spread` to a query about \
-damage counters, or `counter-placement` to a query about dealing damage."""
+`damage-prevention`)."""
 
 
 def build_system_prompt(sets: Sequence[CatalogSet]) -> str:

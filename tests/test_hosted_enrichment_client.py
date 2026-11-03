@@ -148,12 +148,15 @@ async def test_submit_puts_the_tag_glossary_in_a_cached_system_prefix_shared_by_
     assert _NEST_BALL.canonical_card_text not in system_block["text"]
 
 
-def test_system_prompt_tells_the_model_that_placing_damage_counters_is_not_dealing_damage() -> None:
-    # Dragapult ex deals damage to the Active and puts counters on the Bench; the first live run
-    # tagged it `spread` as well as `counter-placement`. Counters get past effects that block
-    # attack damage (Shaymin), so a card that only places them must not be tagged as dealing damage.
-    assert "Placing damage counters is not dealing damage" in SYSTEM_PROMPT
-    assert "only damage counters count toward `counter-placement`" in SYSTEM_PROMPT
+def test_system_prompt_says_the_bench_damage_tags_combine_freely() -> None:
+    # v4 (#101): `bench-reach`, `multi-target` and `counter-placement` each answer one question,
+    # so Dragapult ex (damage to the Active, counters spread over the Bench) carries all three.
+    # The v3 rule that counters aren't damage, written to keep it out of `spread`, is gone.
+    assert "combine freely" in SYSTEM_PROMPT
+    assert "Dragapult ex" in SYSTEM_PROMPT
+    assert "Placing damage counters is not dealing damage" not in SYSTEM_PROMPT
+    assert "snipe" not in SYSTEM_PROMPT
+    assert "spread`" not in SYSTEM_PROMPT
 
 
 async def test_every_call_carries_the_workspace_id_when_one_is_set(batches_api: _FakeBatchesApi) -> None:

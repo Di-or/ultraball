@@ -121,12 +121,24 @@ def test_system_prompt_carries_the_parse_rules_the_eval_trialled_after_the_tag_g
 
     # Category only for the kind of card wanted, not what the effect acts on.
     assert "Fill `category` only when the query says what kind of card it wants" in instructions
-    # Bench damage with no count given gets both tags.
-    assert "tag both `snipe` and `spread`" in instructions
     # A goal with no described effect gets no guessed mechanism.
     assert "Tag only effects the query describes" in instructions
-    # Damage counters aren't damage.
-    assert "Placing damage counters is not dealing damage" in instructions
+
+
+
+def test_system_prompt_maps_bench_queries_onto_the_v4_bench_damage_tags() -> None:
+    # v4 (#101): each of the three tags answers one question, so a query gets one per thing it asks.
+    instructions = build_system_prompt(())
+    instructions = instructions[instructions.index("You split a") :]
+
+    assert "a plain Bench query is `bench-reach`" in instructions
+    assert "hitting several or all of their Pokémon is `multi-target`" in instructions
+    assert "naming damage counters adds `counter-placement`" in instructions
+    # Players' slang maps onto the new tags.
+    assert '"snipe"' in instructions and '"spread"' in instructions
+    # The v3 workarounds are gone.
+    assert "tag both `snipe` and `spread`" not in instructions
+    assert "Placing damage counters is not dealing damage" not in instructions
 
 
 _SETS = (

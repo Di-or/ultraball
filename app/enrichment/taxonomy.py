@@ -1,25 +1,29 @@
 from dataclasses import dataclass
 
-# The v3 functional-tag taxonomy — 29 effects-only tags across 7 documentation-only
-# families (v2 with `switch` narrowed and `retreat-reduction` split out of it, #89).
+# The v4 functional-tag taxonomy — 29 effects-only tags across 7 documentation-only
+# families (v3 with `snipe` and `spread` replaced by `bench-reach` and `multi-target`, #101).
 # Flat enum in code (Q4): the enricher and the query rewriter share this exact
 # vocabulary. See CONTEXT.md: Functional tag.
-TAXONOMY_VERSION = "v3"
+TAXONOMY_VERSION = "v4"
 
 # Bumping the prompt independently of the taxonomy (a wording fix, a confusion-pair
 # clarification) still forces a re-pass without needing a taxonomy version bump.
-PROMPT_VERSION = "v5"
+PROMPT_VERSION = "v6"
 
 
 @dataclass(frozen=True)
 class TagExample:
-    """A real card that carries a tag, cited by its TCGdex id (set id + number)."""
+    """A real card that carries a tag, cited by its TCGdex id (set id + number).
+
+    `also` names the other tags the card carries; only examples in `BENCH_DAMAGE_TAGS` have any.
+    """
 
     name: str
     card_id: str
+    also: tuple[str, ...] = ()
 
 
-# One-line definitions, word for word from research/tag-taxonomy-v3.md (a test holds
+# One-line definitions, word for word from research/tag-taxonomy-v4.md (a test holds
 # the two together). The parse prompt renders from this, and the enrichment prompt
 # (#77) is to render from it too, so the enrichment pass and the parser draw the same
 # line between neighbouring tags. Changing a definition or example changes both
@@ -35,15 +39,22 @@ TAG_DEFINITIONS: dict[str, str] = {
     "energy-recovery": "Return Energy from your discard pile to hand or deck.",
     "energy-removal": "Discard or move Energy off the *opponent's* Pokémon.",
     # Offense — damage shaping
-    "spread": "Deal damage to multiple of the opponent's Pokémon at once.",
-    "snipe": "Deal damage to a chosen *Benched* Pokémon, bypassing the Active.",
+    "bench-reach": (
+        "An attack or Ability can deal damage to, or put damage counters on, "
+        "one or more of the opponent's *Benched* Pokémon."
+    ),
+    "multi-target": (
+        "One attack or Ability use can deal damage to, or put damage counters on, more than one "
+        "of the opponent's Pokémon (choosing a target several times counts, even if every hit "
+        "lands on one)."
+    ),
     "damage-scaling": (
         "Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded."
     ),
     "recoil": "Attack costs damage to, or discards Energy from, *your own* Pokémon.",
     "counter-placement": (
-        "Put damage counters directly on any of the opponent's Pokémon (Active, Benched, or both), "
-        "rather than dealing damage, so Weakness, Resistance and damage-reduction don't apply. "
+        "Put damage counters directly on the opponent's Pokémon rather than dealing damage, "
+        "so Weakness, Resistance and damage-reduction don't apply. "
         "Retaliation when your Pokémon is hit is `counter-damage`."
     ),
     # Disruption — control
@@ -81,11 +92,18 @@ TAG_DEFINITIONS: dict[str, str] = {
 
 FUNCTIONAL_TAGS: frozenset[str] = frozenset(TAG_DEFINITIONS)
 
+# How a card puts damage on the opponent's Bench, or on several Pokémon, split into one
+# question per tag: can it reach the Bench, can one use hit more than one Pokémon, and does
+# it use counters instead of damage. They combine freely (Dragapult ex carries all three).
+BENCH_DAMAGE_TAGS: frozenset[str] = frozenset({"bench-reach", "multi-target", "counter-placement"})
+
 # 1–2 cards per tag from Scarlet & Violet through Mega Evolution, checked against
 # TCGdex card text. Every example carries only its own tag across all of its attacks
 # and Abilities, so each one shows the tag's effect in isolation; that also keeps
 # confusion pairs apart (Baxcalibur attaches without searching; Earthen Vessel searches
-# without attaching). Never the gold or hero set (CONTEXT.md: Quality validation): an
+# without attaching). The exception is BENCH_DAMAGE_TAGS: nearly anything `multi-target`
+# is also `bench-reach`, so their examples show the effect clearly and name the others
+# they carry in `also`. Never the gold or hero set (CONTEXT.md: Quality validation): an
 # example in the prompt would inflate the score that set measures.
 TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
     "draw": (TagExample("Dudunsparce", "sv05-129"), TagExample("Carmine", "sv06-145")),
@@ -101,11 +119,17 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
         TagExample("Enhanced Hammer", "sv06-148"),
         TagExample("Crushing Hammer", "sv01-168"),
     ),
-    "spread": (TagExample("Lapras", "sv03-045"), TagExample("Regice", "sv09-042")),
-    "snipe": (TagExample("Golbat", "sv03.5-042"), TagExample("Elekid", "sv04-059")),
+    "bench-reach": (TagExample("Golbat", "sv03.5-042"), TagExample("Elekid", "sv04-059")),
+    "multi-target": (
+        TagExample("Lapras", "sv03-045", also=("bench-reach",)),
+        TagExample("Regice", "sv09-042", also=("bench-reach",)),
+    ),
     "damage-scaling": (TagExample("Chandelure", "sv03-038"), TagExample("Drampa", "sv03-161")),
     "recoil": (TagExample("Koraidon", "sv01-124"), TagExample("Primeape", "sv01-108")),
-    "counter-placement": (TagExample("Drifblim", "sv01-090"), TagExample("Dusclops", "sv06.5-019")),
+    "counter-placement": (
+        TagExample("Drifblim", "sv01-090", also=("bench-reach", "multi-target")),
+        TagExample("Dusclops", "sv06.5-019", also=("bench-reach",)),
+    ),
     "hand-disruption": (TagExample("Grabber", "sv03.5-162"), TagExample("Krokorok", "sv10.5b-058")),
     "mill": (TagExample("Zweilous", "sv08-118"),),
     "ability-lock": (TagExample("Klefki", "sv01-096"),),
@@ -138,6 +162,10 @@ TAG_EXAMPLES: dict[str, tuple[TagExample, ...]] = {
 }
 
 
+def _render_example(example: TagExample) -> str:
+    return f"{example.name} (also {', '.join(example.also)})" if example.also else example.name
+
+
 def render_tag_glossary() -> str:
     """The tag definitions and example cards as a prompt block, one tag per line.
 
@@ -146,6 +174,6 @@ def render_tag_glossary() -> str:
     """
     lines = []
     for tag, definition in TAG_DEFINITIONS.items():
-        examples = ", ".join(example.name for example in TAG_EXAMPLES[tag])
+        examples = ", ".join(_render_example(example) for example in TAG_EXAMPLES[tag])
         lines.append(f"- {tag}: {definition} Examples: {examples}.")
     return "\n".join(lines)

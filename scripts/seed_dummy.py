@@ -148,7 +148,7 @@ TAGS_BY_NAME: dict[str, list[str]] = {
     "Leafkit": ["healing"],
     "Verdantree ex": ["acceleration", "energy-recovery"],
     "Psychic Owl": ["special-condition", "search"],
-    "Stonehorn": ["snipe", "spread"],
+    "Stonehorn": ["bench-reach"],
     "Dreamcat": ["healing", "special-condition"],
     "Pixiebell": ["movement-lock"],
     "Wyrmling": ["energy-removal"],

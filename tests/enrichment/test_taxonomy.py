@@ -1,7 +1,15 @@
 import re
 from pathlib import Path
 
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, TAG_DEFINITIONS, TAG_EXAMPLES, TAXONOMY_VERSION
+from app.enrichment.taxonomy import (
+    BENCH_DAMAGE_TAGS,
+    FUNCTIONAL_TAGS,
+    TAG_DEFINITIONS,
+    TAG_EXAMPLES,
+    TAXONOMY_VERSION,
+    TagExample,
+    render_tag_glossary,
+)
 
 # The doc for the current taxonomy version; earlier versions' docs stay as a record.
 _TAXONOMY_DOC = Path(__file__).parents[2] / "research" / f"tag-taxonomy-{TAXONOMY_VERSION}.md"
@@ -19,6 +27,12 @@ def _doc_rows() -> dict[str, tuple[str, str]]:
         if match := _TAG_ROW.match(line):
             rows[match["tag"]] = (match["definition"], match["examples"])
     return rows
+
+
+def _doc_example(example: TagExample) -> str:
+    """How the doc cites an example: `Name (`id`)`, or `Name (`id`, also `a`, `b`)`."""
+    also = "".join(f", {'also ' if i == 0 else ''}`{tag}`" for i, tag in enumerate(example.also))
+    return f"{example.name} (`{example.card_id}`{also})"
 
 
 def test_functional_tags_are_derived_from_the_definitions() -> None:
@@ -42,6 +56,25 @@ def test_no_card_is_the_example_for_two_tags() -> None:
     assert len(card_ids) == len(set(card_ids))
 
 
+def test_only_the_bench_damage_family_examples_carry_other_tags() -> None:
+    # Nearly anything `multi-target` is also `bench-reach` (there is one Active), so these three
+    # tags' examples may carry each other's tags, and name them. Every other example stays single-tag.
+    assert BENCH_DAMAGE_TAGS == {"bench-reach", "multi-target", "counter-placement"}
+    for tag, examples in TAG_EXAMPLES.items():
+        for example in examples:
+            if tag in BENCH_DAMAGE_TAGS:
+                assert set(example.also) <= BENCH_DAMAGE_TAGS - {tag}, (tag, example)
+            else:
+                assert example.also == (), (tag, example)
+
+
+def test_the_glossary_names_the_other_tags_an_example_carries() -> None:
+    glossary = render_tag_glossary()
+
+    assert "Examples: Lapras (also bench-reach), Regice (also bench-reach)." in glossary
+    assert "Examples: Golbat, Elekid." in glossary
+
+
 def test_taxonomy_doc_definitions_match_the_code_word_for_word() -> None:
     rows = _doc_rows()
 
@@ -52,5 +85,5 @@ def test_taxonomy_doc_definitions_match_the_code_word_for_word() -> None:
 
 def test_taxonomy_doc_examples_match_the_code() -> None:
     for tag, (_, examples) in _doc_rows().items():
-        expected = ", ".join(f"{example.name} (`{example.card_id}`)" for example in TAG_EXAMPLES[tag])
+        expected = ", ".join(_doc_example(example) for example in TAG_EXAMPLES[tag])
         assert examples == expected, tag
