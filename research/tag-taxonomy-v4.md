@@ -37,7 +37,7 @@ Bootstrapped **propose → cluster → curate** from recurring Standard-format m
 | Q3 | `gust` vs. `switch` | **Split.** They target opposite sides — `gust` drags the opponent's Bench up; `switch` swaps your own Active out. An effect that does both carries both. |
 | Q4 | Enum shape | **Flat.** The model emits a flat list of slugs. The 7 families are **documentation only** — no `category` field is stored. Revisit only if the UI wants family grouping. |
 | Q5 | Card-type coverage | **One unified list** across all supertypes (Pokémon / Trainer / Energy). |
-| Q6 | Tag count | **Ship 27.** Every tag maps to a real, queryable archetype; `suggested_new_tag` grows the rest from real data. v2 added `counter-placement`; v3 added `retreat-reduction`; v4 swaps `snipe`/`spread` for `bench-reach`/`multi-target`. |
+| Q6 | Tag count | **Ship 27** (29 since v3). Every tag maps to a real, queryable archetype; `suggested_new_tag` grows the rest from real data. v2 added `counter-placement`; v3 added `retreat-reduction`; v4 swaps `snipe`/`spread` for `bench-reach`/`multi-target`. |
 
 ## What changed from v3
 

@@ -88,3 +88,25 @@ Choosing GPT-6 Luna `low` means either accepting that up to ~10% of searches deg
 - "energy denial", missed once in the `+ rules` runs, got `energy-removal` on every run.
 
 **Latency fits the 6s timeout.** Every GPT-6 `low` call finished within 6s (≥98% required). In this run, 99–100% also finished within 4s, against 90–93% in the `+ rules` runs. Latency varies between runs, so the 6s timeout still leaves headroom for slow periods.
+
+## After #101: taxonomy v4 (`PARSE_VERSION` v8)
+
+**Date:** 2026-11-03, `PARSE_VERSION` v8. 90 queries, 3 runs after a warm-up, GPT-6 Luna at `low` only.
+**Rerun:** `uv run python -m scripts.parse_model_eval --model gpt-6-luna --effort low --raw research/parse-model-eval-gpt6-v8-raw.json`.
+
+#101 replaced `snipe` and `spread` with `bench-reach` and `multi-target` (see `tag-taxonomy-v4.md`), and swapped the parse prompt's two Bench rules for three: a plain Bench query is `bench-reach`, hitting several or all is `multi-target`, and naming damage counters adds `counter-placement`. The eval's `counter-placement vs snipe/spread` group became `bench-reach vs multi-target vs counter-placement`, with a new query ("hit one of their benched pokemon"). Four queries outside the group were renamed to the new tags ("…that snipe" ×2, the `gust` confusion, "damage all their pokemon and poison them"). 271 calls, none failed, $0.03.
+
+| Configuration | Standard: filters / tag P / R | Hard: filters / tag P / R | Median std / hard | Within 4s std / hard | Within 6s std / hard | $ / 1k std |
+| --- | --- | --- | --- | --- | --- | ---: |
+| GPT-6 `low` (production) | 99% / 1.00 / 1.00 | 100% / 1.00 / 1.00 | 1.98s / 2.13s | 99% / 99% | 99% / 100% | $0.094 |
+
+**No tag regression against v7.** Tag precision and recall stay at 1.00 on both rows.
+
+**The Bench group was right on every run.**
+- "put damage counters on their bench" → `counter-placement`, `bench-reach`
+- "hit their bench for damage" → `bench-reach`
+- "hit one of their benched pokemon" → `bench-reach`
+- "damage all of the opponent's pokemon at once" → `multi-target`, `bench-reach` (the accepted `tags_also` answer)
+- "drag out a benched pokemon and hit it" stayed `gust`
+
+**One filter miss, outside the group.** "pokemon tools" was filtered to `category: Pokemon` on 2 of 3 runs, the same misreading noted for earlier prompts above. It is unrelated to tags.

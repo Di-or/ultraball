@@ -125,7 +125,6 @@ def test_system_prompt_carries_the_parse_rules_the_eval_trialled_after_the_tag_g
     assert "Tag only effects the query describes" in instructions
 
 
-
 def test_system_prompt_maps_bench_queries_onto_the_v4_bench_damage_tags() -> None:
     # v4 (#101): each of the three tags answers one question, so a query gets one per thing it asks.
     instructions = build_system_prompt(())
