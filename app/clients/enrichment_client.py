@@ -90,9 +90,8 @@ embedded for semantic search, so describe effects, not flavour or strategy. Stri
 Keep energy types named inside an effect ("attach a Fire Energy"), but not the Pokémon's own type.
 - `tags`: every functional tag whose definition the card's effect meets, across all of its \
 attacks and Abilities. An empty array if none do (a vanilla attacker, a basic Energy). \
-Placing damage counters is not dealing damage: `snipe` and `spread` count only the Pokémon an \
-attack deals damage to, and only damage counters count toward `counter-placement`. An attack \
-that damages the Active and puts counters on the Bench is `counter-placement`, not `spread`.
+`bench-reach`, `multi-target` and `counter-placement` combine freely: an attack that damages \
+the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three.
 - `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null.
 - `rationale`: one or two sentences tying each tag to the card text that earns it."""
 )
