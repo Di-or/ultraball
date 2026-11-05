@@ -157,9 +157,9 @@ Porygon and Judge unchanged. Live runs cost $0.075 in all.
 
 Toedscruel (`sv01-026`) got `damage-scaling` for "80 damage for each heads". So
 [#104](https://github.com/Di-or/ultraball/issues/104) added "Coin flips aren't a game-state count."
-to the definition (`PROMPT_VERSION` v8, `PARSE_VERSION` v10). A re-run of 7 cards ($0.014) dropped
-`damage-scaling` from three coin-flip attackers: Toedscruel, Azumarill (`sv02-045`, flip 2 coins)
-and Rellor (`sv02-026`, flip until tails). It kept the tag on three real counts: Rattata
+to the definition (`PROMPT_VERSION` v8, `PARSE_VERSION` v10). In a re-run of 7 cards ($0.014), Toedscruel
+lost `damage-scaling`, and two more coin-flip attackers didn't get it: Azumarill (`sv02-045`, flip
+2 coins) and Rellor (`sv02-026`, flip until tails). It kept the tag on three real counts: Rattata
 (`sv03.5-019`, damage counters on the opponent), Raging Bolt ex (`sv05-123`, Energy discarded) and
 Scream Tail (`sv04-086`, its own damage counters, also `bench-reach`). Brambleghast (`sv05-021`,
 "flip a coin for each Energy attached") got no tag either. The number of coins grows with Energy,
