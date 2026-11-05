@@ -92,7 +92,7 @@
   {"group": "confusion: damage-prevention vs effect-prevention", "query": "protect my pokemon from damage counters", "filters": {}, "tags": ["effect-prevention"]},
   {"group": "confusion: damage-scaling vs damage-boost", "query": "tools that add damage", "filters": {"trainer_type": "Tool"}, "filters_also": [{"category": "Trainer", "trainer_type": "Tool"}], "tags": ["damage-boost"]},
   {"group": "confusion: energy-movement vs acceleration", "query": "move energy to another pokemon", "filters": {}, "tags": ["energy-movement"]},
-  {"group": "confusion: recoil", "query": "attackers that hurt themselves", "filters": {}, "filters_also": [{"category": "Pokemon"}], "tags": ["recoil"], "note": "An attacker is a Pokemon, so `category: Pokemon` is accepted too."},
+  {"group": "confusion: recoil vs discarding your own energy", "query": "attackers that hurt themselves", "filters": {}, "filters_also": [{"category": "Pokemon"}], "tags": ["recoil"], "note": "An attacker is a Pokémon, so `category: Pokemon` is accepted too."},
   {"group": "confusion: draw vs hand-disruption", "query": "shuffle hand and draw", "filters": {}, "tags": ["draw"], "note": "Your own hand: `draw` only."},
   {"difficulty": "hard", "group": "confusion: draw vs hand-disruption", "query": "both players shuffle their hands and draw new ones", "filters": {}, "tags": ["draw", "hand-disruption"]},
   {"difficulty": "hard", "group": "confusion: energy-movement vs energy-removal", "query": "move the opponent's energy onto their bench", "filters": {}, "tags": ["energy-movement", "energy-removal"]},
