@@ -9,7 +9,7 @@ from anthropic.types.message_create_params import MessageCreateParamsNonStreamin
 from anthropic.types.messages.batch_create_params import Request
 
 from app.enrichment import status
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary, render_two_tag_rules
 
 
 @dataclass(frozen=True)
@@ -80,6 +80,8 @@ SYSTEM_PROMPT = (
     "Functional tags (what a card does). Search queries are parsed into these same tags with "
     "these same definitions, so apply a tag only when the card has that effect as defined here:\n"
     + render_tag_glossary()
+    + "\n\n"
+    + render_two_tag_rules()
     + """
 
 The user message is one card's text: its name, then its Abilities, attacks or effect.

@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import httpx
 
 from app.catalog.set_models import CatalogSet, render_set_lines
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary, render_two_tag_rules
 
 _OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 _PARSE_MODEL = "gpt-6-luna"
@@ -93,6 +93,8 @@ _TAG_GLOSSARY = (
     "Functional tags (what a card does). The enrichment pass tags cards with these same "
     "definitions, so pick a tag only when the query asks for that effect as defined here:\n"
     + render_tag_glossary()
+    + "\n\n"
+    + render_two_tag_rules()
 )
 
 _INSTRUCTIONS = """You split a Pokémon TCG search query into a hard filter zone and a soft \

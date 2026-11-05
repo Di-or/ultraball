@@ -6,7 +6,7 @@ import pytest
 from app.catalog.set_models import CatalogSet
 from app.clients import parse_client
 from app.clients.parse_client import HostedParseClient, build_parse_json_schema, build_system_prompt
-from app.enrichment.taxonomy import TAG_DEFINITIONS, TAG_EXAMPLES
+from app.enrichment.taxonomy import TAG_DEFINITIONS, TAG_EXAMPLES, render_tag_glossary, render_two_tag_rules
 
 _PARSE_OBJECT = {
     "filters": {
@@ -138,6 +138,14 @@ def test_system_prompt_maps_bench_queries_onto_the_v4_bench_damage_tags() -> Non
     # The v3 workarounds are gone.
     assert "tag both `snipe` and `spread`" not in instructions
     assert "Placing damage counters is not dealing damage" not in instructions
+
+
+def test_system_prompt_lists_the_effects_that_carry_two_tags_after_the_glossary() -> None:
+    # v5 (#103): the first v9 eval tagged moving the opponent's Energy `energy-movement` alone on
+    # every run. The enricher reads the same list, so both draw the same line.
+    system_prompt = build_system_prompt(())
+
+    assert render_tag_glossary() + "\n\n" + render_two_tag_rules() in system_prompt
 
 
 _SETS = (

@@ -239,13 +239,13 @@ def test_tags_score_against_whichever_accepted_tag_set_fits_best() -> None:
             "query": "basic energy acceleration from the discard",
             "filters": {},
             "tags": ["acceleration"],
-            "tags_also": [["acceleration", "energy-recovery"]],
+            "tags_also": [["acceleration", "recovery"]],
         }
     ]
     query = queries[0]["query"]
 
     # Either accepted set scores perfectly.
-    for tags in (["acceleration"], ["acceleration", "energy-recovery"]):
+    for tags in (["acceleration"], ["acceleration", "recovery"]):
         summary = summarise([_call(query, tags=tags)], queries)
         assert (summary.tag_precision, summary.tag_recall) == (1.0, 1.0), tags
 
@@ -312,11 +312,11 @@ def test_report_shows_every_accepted_tag_set_as_expected() -> None:
     luna, mini = Config("gpt-6-luna", "low"), Config("gpt-5-mini", "low")
     query = "basic energy acceleration from the discard"
     queries = [
-        {"query": query, "filters": {}, "tags": ["acceleration"], "tags_also": [["acceleration", "energy-recovery"]]}
+        {"query": query, "filters": {}, "tags": ["acceleration"], "tags_also": [["acceleration", "recovery"]]}
     ]
     calls = [_call(query, config=luna, tags=["acceleration"]), _call(query, config=mini, tags=["search"])]
 
-    assert f"**{query}** (expected `{{}}` · acceleration or acceleration, energy-recovery)" in report(calls, queries)
+    assert f"**{query}** (expected `{{}}` · acceleration or acceleration, recovery)" in report(calls, queries)
 
 
 def test_report_scores_hard_queries_in_their_own_row() -> None:

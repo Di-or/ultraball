@@ -110,3 +110,40 @@ Choosing GPT-6 Luna `low` means either accepting that up to ~10% of searches deg
 - "drag out a benched pokemon and hit it" stayed `gust`
 
 **One filter miss, outside the group.** "pokemon tools" was filtered to `category: Pokemon` on 2 of 3 runs, the same misreading noted for earlier prompts above. It is unrelated to tags.
+
+## After #103: taxonomy v5 (`PARSE_VERSION` v9)
+
+**Date:** 2026-11-04, `PARSE_VERSION` v9. 99 queries (50 standard, 49 hard), 3 runs after a warm-up, GPT-6 Luna at `low` only.
+**Rerun:** `uv run python -m scripts.parse_model_eval --model gpt-6-luna --effort low --raw research/parse-model-eval-gpt6-v9-raw.json`.
+
+#103 split `damage-prevention` from `effect-prevention`, added `damage-boost` and `energy-movement`, merged `energy-search` / `energy-recovery` into `search` / `recovery`, and widened `counter-damage` to any punishment of the attacker (see `tag-taxonomy-v5.md`). The eval renamed the three queries that expected the merged tags, and "basic energy acceleration from the discard" now expects `acceleration` + `recovery` with no `tags_also`. Ten queries were added, one or more per new or changed tag and per "carries both" rule, worded unlike the prompts' examples.
+
+Four evals were run, each 3 runs after a warm-up (298-301 calls), none failed, $0.12 in all:
+
+1. **Glossary alone.** Missed two new hard queries: "move the opponent's energy onto their bench" got `energy-movement` without `energy-removal` on all 3 runs, and "both players shuffle their hands and draw new ones" missed `hand-disruption` once.
+2. **A hand-written two-tag rule in the parse instructions.** Every new query right on every run; only "pokemon tools" missed.
+3. **The shared two-tag table** (`TWO_TAG_RULES`, rendered after the glossary in both prompts) **and the wider `counter-damage`.** Every new and changed query right on every run, but four misses on unchanged queries: "151 pokemon with free retreat" got `retreat-reduction` instead of the 0-retreat filter on 2 runs, "retreat for free" got `switch` once, "cards like Boss's Orders" got no tag once, and "basic energy acceleration from the discard" added an `energy_type: Basic` filter once.
+4. **Shipped: as 3, plus "which carries its own tag too" in `counter-damage`.** None of run 3's four misses came back, so they read as run-to-run variance rather than an effect of where the table sits. The raw file holds this run.
+
+| Configuration | Run | Standard: filters / tag P / R | Hard: filters / tag P / R | Median std / hard | Within 4s std / hard | Within 6s std / hard | $ / 1k std |
+| --- | --- | --- | --- | --- | --- | --- | ---: |
+| GPT-6 `low` (production) | 4 | 99% / 1.00 / 1.00 | 100% / 0.99 / 1.00 | 2.16s / 2.32s | 100% / 100% | 100% / 100% | $0.100 |
+| GPT-6 `low` | 3 | 99% / 0.99 / 0.99 | 98% / 0.99 / 0.99 | 2.16s / 2.45s | 99% / 99% | 100% / 100% | $0.097 |
+
+**No tag regression against v8 outside the changed tags.** In run 4 the only tag disagreement is "bench barrier" getting `effect-prevention` alongside `damage-prevention` once. Both are changed tags, and some Bench barriers (Rabsca) do prevent both.
+
+**Every new query was right on every run in runs 3 and 4:**
+- "protect my pokemon from damage counters" → `effect-prevention`
+- "tools that add damage" → `damage-boost`, `trainer_type: Tool`
+- "pokemon that do extra damage to ex" → `damage-boost`, `category: Pokemon`, no `sub_category`
+- "move energy to another pokemon" → `energy-movement`
+- "move the opponent's energy onto their bench" → `energy-movement`, `energy-removal`
+- "attackers that hurt themselves" → `recoil`
+- "shuffle hand and draw" → `draw`
+- "both players shuffle their hands and draw new ones" → `draw`, `hand-disruption`
+- "knock out the attacker when my pokemon gets hit" → `counter-damage`
+- "poison the attacker when it hits me" → `counter-damage`, `special-condition`
+
+The renamed queries and "basic energy acceleration from the discard" (`acceleration`, `recovery`) were right on every run of run 4.
+
+**One filter miss, unchanged from v8.** "pokemon tools" was filtered to `category: Pokemon` on 2 of 3 runs.
