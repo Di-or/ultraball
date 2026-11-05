@@ -9,7 +9,7 @@ TAXONOMY_VERSION = "v5"
 
 # Bumping the prompt independently of the taxonomy (a wording fix, a confusion-pair
 # clarification) still forces a re-pass without needing a taxonomy version bump.
-PROMPT_VERSION = "v7"
+PROMPT_VERSION = "v8"
 
 
 @dataclass(frozen=True)
@@ -57,7 +57,8 @@ TAG_DEFINITIONS: dict[str, str] = {
         "lands on one)."
     ),
     "damage-scaling": (
-        "Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded."
+        "Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. "
+        "Coin flips aren't a game-state count."
     ),
     "damage-boost": (
         "Make attacks do a fixed amount more damage — from a Tool, Ability, Stadium, Item, Supporter "

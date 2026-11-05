@@ -98,6 +98,16 @@ def test_the_glossary_names_the_other_tags_an_example_carries() -> None:
     assert "Examples: Golbat, Elekid." in glossary
 
 
+def test_the_glossary_says_coin_flips_dont_make_damage_scale() -> None:
+    # #104: "80 damage for each heads" (Toedscruel sv01-026) was tagged `damage-scaling`, so a
+    # search for attackers that grow with Energy would also return coin-flip attackers.
+    damage_scaling_line = next(
+        line for line in render_tag_glossary().splitlines() if line.startswith("- damage-scaling")
+    )
+
+    assert "Coin flips aren't a game-state count." in damage_scaling_line
+
+
 def test_each_two_tag_rule_names_two_different_tags_from_the_taxonomy() -> None:
     assert TWO_TAG_RULES
     for rule in TWO_TAG_RULES:

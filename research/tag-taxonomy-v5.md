@@ -155,8 +155,16 @@ no `special-condition`, Klawf ex no `energy-removal`). The definition gained "wh
 own tag too", and a re-run of 6 cards ($0.014) got both right, with Handheld Fan, Gengar ex,
 Porygon and Judge unchanged. Live runs cost $0.075 in all.
 
-Toedscruel (`sv01-026`) got `damage-scaling` for "80 damage for each heads". That tag isn't
-changed here; it is [#104](https://github.com/Di-or/ultraball/issues/104).
+Toedscruel (`sv01-026`) got `damage-scaling` for "80 damage for each heads". So
+[#104](https://github.com/Di-or/ultraball/issues/104) added "Coin flips aren't a game-state count."
+to the definition (`PROMPT_VERSION` v8, `PARSE_VERSION` v10). A re-run of 7 cards ($0.014) dropped
+`damage-scaling` from three coin-flip attackers: Toedscruel, Azumarill (`sv02-045`, flip 2 coins)
+and Rellor (`sv02-026`, flip until tails). It kept the tag on three real counts: Rattata
+(`sv03.5-019`, damage counters on the opponent), Raging Bolt ex (`sv05-123`, Energy discarded) and
+Scream Tail (`sv04-086`, its own damage counters, also `bench-reach`). Brambleghast (`sv05-021`,
+"flip a coin for each Energy attached") got no tag either. The number of coins grows with Energy,
+but the damage still depends on the flips, so it's left untagged. Whether coin-flip attacks get a
+tag of their own is left to `suggested_new_tag`.
 
 Under v5 the cards from the discussion are tagged:
 
@@ -222,7 +230,7 @@ opponent's Energy is `energy-removal` alone, and discarding your own goes untagg
 |-----|------------|---------|
 | `bench-reach` | An attack or Ability can deal damage to, or put damage counters on, one or more of the opponent's *Benched* Pokémon. | Golbat (`sv03.5-042`), Elekid (`sv04-059`) |
 | `multi-target` | One attack or Ability use can deal damage to, or put damage counters on, more than one of the opponent's Pokémon (choosing a target several times counts, even if every hit lands on one). | Lapras (`sv03-045`, also `bench-reach`), Regice (`sv09-042`, also `bench-reach`) |
-| `damage-scaling` | Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. | Chandelure (`sv03-038`), Drampa (`sv03-161`) |
+| `damage-scaling` | Attack damage grows with a game-state count — Energy attached, damage counters, cards discarded. Coin flips aren't a game-state count. | Chandelure (`sv03-038`), Drampa (`sv03-161`) |
 | `damage-boost` | Make attacks do a fixed amount more damage — from a Tool, Ability, Stadium, Item, Supporter or Energy, or an attack's own conditional bonus ("does 100 more damage if…"). A per-count increase is `damage-scaling`. | Vitality Band (`sv01-197`), Greedent (`sv01-152`) |
 | `recoil` | An attack or Ability does damage to, or Knocks Out, *your own* Pokémon. | Primeape (`sv01-108`), Magneton (`sv01-064`) |
 | `counter-placement` | Put damage counters directly on the opponent's Pokémon rather than dealing damage, so Weakness, Resistance and damage-reduction don't apply. Retaliation when your Pokémon is hit is `counter-damage`. | Drifblim (`sv01-090`, also `bench-reach`, `multi-target`), Iron Valiant ex (`sv04-089`, also `bench-reach`) |
