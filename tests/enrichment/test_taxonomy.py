@@ -37,7 +37,14 @@ def _doc_example(example: TagExample) -> str:
 
 def test_functional_tags_are_derived_from_the_definitions() -> None:
     assert FUNCTIONAL_TAGS == set(TAG_DEFINITIONS)
-    assert len(FUNCTIONAL_TAGS) == 29
+    assert len(FUNCTIONAL_TAGS) == 30
+
+
+def test_v5_splits_prevention_adds_boosts_and_movement_and_merges_the_energy_tags() -> None:
+    # #103: effects of attacks (damage counters included) are split from damage, flat damage
+    # bonuses and moving Energy get tags, and Energy search and recovery fold into the general tags.
+    assert {"damage-prevention", "effect-prevention", "damage-boost", "energy-movement"} <= FUNCTIONAL_TAGS
+    assert not {"energy-search", "energy-recovery"} & FUNCTIONAL_TAGS
 
 
 def test_every_tag_has_a_definition_and_a_current_range_example() -> None:

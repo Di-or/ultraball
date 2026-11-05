@@ -110,3 +110,33 @@ Choosing GPT-6 Luna `low` means either accepting that up to ~10% of searches deg
 - "drag out a benched pokemon and hit it" stayed `gust`
 
 **One filter miss, outside the group.** "pokemon tools" was filtered to `category: Pokemon` on 2 of 3 runs, the same misreading noted for earlier prompts above. It is unrelated to tags.
+
+## After #103: taxonomy v5 (`PARSE_VERSION` v9)
+
+**Date:** 2026-11-04, `PARSE_VERSION` v9. 99 queries (50 standard, 49 hard), 3 runs after a warm-up, GPT-6 Luna at `low` only.
+**Rerun:** `uv run python -m scripts.parse_model_eval --model gpt-6-luna --effort low --raw research/parse-model-eval-gpt6-v9-raw.json`.
+
+#103 split `damage-prevention` from `effect-prevention`, added `damage-boost` and `energy-movement`, and merged `energy-search` / `energy-recovery` into `search` / `recovery` (see `tag-taxonomy-v5.md`). The eval renamed the three queries that expected the merged tags, and "basic energy acceleration from the discard" now expects `acceleration` + `recovery` with no `tags_also`. Nine queries were added, one or more per new or narrowed tag and per "carries both" rule, worded unlike the prompts' examples.
+
+The first v9 run, on the glossary alone, missed two of the new hard queries: "move the opponent's energy onto their bench" got `energy-movement` without `energy-removal` on all 3 runs, and "both players shuffle their hands and draw new ones" missed `hand-disruption` once. The parse prompt then gained one rule naming the effects that carry two tags (moving the opponent's Energy, every player's hand reset, attaching from the discard). The table is the run after that rule. 2 runs × 298 calls, none failed, $0.06 in all.
+
+| Configuration | Standard: filters / tag P / R | Hard: filters / tag P / R | Median std / hard | Within 4s std / hard | Within 6s std / hard | $ / 1k std |
+| --- | --- | --- | --- | --- | --- | ---: |
+| GPT-6 `low` (production) | 99% / 1.00 / 1.00 | 100% / 1.00 / 1.00 | 2.07s / 2.37s | 100% / 100% | 100% / 100% | $0.096 |
+
+**No tag regression against v8.** Tag precision and recall stay at 1.00 on both rows.
+
+**Every new query was right on every run:**
+- "protect my pokemon from damage counters" → `effect-prevention`
+- "tools that add damage" → `damage-boost`, `trainer_type: Tool`
+- "pokemon that do extra damage to ex" → `damage-boost`, `category: Pokemon`, no `sub_category`
+- "move energy to another pokemon" → `energy-movement`
+- "move the opponent's energy onto their bench" → `energy-movement`, `energy-removal`
+- "attackers that hurt themselves" → `recoil`
+- "shuffle hand and draw" → `draw`
+- "both players shuffle their hands and draw new ones" → `draw`, `hand-disruption`
+- "knock out the attacker when my pokemon gets hit" → `counter-damage`
+
+The renamed queries and "basic energy acceleration from the discard" (`acceleration`, `recovery`) were right on every run too.
+
+**One filter miss, unchanged from v8.** "pokemon tools" was filtered to `category: Pokemon` on 2 of 3 runs. In the first v9 run "bench barrier" came back with no tag once; it got `damage-prevention` on all 3 runs after the rule.

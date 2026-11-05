@@ -132,6 +132,10 @@ between my pokemon") is not the card's category, so leave `category` null.
 "snipe"); hitting several or all of their Pokémon is `multi-target` ("spread", "hit everything \
 they have"), plus `bench-reach` when the Bench is among them; naming damage counters adds \
 `counter-placement`.
+- Some effects carry two tags, like both players switching (`gust` + `switch`). Taking Energy off \
+an opponent's Pokémon by moving it to another of theirs is `energy-movement` + `energy-removal`; \
+every player's hand being reset and redrawn is `draw` + `hand-disruption`; attaching Energy from \
+the discard pile is `acceleration` + `recovery`.
 - Tag only effects the query describes. If it names a goal without describing any effect \
 ("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
 might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \

@@ -140,6 +140,17 @@ def test_system_prompt_maps_bench_queries_onto_the_v4_bench_damage_tags() -> Non
     assert "Placing damage counters is not dealing damage" not in instructions
 
 
+def test_system_prompt_names_the_effects_that_carry_two_tags() -> None:
+    # v5 (#103): the first v9 eval tagged moving the opponent's Energy `energy-movement` alone on
+    # every run, and both players' hand reset `draw` alone on one. These effects carry both tags.
+    instructions = build_system_prompt(())
+    instructions = instructions[instructions.index("You split a") :]
+
+    assert "`energy-movement` + `energy-removal`" in instructions
+    assert "`draw` + `hand-disruption`" in instructions
+    assert "`acceleration` + `recovery`" in instructions
+
+
 _SETS = (
     CatalogSet(id="sv06", code="TWM", name="Twilight Masquerade"),
     CatalogSet(id="sv01", code="SVI", name="Scarlet & Violet"),

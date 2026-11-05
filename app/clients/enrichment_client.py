@@ -91,7 +91,9 @@ Keep energy types named inside an effect ("attach a Fire Energy"), but not the P
 - `tags`: every functional tag whose definition the card's effect meets, across all of its \
 attacks and Abilities. An empty array if none do (a vanilla attacker, a basic Energy). \
 `bench-reach`, `multi-target` and `counter-placement` combine freely: an attack that damages \
-the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three.
+the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three. \
+Moving the opponent's Energy to another of their Pokémon carries `energy-movement` and `energy-removal`: \
+the Pokémon it leaves loses that Energy.
 - `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null.
 - `rationale`: one or two sentences tying each tag to the card text that earns it."""
 )
