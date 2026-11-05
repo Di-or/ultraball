@@ -164,7 +164,9 @@ lost `damage-scaling`, and two more coin-flip attackers didn't get it: Azumarill
 Scream Tail (`sv04-086`, its own damage counters, also `bench-reach`). Brambleghast (`sv05-021`,
 "flip a coin for each Energy attached") got no tag either. The number of coins grows with Energy,
 but the damage still depends on the flips, so it's left untagged. Whether coin-flip attacks get a
-tag of their own is left to `suggested_new_tag`.
+tag of their own is left to `suggested_new_tag`. The v10 parse eval got every query right, a new
+coin-flip query included; see
+[`parse-model-eval-gpt6.md`](parse-model-eval-gpt6.md#after-104-coin-flips-arent-a-count-parse_version-v10).
 
 Under v5 the cards from the discussion are tagged:
 

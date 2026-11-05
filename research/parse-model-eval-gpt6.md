@@ -147,3 +147,18 @@ Four evals were run, each 3 runs after a warm-up (298-301 calls), none failed, $
 The renamed queries and "basic energy acceleration from the discard" (`acceleration`, `recovery`) were right on every run of run 4.
 
 **One filter miss, unchanged from v8.** "pokemon tools" was filtered to `category: Pokemon` on 2 of 3 runs.
+
+## After #104: coin flips aren't a count (`PARSE_VERSION` v10)
+
+**Date:** 2026-11-05, `PARSE_VERSION` v10. 101 queries (50 standard, 51 hard), 3 runs after a warm-up, GPT-6 Luna at `low` only.
+**Rerun:** `uv run python -m scripts.parse_model_eval --model gpt-6-luna --effort low --raw research/parse-model-eval-gpt6-v10-raw.json`.
+
+#104 added "Coin flips aren't a game-state count." to the `damage-scaling` definition (see `tag-taxonomy-v5.md`). One hard query was added: "attackers that do more damage the more heads they flip" expects no tag (`category: Pokemon` accepted). 304 calls, none failed, $0.03.
+
+| Configuration | Standard: filters / tag P / R | Hard: filters / tag P / R | Median std / hard | Within 4s std / hard | Within 6s std / hard | $ / 1k std |
+| --- | --- | --- | --- | --- | --- | ---: |
+| GPT-6 `low` (production) | 100% / 1.00 / 1.00 | 100% / 1.00 / 1.00 | 2.76s / 3.27s | 90% / 69% | 100% / 98% | $0.104 |
+
+**No disagreements on any query in any run.** The new query got no tag on all 3 runs, and the three existing `damage-scaling` queries ("more damage for each energy attached", "stronger with more benched pokemon", "hit harder the more damage they have") kept the tag on all 3. "pokemon tools", the one filter miss under v9, was right on every run, which fits it being run-to-run variance.
+
+**Slower than v9.** Medians went from 2.16s / 2.32s to 2.76s / 3.27s, and 2% of hard calls went over 6s. The prompt grew by one sentence and the cached share is 100% either way, so the change doesn't obviously explain it; one run can't separate it from API latency on the day. The 6s timeout held on 300 of 303 calls.
