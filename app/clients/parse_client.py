@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import httpx
 
 from app.catalog.set_models import CatalogSet, render_set_lines
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary, render_two_tag_rules
 
 _OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 _PARSE_MODEL = "gpt-6-luna"
@@ -93,6 +93,8 @@ _TAG_GLOSSARY = (
     "Functional tags (what a card does). The enrichment pass tags cards with these same "
     "definitions, so pick a tag only when the query asks for that effect as defined here:\n"
     + render_tag_glossary()
+    + "\n\n"
+    + render_two_tag_rules()
 )
 
 _INSTRUCTIONS = """You split a Pokémon TCG search query into a hard filter zone and a soft \
@@ -132,10 +134,6 @@ between my pokemon") is not the card's category, so leave `category` null.
 "snipe"); hitting several or all of their Pokémon is `multi-target` ("spread", "hit everything \
 they have"), plus `bench-reach` when the Bench is among them; naming damage counters adds \
 `counter-placement`.
-- Some effects carry two tags, like both players switching (`gust` + `switch`). Taking Energy off \
-an opponent's Pokémon by moving it to another of theirs is `energy-movement` + `energy-removal`; \
-every player's hand being reset and redrawn is `draw` + `hand-disruption`; attaching Energy from \
-the discard pile is `acceleration` + `recovery`.
 - Tag only effects the query describes. If it names a goal without describing any effect \
 ("good against big attackers", "tool that beats Charizard"), don't guess a mechanism the card \
 might use: leave `tags` empty and let `concept` carry it. A query that does describe the effect \

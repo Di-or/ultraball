@@ -9,7 +9,7 @@ from anthropic import DefaultAsyncHttpxClient
 from app.clients import enrichment_client
 from app.clients.enrichment_client import SYSTEM_PROMPT, EnrichmentRequest, EnrichmentResult, HostedEnrichmentClient
 from app.enrichment import status
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, TAG_DEFINITIONS
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, TAG_DEFINITIONS, render_tag_glossary, render_two_tag_rules
 
 _NEST_BALL = EnrichmentRequest(
     dedupe_key="nest ball search your deck for a basic pokémon and put it onto your bench.",
@@ -159,11 +159,10 @@ def test_system_prompt_says_the_bench_damage_tags_combine_freely() -> None:
     assert "spread`" not in SYSTEM_PROMPT
 
 
-def test_system_prompt_says_moving_the_opponents_energy_also_removes_it() -> None:
+def test_system_prompt_lists_the_effects_that_carry_two_tags_after_the_glossary() -> None:
     # v5 (#103): the first live run tagged Porygon (moves an Energy from the opponent's Active to
-    # their Bench) `energy-movement` alone; their Active loses that Energy, so it is
-    # `energy-removal` too. The other "carries both" pairs came out right from the glossary alone.
-    assert "carries `energy-movement` and `energy-removal`" in SYSTEM_PROMPT
+    # their Bench) `energy-movement` alone. The parser reads the same list, so both draw the same line.
+    assert render_tag_glossary() + "\n\n" + render_two_tag_rules() in SYSTEM_PROMPT
 
 
 async def test_every_call_carries_the_workspace_id_when_one_is_set(batches_api: _FakeBatchesApi) -> None:

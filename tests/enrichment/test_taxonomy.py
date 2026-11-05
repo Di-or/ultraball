@@ -7,8 +7,10 @@ from app.enrichment.taxonomy import (
     TAG_DEFINITIONS,
     TAG_EXAMPLES,
     TAXONOMY_VERSION,
+    TWO_TAG_RULES,
     TagExample,
     render_tag_glossary,
+    render_two_tag_rules,
 )
 
 # The doc for the current taxonomy version; earlier versions' docs stay as a record.
@@ -19,6 +21,20 @@ _TAG_ROW = re.compile(r"^\| `(?P<tag>[a-z-]+)` \| (?P<definition>.+?) \| (?P<exa
 
 # Main Scarlet & Violet and Mega Evolution sets only (no promos), e.g. sv01-181, sv03.5-108, me02.5-050.
 _SV_OR_ME_CARD_ID = re.compile(r"^(sv\d{2}(\.5[wb]?)?|me\d{2}(\.5)?)-\d{3}$")
+
+
+# A row in the doc's "Effects that carry two tags" table: | effect | `a` + `b` |
+_TWO_TAG_ROW = re.compile(r"^\| (?P<effect>.+?) \| `(?P<first>[a-z-]+)` \+ `(?P<second>[a-z-]+)` \|$")
+
+
+def _doc_two_tag_rows() -> list[tuple[str, tuple[str, str]]]:
+    text = _TAXONOMY_DOC.read_text(encoding="utf-8")
+    section = text.split("## Effects that carry two tags", 1)[1].split("\n## ", 1)[0]
+    return [
+        (match["effect"], (match["first"], match["second"]))
+        for line in section.splitlines()
+        if (match := _TWO_TAG_ROW.match(line))
+    ]
 
 
 def _doc_rows() -> dict[str, tuple[str, str]]:
@@ -80,6 +96,25 @@ def test_the_glossary_names_the_other_tags_an_example_carries() -> None:
 
     assert "Examples: Lapras (also bench-reach), Regice (also bench-reach)." in glossary
     assert "Examples: Golbat, Elekid." in glossary
+
+
+def test_each_two_tag_rule_names_two_different_tags_from_the_taxonomy() -> None:
+    assert TWO_TAG_RULES
+    for rule in TWO_TAG_RULES:
+        assert rule.effect.strip()
+        assert len(set(rule.tags)) == 2, rule
+        assert set(rule.tags) <= FUNCTIONAL_TAGS, rule
+
+
+def test_taxonomy_doc_two_tag_rules_match_the_code_word_for_word() -> None:
+    assert _doc_two_tag_rows() == [(rule.effect, rule.tags) for rule in TWO_TAG_RULES]
+
+
+def test_the_two_tag_block_lists_every_rule_with_both_tags() -> None:
+    block = render_two_tag_rules()
+
+    for rule in TWO_TAG_RULES:
+        assert f"- {rule.effect}: `{rule.tags[0]}` + `{rule.tags[1]}`." in block
 
 
 def test_taxonomy_doc_definitions_match_the_code_word_for_word() -> None:

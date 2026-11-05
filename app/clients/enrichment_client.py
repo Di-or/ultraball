@@ -9,7 +9,7 @@ from anthropic.types.message_create_params import MessageCreateParamsNonStreamin
 from anthropic.types.messages.batch_create_params import Request
 
 from app.enrichment import status
-from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary
+from app.enrichment.taxonomy import FUNCTIONAL_TAGS, render_tag_glossary, render_two_tag_rules
 
 
 @dataclass(frozen=True)
@@ -80,6 +80,8 @@ SYSTEM_PROMPT = (
     "Functional tags (what a card does). Search queries are parsed into these same tags with "
     "these same definitions, so apply a tag only when the card has that effect as defined here:\n"
     + render_tag_glossary()
+    + "\n\n"
+    + render_two_tag_rules()
     + """
 
 The user message is one card's text: its name, then its Abilities, attacks or effect.
@@ -91,9 +93,7 @@ Keep energy types named inside an effect ("attach a Fire Energy"), but not the P
 - `tags`: every functional tag whose definition the card's effect meets, across all of its \
 attacks and Abilities. An empty array if none do (a vanilla attacker, a basic Energy). \
 `bench-reach`, `multi-target` and `counter-placement` combine freely: an attack that damages \
-the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three. \
-Moving the opponent's Energy to another of their Pokémon carries `energy-movement` and `energy-removal`: \
-the Pokémon it leaves loses that Energy.
+the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three.
 - `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null.
 - `rationale`: one or two sentences tying each tag to the card text that earns it."""
 )

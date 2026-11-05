@@ -99,7 +99,8 @@ TAG_DEFINITIONS: dict[str, str] = {
     ),
     "counter-damage": (
         "When your Pokémon is hit by an attack, punish the Attacking Pokémon — damage, "
-        "damage counters, or a Knock Out."
+        "damage counters, a Knock Out, or another effect such as a Special Condition or losing Energy, "
+        "which carries its own tag too."
     ),
     # Prize & win condition
     "prize-manipulation": (
@@ -117,6 +118,35 @@ FUNCTIONAL_TAGS: frozenset[str] = frozenset(TAG_DEFINITIONS)
 # question per tag: can it reach the Bench, can one use hit more than one Pokémon, and does
 # it use counters instead of damage. They combine freely (Dragapult ex carries all three).
 BENCH_DAMAGE_TAGS: frozenset[str] = frozenset({"bench-reach", "multi-target", "counter-placement"})
+
+
+@dataclass(frozen=True)
+class TwoTagRule:
+    """An effect that always carries both of two neighbouring tags."""
+
+    effect: str
+    tags: tuple[str, str]
+
+
+# Effects whose definitions overlap, so a card (or query) with one carries both tags. The one
+# list both prompts render, word for word from the v5 doc's "Effects that carry two tags" table
+# (a test holds the two together); changing it changes both prompts, as for TAG_DEFINITIONS.
+TWO_TAG_RULES: tuple[TwoTagRule, ...] = (
+    TwoTagRule("Both players switch their Active Pokémon", ("gust", "switch")),
+    TwoTagRule(
+        "Energy is moved off one of the opponent's Pokémon to another of theirs",
+        ("energy-movement", "energy-removal"),
+    ),
+    TwoTagRule(
+        "Every player's hand is reset — shuffled or discarded, then a new one drawn",
+        ("draw", "hand-disruption"),
+    ),
+    TwoTagRule("Energy is attached from your discard pile", ("acceleration", "recovery")),
+    TwoTagRule(
+        "All damage from and effects of attacks are prevented",
+        ("damage-prevention", "effect-prevention"),
+    ),
+)
 
 # 1–2 cards per tag from Scarlet & Violet through Mega Evolution, checked against
 # TCGdex card text. Every example carries only its own tag across all of its attacks
@@ -195,4 +225,11 @@ def render_tag_glossary() -> str:
     for tag, definition in TAG_DEFINITIONS.items():
         examples = ", ".join(_render_example(example) for example in TAG_EXAMPLES[tag])
         lines.append(f"- {tag}: {definition} Examples: {examples}.")
+    return "\n".join(lines)
+
+
+def render_two_tag_rules() -> str:
+    """The effects that carry two tags as a prompt block, one per line, in list order."""
+    lines = ["Effects that carry two tags (a card or query with one of these gets both):"]
+    lines += [f"- {rule.effect}: `{rule.tags[0]}` + `{rule.tags[1]}`." for rule in TWO_TAG_RULES]
     return "\n".join(lines)

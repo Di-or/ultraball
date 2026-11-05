@@ -72,7 +72,8 @@ definition didn't match its own examples. A few common effects had no tag.
 - **`counter-damage` contradicted its examples.** It said "Deal damage back", but both examples
   place damage counters (Rocky Helmet `sv01-193`, Cacturne `sv01-006`). The live run also tagged
   Gengar ex (`30th-090`, Fainting Spell: flip to Knock Out the attacker) `counter-damage`, which
-  isn't damage either.
+  isn't damage either. Other cards punish the attacker without any damage at all: Handheld Fan
+  (`sv06-150`) moves its Energy away, Roserade (`sv05-009`, Poison Point) poisons it.
 - **`stall` and `damage-prevention` both said "block".** "Block attacks" (the Defending Pokémon
   can't attack) and "block next turn" (prevent all damage done to this Pokémon) are different
   effects under the same verb.
@@ -115,7 +116,7 @@ Decisions:
    don't get v4's `also` treatment. The Bench family needed it because nearly every `multi-target`
    card is also `bench-reach`, so single-tag examples barely exist. Each pair here has plenty of
    cards with one tag alone, and a single-tag example keeps each tag's effect clear. The pairs are
-   stated in the enrichment prompt and the confusion-pair notes below instead.
+   listed once instead, in [Effects that carry two tags](#effects-that-carry-two-tags).
 9. **Examples re-checked.** Under the new definitions four v4 examples no longer carried only their
    own tag, and were swapped: Hoppip (prevents damage *and* effects; now Glimmet), Koraidon (only
    discards its own Energy; now Magneton), Dusclops (now `recoil` too; now Iron Valiant ex) and
@@ -123,14 +124,19 @@ Decisions:
    gave way to Earthen Vessel and Energy Retrieval, which show the merged Energy cases. The cards
    the acceptance run checks (Sinistcha, Kyurem, Gengar ex, Lillie's Determination, Judge,
    Maximum Belt, Defiance Band) are kept out of the examples.
-10. **Re-tag scope.** The bump re-queues every card (CONTEXT.md: Enrichment identity). Nothing is
+10. **`counter-damage` covers any punishment of the attacker.** A player asking for cards that
+    "punish them for attacking" wants Handheld Fan and Poison Point too, so the definition names
+    damage, damage counters, a Knock Out, or another effect such as a Special Condition or losing
+    Energy. Such a card also carries the tag for that effect (Poison Point: `special-condition`;
+    Handheld Fan: `energy-movement` + `energy-removal`). The tag keeps its name.
+11. **Re-tag scope.** The bump re-queues every card (CONTEXT.md: Enrichment identity). Nothing is
     tagged yet, so that costs nothing.
 
 **Prompts.** The glossary alone got most "carries both" rules right in the first live
 enrichment run, but tagged Porygon (moves an Energy off the opponent's Active) `energy-movement`
-without `energy-removal`. The enrichment prompt now says so in one sentence. The parse prompt gained
-one rule naming all three pairs (moving the opponent's Energy, every player's hand reset, attaching
-from the discard), after the first v9 parse eval missed the first two; see
+without `energy-removal`, and the first v9 parse eval missed that pair and the both-hands pair. So
+both prompts now render [Effects that carry two tags](#effects-that-carry-two-tags) right after the
+glossary, from one list in `app/enrichment/taxonomy.py` (`TWO_TAG_RULES`); see
 [`parse-model-eval-gpt6.md`](parse-model-eval-gpt6.md#after-103-taxonomy-v5-parse_version-v9).
 The parse prompt's existing examples ("tools that boost damage", "move energy between my pokemon",
 "nothing can damage it next turn") still read right under v5.
@@ -139,10 +145,18 @@ The parse prompt's existing examples ("tools that boost damage", "move energy be
 ($0.010), returned the intended tags for every card in the table below except Shaymin and Earthen
 Vessel, which are prompt examples and weren't run. It also returned `search` for Energy Search
 (`sv01-172`), `acceleration` + `recovery` for Energy Sticker (`sv03.5-159`), and `search` +
-`effect-prevention` for Jirachi (`sv04-126`: Stellar Veil stops counters on the Bench). Two
-side findings on unchanged tags, left alone: Toedscruel (`sv01-026`) got `damage-scaling` for "80
-damage for each heads", and Handheld Fan (`sv06-150`) got `counter-damage` for moving the
-attacker's Energy away.
+`effect-prevention` for Jirachi (`sv04-126`: Stellar Veil stops counters on the Bench).
+
+That run also showed Handheld Fan (`sv06-150`) getting `counter-damage` for moving the attacker's
+Energy away, which led to decision 10. After it and the shared two-tag table, all 14 cards plus
+Handheld Fan, Roserade (`sv05-009`) and Klawf ex (`sv03-120`) were re-run ($0.028). Every card got
+its intended tags except two, which got `counter-damage` but dropped the effect's own tag (Roserade
+no `special-condition`, Klawf ex no `energy-removal`). The definition gained "which carries its
+own tag too", and a re-run of 6 cards ($0.014) got both right, with Handheld Fan, Gengar ex,
+Porygon and Judge unchanged. Live runs cost $0.075 in all.
+
+Toedscruel (`sv01-026`) got `damage-scaling` for "80 damage for each heads". That tag isn't
+changed here; it is [#104](https://github.com/Di-or/ultraball/issues/104).
 
 Under v5 the cards from the discussion are tagged:
 
@@ -268,7 +282,7 @@ both players switch carry `gust` + `switch`.
 | `damage-reduction` | Reduce the damage your Pokémon take from the opponent's attacks. | Rock Chestplate (`sv01-192`), Stonjourner (`sv01-121`) |
 | `damage-prevention` | Prevent the damage the opponent's attacks do to your Pokémon, under a condition (a Benched Pokémon, next turn). | Shaymin (`sv10-010`), Glimmet (`sv03-121`) |
 | `effect-prevention` | Prevent the effects of the opponent's attacks or Abilities on your Pokémon, including damage counters they place. | Mist Energy (`sv05-161`), Kakuna (`sv03.5-014`) |
-| `counter-damage` | When your Pokémon is hit by an attack, punish the Attacking Pokémon — damage, damage counters, or a Knock Out. | Rocky Helmet (`sv01-193`), Cacturne (`sv01-006`) |
+| `counter-damage` | When your Pokémon is hit by an attack, punish the Attacking Pokémon — damage, damage counters, a Knock Out, or another effect such as a Special Condition or losing Energy, which carries its own tag too. | Rocky Helmet (`sv01-193`), Cacturne (`sv01-006`) |
 
 **Confusion pairs.** `damage-prevention`, `effect-prevention` and `counter-placement`: damage
 counters get past damage prevention but not effect prevention. Shaymin's Flower Curtain stops
@@ -280,8 +294,8 @@ an effect" (Mist Energy) is `effect-prevention` alone.
 `stall` and `damage-prevention`: "the Defending Pokémon can't attack" targets the opponent and is
 `stall`; "prevent all damage done to this Pokémon" protects yours and is `damage-prevention`.
 `damage-reduction` takes some damage off; `damage-prevention` stops all of it under its condition.
-`counter-damage` punishes the attacker after your Pokémon is hit, by damage, counters or a Knock
-Out.
+`counter-damage` punishes the attacker after your Pokémon is hit, by damage, counters, a Knock Out
+or another effect, and carries that effect's tag too (Poison Point also `special-condition`).
 
 ### 7 · Prize & win condition
 
@@ -289,6 +303,20 @@ Out.
 |-----|------------|---------|
 | `prize-manipulation` | Change how Prizes are taken — extra Prizes on KO, or denying the opponent Prizes. | Iron Hands ex (`sv04-070`), Legacy Energy (`sv06-167`) |
 | `stall` | Stop the opponent from attacking or taking their turn — the Defending Pokémon can't attack, they skip a turn. | Lickitung (`sv03.5-108`), Frosmoth (`sv05-046`) |
+
+## Effects that carry two tags
+
+Some effects meet two neighbouring definitions, so a card or query with one carries both tags.
+Both prompts show this table right after the tag glossary, rendered from `TWO_TAG_RULES` in
+`app/enrichment/taxonomy.py`; a test keeps the two word for word in step.
+
+| effect | tags |
+|--------|------|
+| Both players switch their Active Pokémon | `gust` + `switch` |
+| Energy is moved off one of the opponent's Pokémon to another of theirs | `energy-movement` + `energy-removal` |
+| Every player's hand is reset — shuffled or discarded, then a new one drawn | `draw` + `hand-disruption` |
+| Energy is attached from your discard pile | `acceleration` + `recovery` |
+| All damage from and effects of attacks are prevented | `damage-prevention` + `effect-prevention` |
 
 ## Enum (flat, for the enricher schema)
 

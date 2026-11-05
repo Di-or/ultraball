@@ -97,5 +97,6 @@
   {"difficulty": "hard", "group": "confusion: draw vs hand-disruption", "query": "both players shuffle their hands and draw new ones", "filters": {}, "tags": ["draw", "hand-disruption"]},
   {"difficulty": "hard", "group": "confusion: energy-movement vs energy-removal", "query": "move the opponent's energy onto their bench", "filters": {}, "tags": ["energy-movement", "energy-removal"]},
   {"difficulty": "hard", "group": "confusion: counter-damage vs counter-placement", "query": "knock out the attacker when my pokemon gets hit", "filters": {}, "tags": ["counter-damage"]},
+  {"difficulty": "hard", "group": "confusion: counter-damage vs special-condition", "query": "poison the attacker when it hits me", "filters": {}, "tags": ["counter-damage", "special-condition"], "note": "Punishing the attacker with a Special Condition is `counter-damage` too (taxonomy v5)."},
   {"difficulty": "hard", "group": "confusion: damage-scaling vs damage-boost", "query": "pokemon that do extra damage to ex", "filters": {"category": "Pokemon"}, "tags": ["damage-boost"], "note": "`ex` describes the target, not the card, so no `sub_category`."}
 ]
