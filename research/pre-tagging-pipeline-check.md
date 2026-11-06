@@ -62,6 +62,9 @@ run, or the live batch. 14 is a gap in the code, not a probed failure.
 ## Enrichment quality (live batch)
 
 71 / 71 requests succeeded, with no refusals, `max_tokens` stops or invalid tags. $0.100 total, $0.0014 per card.
+Per-card output (canonical text, tags, description, rationale, `suggested_new_tag`, output
+tokens) is in [`pre-tagging-pipeline-check-raw.json`](pre-tagging-pipeline-check-raw.json), from
+batch `msgbatch_01VZWna9pF6UamKKCXHaiRdn` run through the real `_to_result` and validator.
 
 - **Acceptance cards.** 17 / 18 v5/#104 cards got their expected tags (Sinistcha, Dusclops, Gengar
   ex, Lillie's Determination, Judge, Maximum Belt, Defiance Band, Energy Switch, Porygon, Hoppip,

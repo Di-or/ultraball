@@ -1,0 +1,1175 @@
+[
+ {
+  "ids": [
+   "me01-003"
+  ],
+  "text": "Mega Venusaur ex\nAbility: Solar Transfer - As often as you like during your turn, you may use this Ability. Move a Basic {G} Energy from 1 of your Pokémon to another of your Pokémon.\nAttack: Jungle Dump [Grass/Grass/Grass/Grass] 240 - Heal 30 damage from this Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "energy-movement",
+   "healing"
+  ],
+  "suggested": null,
+  "description": "Ability usable any number of times during your turn: move a Basic Grass Energy from one of your Pokémon to another of your Pokémon. Attack deals damage and heals damage from this Pokémon.",
+  "rationale": "Solar Transfer moves Basic Grass Energy between your own Pokémon, earning energy-movement. Jungle Dump heals damage from itself, earning healing.",
+  "out_tokens": 164
+ },
+ {
+  "ids": [
+   "me03-059"
+  ],
+  "text": "Klefki\nAttack: Memory Lock [Metal] 30 - Choose 1 of your opponent's Active Pokémon's attacks. During your opponent's next turn, that Pokémon can't use that attack.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": "attack-lock",
+  "description": "Deals damage, then chooses one of the opponent's Active Pokémon's attacks; during the opponent's next turn, that Pokémon cannot use that attack.",
+  "rationale": "Memory Lock only blocks one chosen attack, not all attacks, so it isn't stall; it doesn't stop retreating or switching (not movement-lock) and doesn't turn off Abilities (not ability-lock). No existing tag covers locking a specific attack, so attack-lock is suggested.",
+  "out_tokens": 191
+ },
+ {
+  "ids": [
+   "sv05-021"
+  ],
+  "text": "Brambleghast\nAbility: Resilient Soul - This Pokémon gets +50 HP for each Prize card your opponent has taken.\nAttack: Powerful Needles [Grass/Colorless/Colorless] 80× - Flip a coin for each Energy attached to this Pokémon. This attack does 80 damage for each heads.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "Ability: this Pokémon gets extra HP for each Prize card the opponent has taken. Attack: flip a coin for each Energy attached to this Pokémon, and the attack does damage for each heads.",
+  "rationale": "The HP bonus is not healing or damage reduction, so no listed tag fits. The attack scales with coin flips per attached Energy, and coin flips are explicitly excluded from damage-scaling, so no tag applies.",
+  "out_tokens": 173
+ },
+ {
+  "ids": [
+   "sv01-026"
+  ],
+  "text": "Toedscruel\nAttack: Eerie Tentacles [Grass] 30 - You may move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon.\nAttack: Triple Smash [Grass/Colorless/Colorless] 80× - Flip 3 coins. This attack does 80 damage for each heads.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "energy-movement",
+   "energy-removal"
+  ],
+  "suggested": null,
+  "description": "Attack that deals damage and optionally moves an Energy from the opponent's Active Pokémon to one of their Benched Pokémon. Another attack flips three coins and deals damage for each heads.",
+  "rationale": "Eerie Tentacles moves an Energy off the opponent's Active Pokémon onto their Bench, which earns energy-movement plus energy-removal. Triple Smash scales with coin flips, which don't count as a game-state count, so there's no damage-scaling tag.",
+  "out_tokens": 200
+ },
+ {
+  "ids": [
+   "me02.5-113"
+  ],
+  "text": "Mega Lucario ex\nAttack: Aura Jab [Fighting] 130 - Attach up to 3 Basic {F} Energy cards from your discard pile to your Benched Pokémon in any way you like.\nAttack: Mega Brave [Fighting/Fighting] 270 - During your next turn, this Pokémon can't use Mega Brave.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "recovery"
+  ],
+  "suggested": null,
+  "description": "Attack that deals damage, then attaches several basic Fighting Energy cards from your discard pile to your Benched Pokémon, divided as you choose. Second attack deals heavy damage, but this Pokémon cannot use that same attack during your next turn.",
+  "rationale": "Aura Jab attaches Basic Fighting Energy from the discard pile to Benched Pokémon beyond the normal attachment, earning acceleration + recovery. Mega Brave's self-restriction on its own use is not recoil, damage to own Pokémon, or any other listed effect.",
+  "out_tokens": 222
+ },
+ {
+  "ids": [
+   "me01-166"
+  ],
+  "text": "Air Balloon\nThe Retreat Cost of the Pokémon this card is attached to is {C}{C} less.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "retreat-reduction"
+  ],
+  "suggested": null,
+  "description": "A Pokémon Tool that reduces the Retreat Cost of the Pokémon it is attached to by two Colorless Energy.",
+  "rationale": "The card lowers the attached Pokémon's Retreat Cost by two, which meets the retreat-reduction definition.",
+  "out_tokens": 125
+ },
+ {
+  "ids": [
+   "mep-023"
+  ],
+  "text": "Mega Charizard X ex\nAttack: Inferno X [Fire/Fire] 90× - Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "Attack that discards any amount of a specific Energy type from among your own Pokémon, and deals damage for each Energy card discarded this way.",
+  "rationale": "Damage scales with the number of Fire Energy cards discarded (a game-state count), earning damage-scaling. The discard is a cost on your own Energy, not damage to your Pokémon, so no recoil, and it doesn't affect the opponent's Energy, so no energy-removal.",
+  "out_tokens": 179
+ },
+ {
+  "ids": [
+   "sv08.5-037"
+  ],
+  "text": "Dusknoir\nAbility: Cursed Blast - Once during your turn, you may put 13 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.\nAttack: Shadow Bind [Psychic/Psychic/Colorless] 150 - During your opponent's next turn, the Defending Pokémon can't retreat.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-placement",
+   "recoil",
+   "bench-reach",
+   "movement-lock"
+  ],
+  "suggested": null,
+  "description": "Ability: once during your turn, put a large number of damage counters on one of the opponent's Pokémon, and this Pokémon Knocks itself Out. Attack: deals damage, and during the opponent's next turn the Defending Pokémon can't retreat.",
+  "rationale": "Cursed Blast puts damage counters directly on any of the opponent's Pokémon (counter-placement), can target Benched Pokémon (bench-reach), and Knocks Out the user (recoil). Shadow Bind stops the Defending Pokémon from retreating (movement-lock).",
+  "out_tokens": 237
+ },
+ {
+  "ids": [
+   "me02.5-261"
+  ],
+  "text": "Jamming Tower\nPokémon Tools attached to each Pokémon (both yours and your opponent's) have no effect.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": "tool-lock",
+  "description": "Stadium that makes Pokémon Tools attached to every Pokémon, on both sides of the field, have no effect.",
+  "rationale": "The Stadium negates Pokémon Tool effects for both players. None of the listed tags cover turning off Tools: item-lock only stops the opponent from playing Item cards, and ability-lock only covers Abilities. A new tool-lock tag would describe it.",
+  "out_tokens": 162
+ },
+ {
+  "ids": [
+   "30th-090"
+  ],
+  "text": "Gengar ex\nAbility: Fainting Spell - If this Pokémon is Knocked Out by damage from an attack from your opponent's Pokémon, flip a coin. If heads, the Attacking Pokémon is Knocked Out.\nAttack: Chaotic Pain [Darkness/Darkness] - Place 13 damage counters on 1 of your opponent's Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-damage",
+   "counter-placement",
+   "bench-reach"
+  ],
+  "suggested": null,
+  "description": "Ability: when this Pokémon is Knocked Out by damage from an opponent's attack, flip a coin; if heads, the Attacking Pokémon is Knocked Out. Attack: place a large number of damage counters on one of the opponent's Pokémon.",
+  "rationale": "Fainting Spell punishes the Attacking Pokémon with a Knock Out when this Pokémon is KO'd, earning counter-damage. Chaotic Pain places damage counters directly on any one of the opponent's Pokémon, including Benched ones, so counter-placement and bench-reach apply; it targets only one Pokémon, so not multi-target.",
+  "out_tokens": 257
+ },
+ {
+  "ids": [
+   "me02.5-160"
+  ],
+  "text": "Dragapult ex\nAttack: Jet Headbutt [Colorless] 70 -\nAttack: Phantom Dive [Fire/Psychic] 200 - Put 6 damage counters on your opponent's Benched Pokémon in any way you like.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "bench-reach",
+   "multi-target",
+   "counter-placement"
+  ],
+  "suggested": null,
+  "description": "One attack deals damage with no additional effect. Another attack deals damage to the opponent's Active Pokémon and also puts damage counters on the opponent's Benched Pokémon, divided in any way the player likes.",
+  "rationale": "Phantom Dive puts damage counters on the opponent's Benched Pokémon in any way you like, so it earns bench-reach and counter-placement. It also hits the Active Pokémon and distributes counters across several targets, so it counts as multi-target. Jet Headbutt is a vanilla attack with no extra effect.",
+  "out_tokens": 226
+ },
+ {
+  "ids": [
+   "me02-068"
+  ],
+  "text": "Toxtricity\nAbility: Sinister Surge - Once during your turn, you may use this Ability. Search your deck for a Basic {D} Energy card and attach it to 1 of your Benched {D} Pokémon. Then, shuffle your deck. If you attached Energy to a Pokémon in this way, place 2 damage counters on that Pokémon.\nAttack: Gentle Slap [Darkness/Darkness/Colorless] 100 -",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "search",
+   "recoil"
+  ],
+  "suggested": null,
+  "description": "Once during your turn, search your deck for a Basic Darkness Energy card, attach it to one of your Benched Darkness Pokémon, then shuffle your deck. If Energy was attached this way, put damage counters on that Pokémon. Also has a plain attack that deals damage.",
+  "rationale": "Sinister Surge searches the deck for a Basic Darkness Energy (search) and attaches it beyond the normal attachment (acceleration). It then places damage counters on your own Pokémon, which counts as recoil.",
+  "out_tokens": 209
+ },
+ {
+  "ids": [
+   "me05-035"
+  ],
+  "text": "Spiritomb\nAttack: Spiritual End [Psychic] - If you have 13 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, choose 2 of your opponent's Pokémon and quadruple the number of damage counters on each of them.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "multi-target",
+   "bench-reach",
+   "counter-placement"
+  ],
+  "suggested": null,
+  "description": "Attack that requires a certain number of Pokémon with a specific Ability in your discard pile; if the condition is met, choose two of the opponent's Pokémon and quadruple the number of damage counters on each of them.",
+  "rationale": "Choosing 2 of the opponent's Pokémon (any, including Benched) and multiplying their damage counters affects multiple targets (multi-target, bench-reach), and it adds damage counters directly rather than dealing damage (counter-placement).",
+  "out_tokens": 202
+ },
+ {
+  "ids": [
+   "sv04.5-221"
+  ],
+  "text": "Pidgeot ex\nAbility: Quick Search - Once during your turn, you may search your deck for a card and put it into your hand. Then, shuffle your deck. You can't use more than 1 Quick Search Ability each turn.\nAttack: Blustery Wind [Colorless/Colorless] 120 - You may discard a Stadium in play.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "search"
+  ],
+  "suggested": "stadium-removal",
+  "description": "Ability: once per turn, search your deck for any card, put it into your hand, then shuffle your deck; only one use of this Ability per turn. Attack: deals damage, and you may discard a Stadium in play.",
+  "rationale": "Quick Search fetches any card from the deck to hand, earning search. The attack's optional Stadium discard is not covered by any existing tag, so a new stadium-removal tag is suggested.",
+  "out_tokens": 171
+ },
+ {
+  "ids": [
+   "sv08.5-166"
+  ],
+  "text": "Raging Bolt ex\nAttack: Burst Roar [Colorless] - Discard your hand and draw 6 cards.\nAttack: Bellowing Thunder [Lightning/Fighting] 70× - You may discard any amount of Basic Energy from your Pokémon. This attack does 70 damage for each card you discarded in this way.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw",
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "First attack: discard your whole hand, then draw a fixed number of cards. Second attack: you may discard any amount of Basic Energy from your own Pokémon, and the attack does damage for each card discarded this way.",
+  "rationale": "Burst Roar discards your hand and draws 6 cards, which earns draw (only your own hand is reset, so no hand-disruption). Bellowing Thunder's damage scales with the number of Basic Energy cards discarded, which earns damage-scaling; the discard is from your own Pokémon, so it is not energy-removal or recoil.",
+  "out_tokens": 225
+ },
+ {
+  "ids": [
+   "sv06-150"
+  ],
+  "text": "Handheld Fan\nIf the Pokémon this card is attached to is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), move an Energy from the Attacking Pokémon to 1 of your opponent's Benched Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-damage",
+   "energy-movement",
+   "energy-removal"
+  ],
+  "suggested": null,
+  "description": "Pokémon Tool. If the Pokémon this is attached to is Active and is damaged by an opponent's Pokémon's attack, even if it is Knocked Out, move an Energy from the Attacking Pokémon to one of the opponent's Benched Pokémon.",
+  "rationale": "When the holder is hit, it punishes the Attacker by moving its Energy (counter-damage). Moving Energy between the opponent's own Pokémon earns energy-movement + energy-removal.",
+  "out_tokens": 205
+ },
+ {
+  "ids": [
+   "me02.5-076"
+  ],
+  "text": "Lillie's Clefairy ex\nAbility: Fairy Zone - The Weakness of each of your opponent's {N} Pokémon in play is now {P}. (Apply Weakness as ×2.)\nAttack: Full Moon Rondo [Psychic/Colorless] 20+ - This attack does 20 more damage for each Benched Pokémon (both yours and your opponent's).",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-scaling"
+  ],
+  "suggested": "weakness-change",
+  "description": "Ability: changes the Weakness of each of the opponent's Dragon Pokémon in play to Psychic. Attack: deals damage that increases for each Benched Pokémon on both sides of the field.",
+  "rationale": "Full Moon Rondo does more damage for each Benched Pokémon on both sides, which is a game-state count, so it earns damage-scaling. Fairy Zone changes the opponent's Dragon Pokémon Weakness to Psychic, an effect no existing tag covers, so I suggest weakness-change.",
+  "out_tokens": 214
+ },
+ {
+  "ids": [
+   "me02.5-179"
+  ],
+  "text": "Terapagos ex\nAttack: Unified Beatdown [Colorless/Colorless] 30× - If you go second, you can't use this attack during your first turn. This attack does 30 damage for each of your Benched Pokémon.\nAttack: Crown Opal [Grass/Water/Lightning] 180 - During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic non-{C} Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-scaling",
+   "damage-prevention"
+  ],
+  "suggested": null,
+  "description": "Attack that cannot be used on the first turn when going second, and does damage for each of your Benched Pokémon. Second attack does damage and, during the opponent's next turn, prevents all damage done to this Pokémon by attacks from Basic Pokémon that are not Colorless type.",
+  "rationale": "Unified Beatdown deals damage per Benched Pokémon, so it is damage-scaling. Crown Opal prevents damage from certain attackers during the opponent's next turn, so it is damage-prevention (only damage is prevented, not effects).",
+  "out_tokens": 222
+ },
+ {
+  "ids": [
+   "me01-085"
+  ],
+  "text": "Crawdaunt\nAttack: Vise Grip [Colorless] 30 -\nAttack: Cutting Riposte [Darkness/Darkness/Colorless] 130 - If this Pokémon has any damage counters on it, this attack can be used for {D}.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "A basic attack that deals damage. A second attack deals damage and can be used for a reduced Energy cost, requiring only one Darkness Energy, if this Pokémon has any damage counters on it.",
+  "rationale": "Vise Grip is vanilla damage. Cutting Riposte only lowers its own attack cost when damaged, which is not Energy attachment, damage boost, or scaling in any defined tag, so no tag applies.",
+  "out_tokens": 169
+ },
+ {
+  "ids": [
+   "me02.5-099"
+  ],
+  "text": "Munkidori\nAbility: Adrena-Brain - Once during your turn, if this Pokémon has any {D} Energy attached, you may move up to 3 damage counters from 1 of your Pokémon to 1 of your opponent's Pokémon.\nAttack: Mind Bend [Psychic/Colorless] 60 - Your opponent's Active Pokémon is now Confused.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-placement",
+   "bench-reach",
+   "healing",
+   "special-condition"
+  ],
+  "suggested": null,
+  "description": "Ability, once per turn, if this Pokémon has a Darkness Energy attached, move some damage counters from one of your own Pokémon to one of the opponent's Pokémon. Attack deals damage and makes the opponent's Active Pokémon Confused.",
+  "rationale": "Adrena-Brain moves damage counters onto any of the opponent's Pokémon (counter-placement, bench-reach since it can target a Benched Pokémon) and removes them from your own Pokémon (healing). Mind Bend inflicts Confusion (special-condition).",
+  "out_tokens": 231
+ },
+ {
+  "ids": [
+   "me05-107"
+  ],
+  "text": "Energy Switch\nMove a Basic Energy from 1 of your Pokémon to another of your Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "energy-movement"
+  ],
+  "suggested": null,
+  "description": "Move a Basic Energy attached to one of your Pokémon to another of your Pokémon.",
+  "rationale": "The card moves a Basic Energy from one of your own Pokémon to another, which meets energy-movement. It does not remove Energy from the opponent, so there is no energy-removal tag.",
+  "out_tokens": 131
+ },
+ {
+  "ids": [
+   "sv04.5-076"
+  ],
+  "text": "Artazon\nOnce during each player's turn, that player may search their deck for a Basic Pokémon that doesn't have a Rule Box and put it onto their Bench. Then, that player shuffles their deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "search"
+  ],
+  "suggested": null,
+  "description": "Stadium that lets each player, once during their own turn, search their deck for a Basic Pokémon without a Rule Box, put it onto their Bench, then shuffle their deck.",
+  "rationale": "Fetches a Basic Pokémon without a Rule Box from the deck onto the Bench, which meets the search definition.",
+  "out_tokens": 134
+ },
+ {
+  "ids": [
+   "mep-069"
+  ],
+  "text": "Chikorita\nAttack: Razor Leaf [Grass] 20 -",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "A basic attack that deals damage with no additional effect.",
+  "rationale": "Razor Leaf is a vanilla damage attack with no extra effect, so no functional tag applies.",
+  "out_tokens": 86
+ },
+ {
+  "ids": [
+   "me02.5-184"
+  ],
+  "text": "Buddy-Buddy Poffin\nSearch your deck for up to 2 Basic Pokémon with 70 HP or less and put them onto your Bench. Then, shuffle your deck.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "search"
+  ],
+  "suggested": null,
+  "description": "Search your deck for up to two Basic Pokémon under an HP limit and put them onto your Bench, then shuffle your deck.",
+  "rationale": "Fetches up to 2 Basic Pokémon with 70 HP or less from the deck directly onto the Bench, which is the search effect.",
+  "out_tokens": 125
+ },
+ {
+  "ids": [
+   "me02.5-016"
+  ],
+  "text": "Budew\nAttack: Itchy Pollen [] 10 - During your opponent's next turn, they can't play any Item cards from their hand.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "item-lock"
+  ],
+  "suggested": null,
+  "description": "Attack that deals damage and prevents the opponent from playing Item cards from their hand during their next turn.",
+  "rationale": "Itchy Pollen stops the opponent from playing Item cards from their hand during their next turn, which is item-lock.",
+  "out_tokens": 112
+ },
+ {
+  "ids": [
+   "sv02-001"
+  ],
+  "text": "Hoppip\nAttack: Splashing Dodge [Grass] 10 - Flip a coin. If heads, during your opponent's next turn, prevent all damage from and effects of attacks done to this Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-prevention",
+   "effect-prevention"
+  ],
+  "suggested": null,
+  "description": "Deals damage. Flip a coin; if heads, during the opponent's next turn, all damage and effects of attacks done to this Pokémon are prevented.",
+  "rationale": "On heads, 'prevent all damage from and effects of attacks' during the opponent's next turn earns both damage-prevention and effect-prevention, per the two-tag rule for full attack immunity.",
+  "out_tokens": 163
+ },
+ {
+  "ids": [
+   "sv08.5-119"
+  ],
+  "text": "Prime Catcher\nSwitch in 1 of your opponent's Benched Pokémon to the Active Spot. If you do, switch your Active Pokémon with 1 of your Benched Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "gust",
+   "switch"
+  ],
+  "suggested": null,
+  "description": "Item-like Ace Spec effect: choose one of the opponent's Benched Pokémon and switch it into the Active Spot, then if you did, switch your own Active Pokémon with one of your Benched Pokémon.",
+  "rationale": "It drags an opponent's Benched Pokémon into the Active Spot, which is gust, and then switches your own Active Pokémon with a Benched one, which is switch.",
+  "out_tokens": 167
+ },
+ {
+  "ids": [
+   "sv02-045"
+  ],
+  "text": "Azumarill\nAttack: Bubble Drain [Water/Colorless] 50 - Heal 30 damage from this Pokémon.\nAttack: Slam [Water/Colorless/Colorless] 100× - Flip 2 coins. This attack does 100 damage for each heads.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "healing"
+  ],
+  "suggested": null,
+  "description": "Attack deals damage and heals some damage from this Pokémon. Another attack flips two coins and deals damage for each heads.",
+  "rationale": "Bubble Drain removes damage counters from the user, earning healing. Slam scales with coin flips, which don't count as a game-state count, so no damage-scaling.",
+  "out_tokens": 132
+ },
+ {
+  "ids": [
+   "sv01-169"
+  ],
+  "text": "Defiance Band\nIf you have more Prize cards remaining than your opponent, the attacks of the Pokémon this card is attached to do 30 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-boost"
+  ],
+  "suggested": null,
+  "description": "Pokémon Tool. If you have more Prize cards remaining than your opponent, the attacks of the Pokémon this card is attached to do more damage to the opponent's Active Pokémon, before applying Weakness and Resistance.",
+  "rationale": "The Tool gives a fixed increase in attack damage to the opponent's Active Pokémon when behind on Prizes, which matches damage-boost; it is a flat bonus, not a per-count scaling.",
+  "out_tokens": 183
+ },
+ {
+  "ids": [
+   "me01-034"
+  ],
+  "text": "Kyogre\nAttack: Riptide [Water] 20× - This attack does 20 damage for each Basic {W} Energy card in your discard pile. Then, shuffle those cards into your deck.\nAttack: Swirling Waves [Water/Water/Colorless] 130 - Discard 2 Energy from this Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-scaling",
+   "recovery"
+  ],
+  "suggested": null,
+  "description": "Attack that deals damage for each basic Water Energy card in your discard pile, then shuffles those cards into your deck. Second attack deals damage and requires discarding Energy attached to this Pokémon.",
+  "rationale": "Riptide scales damage by the count of Basic Water Energy in your discard pile (damage-scaling) and shuffles those cards back into your deck (recovery). Swirling Waves only discards the user's own Energy, which is a cost and not opponent energy-removal, and it has no recoil or other matching effect.",
+  "out_tokens": 212
+ },
+ {
+  "ids": [
+   "30th-127"
+  ],
+  "text": "Switch",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "switch"
+  ],
+  "suggested": null,
+  "description": "Item card that switches your Active Pokémon with one of your Benched Pokémon.",
+  "rationale": "The card swaps your own Active Pokémon with a Benched one without retreating, which matches the switch tag.",
+  "out_tokens": 100
+ },
+ {
+  "ids": [
+   "sv06-165"
+  ],
+  "text": "Unfair Stamp\nYou can use this card only if any of your Pokémon were Knocked Out during your opponent's last turn.\n\nEach player shuffles their hand into their deck. Then, you draw 5 cards, and your opponent draws 2 cards.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw",
+   "hand-disruption"
+  ],
+  "suggested": null,
+  "description": "Can be played only if one of your Pokémon was Knocked Out during the opponent's last turn. Each player shuffles their hand into their deck, then you draw several cards and the opponent draws fewer cards.",
+  "rationale": "Both players shuffle their hands into their decks and draw new hands, which is a hand reset, so it gets draw and hand-disruption. The opponent ends with fewer cards, which is the hand-disruption effect.",
+  "out_tokens": 180
+ },
+ {
+  "ids": [
+   "me02.5-142"
+  ],
+  "text": "Fezandipiti ex\nAbility: Flip the Script - Once during your turn, if any of your Pokémon were Knocked Out during your opponent's last turn, you may draw 3 cards. You can't use more than 1 Flip the Script Ability each turn.\nAttack: Cruel Arrow [Colorless/Colorless/Colorless] - This attack does 100 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw",
+   "bench-reach"
+  ],
+  "suggested": null,
+  "description": "Ability: once during your turn, if any of your Pokémon were Knocked Out during the opponent's last turn, draw several cards; only one Ability of this name can be used each turn. Attack: deals damage to any one of the opponent's Pokémon, with Weakness and Resistance not applied to Benched Pokémon.",
+  "rationale": "Flip the Script lets you draw 3 cards, earning draw. Cruel Arrow can hit 1 of the opponent's Pokémon including Benched ones, earning bench-reach; it hits only one target, so not multi-target.",
+  "out_tokens": 224
+ },
+ {
+  "ids": [
+   "me05-028"
+  ],
+  "text": "Miraidon\nAbility: Photon Cord - If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon.\nAttack: Thunder [Lightning/Lightning] 90 - This Pokémon also does 30 damage to itself.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "energy-movement",
+   "recoil"
+  ],
+  "suggested": null,
+  "description": "Ability: when this Active Pokémon is Knocked Out by damage from an opponent's attack, move some Basic Lightning Energy attached to it to one of your Benched Pokémon. Attack: deals damage, and this Pokémon also does damage to itself.",
+  "rationale": "Photon Cord moves Basic Lightning Energy from the Knocked Out Pokémon to a Benched Pokémon, earning energy-movement (it is your own Energy, so not energy-removal). Thunder does damage to itself, earning recoil.",
+  "out_tokens": 214
+ },
+ {
+  "ids": [
+   "sv05-009"
+  ],
+  "text": "Roserade\nAbility: Poison Point - If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), the Attacking Pokémon is now Poisoned.\nAttack: Bind Down [Colorless/Colorless] 70 - During your opponent's next turn, the Defending Pokémon can't retreat.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-damage",
+   "special-condition",
+   "movement-lock"
+  ],
+  "suggested": null,
+  "description": "Ability: when this Pokémon is in the Active Spot and is damaged by an opponent's attack, even if Knocked Out, the Attacking Pokémon becomes Poisoned. Attack: deals damage, and during the opponent's next turn the Defending Pokémon can't retreat.",
+  "rationale": "Poison Point punishes the attacker with Poison when this Pokémon is damaged, earning counter-damage and special-condition. Bind Down stops the Defending Pokémon from retreating next turn, earning movement-lock.",
+  "out_tokens": 221
+ },
+ {
+  "ids": [
+   "me02.5-089",
+   "me01-060"
+  ],
+  "text": "Mega Gardevoir ex\nAttack: Overflowing Wishes [Psychic] - For each of your Benched Pokémon, search your deck for a Basic {P} Energy card and attach it to that Pokémon. Then, shuffle your deck.\nAttack: Mega Symphonia [Psychic] 50× - This attack does 50 damage for each {P} Energy attached to all of your Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "search",
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "Attack that, for each of your Benched Pokémon, searches your deck for a basic Psychic Energy card and attaches it to that Pokémon, then shuffles your deck. Second attack deals damage multiplied by the number of Psychic Energy attached to all of your Pokémon.",
+  "rationale": "Overflowing Wishes searches the deck for basic Psychic Energy (search) and attaches it to each Benched Pokémon beyond the normal attachment (acceleration). Mega Symphonia scales damage with the count of Psychic Energy attached to all your Pokémon (damage-scaling).",
+  "out_tokens": 241
+ },
+ {
+  "ids": [
+   "me01-119"
+  ],
+  "text": "Lillie's Determination\nShuffle your hand into your deck. Then, draw 6 cards. If you have exactly 6 Prize cards remaining, draw 8 cards instead.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw"
+  ],
+  "suggested": null,
+  "description": "Shuffle your own hand into your deck, then draw a set number of cards. If you have a specific number of Prize cards remaining, draw more cards instead.",
+  "rationale": "Draw: the Supporter shuffles your hand into your deck and then draws cards, with a bonus draw at exactly the starting Prize count. It does not shuffle the opponent's hand, so hand-disruption does not apply.",
+  "out_tokens": 161
+ },
+ {
+  "ids": [
+   "sv04-142"
+  ],
+  "text": "Porygon\nAttack: Data Displacement [Colorless] 10 - Flip a coin. If heads, move an Energy from your opponent's Active Pokémon to 1 of their Benched Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "energy-movement",
+   "energy-removal"
+  ],
+  "suggested": null,
+  "description": "Deals damage, then flips a coin; if heads, moves an Energy from the opponent's Active Pokémon to one of their Benched Pokémon.",
+  "rationale": "The attack moves an Energy from the opponent's Active Pokémon to their own Benched Pokémon, which carries both energy-movement and energy-removal per the combined-effect rule.",
+  "out_tokens": 156
+ },
+ {
+  "ids": [
+   "me02-013"
+  ],
+  "text": "Mega Charizard X ex\nAttack: Inferno X [Fire/Fire] 90× - Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "Discard any amount of Fire Energy from among your own Pokémon, and the attack deals damage for each Energy card discarded this way.",
+  "rationale": "Damage scales with the number of Fire Energy cards discarded from your Pokémon, a game-state count, so damage-scaling applies. The discard is a cost to your own side, not removal from the opponent, and it isn't damage to your Pokémon, so no energy-removal or recoil.",
+  "out_tokens": 178
+ },
+ {
+  "ids": [
+   "me02.5-196"
+  ],
+  "text": "Night Stretcher\nPut a Pokémon or a Basic Energy card from your discard pile into your hand.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "recovery"
+  ],
+  "suggested": null,
+  "description": "Put a Pokémon or a Basic Energy card from your discard pile into your hand.",
+  "rationale": "Returns a Pokémon or Basic Energy card from the discard pile to the hand, which is recovery.",
+  "out_tokens": 102
+ },
+ {
+  "ids": [
+   "sv08.5-163"
+  ],
+  "text": "Pecharunt ex\nAbility: Subjugating Chains - Once during your turn, you may switch 1 of your Benched {D} Pokémon, except any Pecharunt ex, with your Active Pokémon. If you do, the new Active Pokémon is now Poisoned. You can't use more than 1 Subjugating Chains Ability each turn.\nAttack: Irritated Outburst [Darkness/Darkness] 60× - This attack does 60 damage for each Prize card your opponent has taken.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "switch",
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "Ability, once per turn: switch one of your Benched Darkness Pokémon (other than the same-named Pokémon) with your Active Pokémon, and the new Active Pokémon becomes Poisoned. Attack: deals damage multiplied by the number of Prize cards the opponent has taken.",
+  "rationale": "Subjugating Chains switches your Benched Darkness Pokémon into the Active spot, which earns switch. The poison it inflicts lands on your own Pokémon, so special-condition is not applied. Irritated Outburst does damage per Prize card the opponent has taken, which is damage-scaling.",
+  "out_tokens": 241
+ },
+ {
+  "ids": [
+   "me03-088"
+  ],
+  "text": "Telepathic Psychic Energy\nAs long as this card is attached to a Pokémon, it provides {P} Energy.\nWhen you attach this card from your hand to a {P} Pokémon, search your deck for up to 2 Basic {P} Pokémon and put them onto your Bench. Then, shuffle your deck.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "search"
+  ],
+  "suggested": null,
+  "description": "Special Energy that provides Psychic Energy while attached. When attached from hand to a Psychic Pokémon, search the deck for up to two Basic Psychic Pokémon, put them onto the Bench, then shuffle the deck.",
+  "rationale": "Searches the deck for up to 2 Basic Psychic Pokémon and puts them onto the Bench when attached, which is a search effect. It does not attach extra Energy or draw cards.",
+  "out_tokens": 175
+ },
+ {
+  "ids": [
+   "30th-c-008"
+  ],
+  "text": "Pikachu & Zekrom GX\nAttack: Full Blitz [Lightning/Lightning/Lightning] 150 - Search your deck for up to 3 <span class=\"energy-symbol Lightning\" title=\"Lightning\">Lightning</span> Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck.\nAttack: Tag Bolt {GX} [Lightning/Lightning/Lightning] 200 - If this Pokémon has at least 3 extra <span class=\"energy-symbol Lightning\" title=\"Lightning\">Lightning</span> Energy attached to it <em>(in addition to this attack's cost)</em>, this attack does 170 damage to 1 of your opponent's Benched Pokémon. <em>(Don't apply Weakness and Resistance for Benched Pokémon.) (You can't use more than 1 <em>GX</em> attack in a game.)</em>",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "search",
+   "acceleration",
+   "bench-reach"
+  ],
+  "suggested": null,
+  "description": "Attack that deals damage, then searches the deck for several Lightning Energy cards, attaches them to one of your Pokémon, and shuffles the deck. Second attack (once per game) deals damage to the Active Pokémon and, if the user has enough extra Lightning Energy attached beyond the attack cost, also deals a large amount of damage to one of the opponent's Benched Pokémon, ignoring Weakness and Resistance.",
+  "rationale": "Full Blitz searches the deck for Lightning Energy and attaches up to 3 beyond the normal attachment, earning search and acceleration. Tag Bolt GX can deal damage to one of the opponent's Benched Pokémon given extra Energy, earning bench-reach; it hits only one target, so not multi-target.",
+  "out_tokens": 296
+ },
+ {
+  "ids": [
+   "sv08-130"
+  ],
+  "text": "Archaludon ex\nAbility: Assemble Alloy - When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may attach up to 2 Basic {M} Energy cards from your discard pile to your {M} Pokémon in any way you like.\nAttack: Metal Defender [Metal/Metal/Metal] 220 - During your opponent's next turn, this Pokémon has no Weakness.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "recovery"
+  ],
+  "suggested": null,
+  "description": "When this Pokémon is played from hand to evolve a Pokémon during your turn, you may attach Basic Metal Energy cards from your discard pile to your Metal Pokémon in any way you like. Attack deals damage, and during the opponent's next turn this Pokémon has no Weakness.",
+  "rationale": "Assemble Alloy attaches Energy from the discard pile beyond the normal attachment, earning acceleration + recovery. Metal Defender removes this Pokémon's Weakness, which is not a defined damage-reduction or prevention effect, so no tag applies.",
+  "out_tokens": 227
+ },
+ {
+  "ids": [
+   "me03-076"
+  ],
+  "text": "Judge\nEach player shuffles their hand into their deck and draws 4 cards.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw",
+   "hand-disruption"
+  ],
+  "suggested": null,
+  "description": "Each player shuffles their hand into their deck, then draws a new hand of cards.",
+  "rationale": "Both players shuffle their hands into their decks and draw a fresh set of cards, so the hand is reset for everyone, earning draw and hand-disruption together.",
+  "out_tokens": 123
+ },
+ {
+  "ids": [
+   "me01-074"
+  ],
+  "text": "Lunatone\nAbility: Lunar Cycle - Once during your turn, if you have Solrock in play, you may discard a Basic {F} Energy card from your hand in order to use this Ability. Draw 3 cards. You can't use more than 1 Lunar Cycle Ability each turn.\nAttack: Power Gem [Fighting/Fighting] 50 -",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw"
+  ],
+  "suggested": null,
+  "description": "Ability, once per turn, usable only if a specific partner Pokémon is in play: discard a basic Fighting Energy card from your hand to draw cards. Only one Ability of this name can be used each turn. Attack deals damage with no additional effect.",
+  "rationale": "Lunar Cycle lets you discard a Basic Fighting Energy from hand to draw 3 cards, which earns draw. Power Gem is a plain damage attack with no effect.",
+  "out_tokens": 179
+ },
+ {
+  "ids": [
+   "sv04.5-029"
+  ],
+  "text": "Gardevoir ex\nAbility: Psychic Embrace - As often as you like during your turn, you may attach a Basic {P} Energy card from your discard pile to 1 of your {P} Pokémon. If you attached Energy to a Pokémon in this way, put 2 damage counters on that Pokémon. You can't use this Ability on a Pokémon that would be Knocked Out.\nAttack: Miracle Force [Psychic/Psychic/Colorless] 190 - This Pokémon recovers from all Special Conditions.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "recovery",
+   "condition-heal"
+  ],
+  "suggested": null,
+  "description": "Ability: as often as you like during your turn, attach a Basic Psychic Energy card from your discard pile to one of your Psychic Pokémon, then put damage counters on that Pokémon; cannot be used on a Pokémon that would be Knocked Out. Attack: deals damage, and this Pokémon recovers from all Special Conditions.",
+  "rationale": "Psychic Embrace attaches Energy from the discard pile beyond the normal attachment, earning acceleration + recovery. Miracle Force removes all Special Conditions from itself, earning condition-heal. The damage counters Psychic Embrace places land on your own Pokémon as a cost, but it is not an attack or damage to your own Pokémon in the recoil sense, so recoil is not applied.",
+  "out_tokens": 294
+ },
+ {
+  "ids": [
+   "sv10.5b-085"
+  ],
+  "text": "Professor's Research\nDiscard your hand and draw 7 cards.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw"
+  ],
+  "suggested": null,
+  "description": "Discard your whole hand, then draw a fresh hand of cards from your deck.",
+  "rationale": "Draw: the card has you draw 7 cards after discarding your own hand. Only your own hand is reset, so there is no hand-disruption tag, which applies to the opponent's hand or a reset of every player's hand.",
+  "out_tokens": 134
+ },
+ {
+  "ids": [
+   "sv04.5-235"
+  ],
+  "text": "Arven\nSearch your deck for an Item card and a Pokémon Tool card, reveal them, and put them into your hand. Then, shuffle your deck.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "search"
+  ],
+  "suggested": null,
+  "description": "Search your deck for an Item card and a Pokémon Tool card, reveal them, put them into your hand, then shuffle your deck.",
+  "rationale": "Fetches a specific Item card and a Pokémon Tool card from the deck to hand, which is search; it does nothing else.",
+  "out_tokens": 121
+ },
+ {
+  "ids": [
+   "sv04.5-075"
+  ],
+  "text": "Squawkabilly ex\nAbility: Squawk and Seize - Once during your first turn, you may discard your hand and draw 6 cards. You can't use more than 1 Squawk and Seize Ability during your turn.\nAttack: Motivate [Colorless] 20 - Attach up to 2 Basic Energy cards from your discard pile to 1 of your Benched Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw",
+   "acceleration",
+   "recovery"
+  ],
+  "suggested": null,
+  "description": "Ability: once during your first turn, discard your hand and draw a new set of cards; only one use of this Ability per turn. Attack: deals damage, then attaches Basic Energy cards from your discard pile to one of your Benched Pokémon.",
+  "rationale": "Squawk and Seize discards your hand and draws 6 cards, which is draw (it only resets your own hand, so no hand-disruption). Motivate attaches Basic Energy from the discard pile beyond the manual attachment, which is acceleration + recovery.",
+  "out_tokens": 211
+ },
+ {
+  "ids": [
+   "me01-025"
+  ],
+  "text": "Volcanion\nAttack: Singe [Fire] - Your opponent's Active Pokémon is now Burned.\nAttack: Backfire [Fire/Fire/Colorless] 130 - Put 2 {R} Energy attached to this Pokémon into your hand.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "special-condition"
+  ],
+  "suggested": null,
+  "description": "One attack makes the opponent's Active Pokémon Burned. Another attack deals damage, then returns a number of Fire Energy attached to this Pokémon to your hand.",
+  "rationale": "Singe inflicts Burned on the opponent's Active Pokémon, which earns special-condition. Backfire returns this Pokémon's own Fire Energy to your hand as a cost; this is not recovery from the discard pile, not acceleration, and not opponent energy-removal, so no other tag applies.",
+  "out_tokens": 196
+ },
+ {
+  "ids": [
+   "sv08.5-011"
+  ],
+  "text": "Hydrapple ex\nAbility: Ripening Charge - Once during your turn, you may attach a Basic {G} Energy card from your hand to 1 of your Pokémon. If you attached Energy to a Pokémon in this way, heal 30 damage from that Pokémon.\nAttack: Syrup Storm [Colorless/Colorless] 30+ - This attack does 30 more damage for each {G} Energy attached to all of your Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "healing",
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "Ability, once per turn: attach a basic Grass Energy card from your hand to one of your Pokémon, which is an extra attachment beyond the normal one, then heal damage from that Pokémon. Attack: deals damage that increases for each Grass Energy attached to all of your Pokémon.",
+  "rationale": "Ripening Charge attaches Energy from hand beyond the normal attachment (acceleration) and heals damage from that Pokémon (healing). Syrup Storm does more damage for each Grass Energy attached to your Pokémon (damage-scaling).",
+  "out_tokens": 230
+ },
+ {
+  "ids": [
+   "sv06.5-060"
+  ],
+  "text": "Neutralization Zone\nPrevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-prevention"
+  ],
+  "suggested": null,
+  "description": "Stadium that prevents all damage done to Pokémon without a Rule Box, on both sides of the field, by attacks from the opponent's Pokémon ex and Pokémon V. This card can't be put into hand or deck from the discard pile.",
+  "rationale": "Prevents all attack damage to non-Rule Box Pokémon from opposing ex and V attackers, which is a conditional damage-prevention effect. It does not prevent non-damage effects, so effect-prevention does not apply.",
+  "out_tokens": 195
+ },
+ {
+  "ids": [
+   "me02.5-217"
+  ],
+  "text": "Team Rocket's Energy\nThis card can only be attached to a Team Rocket's Pokémon. If this card is attached to anything other than a Team Rocket's Pokémon, discard this card.\n\nAs long as this card is attached to a Pokémon, it provides 2 in any combination of {P} Energy and {D} Energy.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "Special Energy that can only be attached to a specific faction's Pokémon and is discarded if attached to any other Pokémon. While attached, it provides two Energy in any combination of Psychic and Darkness types.",
+  "rationale": "It is a restricted Special Energy that only provides Energy; it has no attachment beyond the normal one, search, movement, or other effect matching any tag.",
+  "out_tokens": 151
+ },
+ {
+  "ids": [
+   "me01-048"
+  ],
+  "text": "Raikou\nAttack: Electro Fall [Lightning/Lightning] 30+ - If you have at least 4 {L} Energy in play, this attack does 90 more damage.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-boost"
+  ],
+  "suggested": null,
+  "description": "Attack that deals damage, and deals a fixed amount more damage if you have enough Lightning Energy in play.",
+  "rationale": "The attack has a conditional fixed bonus (more damage if you have at least a threshold of Lightning Energy in play). It is a threshold bonus, not a per-Energy count, so it is damage-boost and not damage-scaling.",
+  "out_tokens": 302
+ },
+ {
+  "ids": [
+   "sv04-266"
+  ],
+  "text": "Reversal Energy\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf you have more Prize cards remaining than your opponent, and if this card is attached to an Evolution Pokémon that doesn't have a Rule Box (Pokémon ex, Pokémon V, etc. have Rule Boxes), this card provides every type of Energy but provides only 3 Energy at a time.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "Special Energy that provides Colorless Energy while attached. If you have more Prize cards remaining than the opponent and it is attached to an Evolution Pokémon without a Rule Box, it instead provides every type of Energy, counting as several Energy at once.",
+  "rationale": "This is a Special Energy that only provides Energy, with a conditional multi-type boost. It does not attach extra Energy, move or remove Energy, or match any other defined tag.",
+  "out_tokens": 174
+ },
+ {
+  "ids": [
+   "sv02-188"
+  ],
+  "text": "Super Rod\nShuffle up to 3 in any combination of Pokémon and Basic Energy cards from your discard pile into your deck.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "recovery"
+  ],
+  "suggested": null,
+  "description": "Shuffle a limited number of Pokémon and Basic Energy cards in any combination from your discard pile into your deck.",
+  "rationale": "Super Rod returns Pokémon and Basic Energy cards from the discard pile to the deck, which meets the recovery definition (getting cards back from the discard pile into the deck).",
+  "out_tokens": 138
+ },
+ {
+  "ids": [
+   "sv03-120"
+  ],
+  "text": "Klawf ex\nAbility: Counterattacking Pincer - If this Pokémon is in the Active Spot and is damaged by an attack from your opponent's Pokémon (even if this Pokémon is Knocked Out), discard an Energy from the Attacking Pokémon.\nAttack: Falling Press [Fighting/Colorless/Colorless] 100+ - Flip a coin. If heads, this attack does 80 more damage.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-damage",
+   "energy-removal",
+   "damage-boost"
+  ],
+  "suggested": null,
+  "description": "Ability: when this Active Pokémon is damaged by an opponent's attack, even if Knocked Out, discard an Energy from the Attacking Pokémon. Attack: flip a coin; if heads, the attack does more damage.",
+  "rationale": "Counterattacking Pincer punishes the Attacking Pokémon by making it lose an Energy, so it earns counter-damage and energy-removal. Falling Press does extra damage on a heads coin flip, a conditional fixed bonus, so damage-boost applies.",
+  "out_tokens": 217
+ },
+ {
+  "ids": [
+   "sv06.5-019"
+  ],
+  "text": "Dusclops\nAbility: Cursed Blast - Once during your turn, you may put 5 damage counters on 1 of your opponent's Pokémon. If you use this Ability, this Pokémon is Knocked Out.\nAttack: Will-O-Wisp [Psychic/Psychic] 50 -",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "counter-placement",
+   "bench-reach",
+   "recoil"
+  ],
+  "suggested": null,
+  "description": "Once during your turn, an Ability places damage counters on one of the opponent's Pokémon, and then this Pokémon is Knocked Out. Also has a basic attack that deals damage.",
+  "rationale": "Cursed Blast puts damage counters directly on any of the opponent's Pokémon, including Benched ones, so it gets counter-placement and bench-reach. It Knocks Out Dusclops itself, which is recoil. It targets only one Pokémon, so it is not multi-target.",
+  "out_tokens": 205
+ },
+ {
+  "ids": [
+   "me05-006"
+  ],
+  "text": "Sinistcha\nAbility: Hide 'n' Sneak - Prevent all effects of your opponent's Pokémon's attacks and Abilities done to this Pokémon. (Damage is not an effect.)\nAttack: Matcha Spin [Colorless] - If you have 6 or more Pokémon that have the Hide 'n' Sneak Ability in your discard pile, place 4 damage counters on each of your opponent's Pokémon.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "effect-prevention",
+   "counter-placement",
+   "bench-reach",
+   "multi-target"
+  ],
+  "suggested": null,
+  "description": "Ability: prevents all effects of the opponent's Pokémon's attacks and Abilities on this Pokémon, though damage still applies. Attack: if a certain number or more Pokémon with this same Ability are in your discard pile, place damage counters on each of the opponent's Pokémon.",
+  "rationale": "Hide 'n' Sneak prevents all effects of the opponent's attacks and Abilities on this Pokémon, which earns effect-prevention. Matcha Spin places damage counters on each of the opponent's Pokémon, including the Bench, so it is counter-placement, bench-reach and multi-target.",
+  "out_tokens": 255
+ },
+ {
+  "ids": [
+   "sv04-160"
+  ],
+  "text": "Counter Catcher\nYou can use this card only if you have more Prize cards remaining than your opponent.\n\nSwitch in 1 of your opponent's Benched Pokémon to the Active Spot.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "gust"
+  ],
+  "suggested": null,
+  "description": "Can only be played if you have more Prize cards remaining than your opponent. Switch one of the opponent's Benched Pokémon into the Active Spot.",
+  "rationale": "The card forces the opponent to bring a Benched Pokémon to the Active Spot, which earns gust. The Prize-count condition only restricts when it can be played and does not change Prizes taken.",
+  "out_tokens": 150
+ },
+ {
+  "ids": [
+   "sv08.5-117"
+  ],
+  "text": "Maximum Belt\nAttacks used by the Pokémon this card is attached to do 50 more damage to your opponent's Active Pokémon ex (before applying Weakness and Resistance).",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-boost"
+  ],
+  "suggested": null,
+  "description": "Pokémon Tool. Attacks used by the attached Pokémon deal extra damage to the opponent's Active Pokémon ex, before applying Weakness and Resistance.",
+  "rationale": "The Tool adds a fixed amount of damage to the attached Pokémon's attacks against the opponent's Active Pokémon ex, which is damage-boost.",
+  "out_tokens": 152
+ },
+ {
+  "ids": [
+   "sv07-175"
+  ],
+  "text": "Bravery Charm\nThe Basic Pokémon this card is attached to gets +50 HP.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": "hp-boost",
+  "description": "A Pokémon Tool attached to a Basic Pokémon that increases that Pokémon's maximum HP.",
+  "rationale": "The card only raises the attached Basic Pokémon's HP, which is not damage reduction, prevention, or healing under any defined tag, so none apply; a new hp-boost tag would cover it.",
+  "out_tokens": 139
+ },
+ {
+  "ids": [
+   "me01-118"
+  ],
+  "text": "Iron Defender\nDuring your opponent's next turn, all of your {M} Pokémon take 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance). (This includes new Pokémon that come into play.)",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "damage-reduction"
+  ],
+  "suggested": null,
+  "description": "Until the end of the opponent's next turn, all of your Pokémon of a specific type take less damage from the opponent's attacks, applied after Weakness and Resistance, including Pokémon that newly enter play.",
+  "rationale": "All of your Metal Pokémon take 30 less damage from the opponent's attacks during their next turn, which is a damage-reduction effect; it reduces damage rather than preventing it entirely.",
+  "out_tokens": 172
+ },
+ {
+  "ids": [
+   "sve-002"
+  ],
+  "text": "Fire Energy",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "Basic Energy card that provides one Fire Energy when attached to a Pokémon.",
+  "rationale": "A basic Energy card with no additional effects, so no functional tag applies.",
+  "out_tokens": 87
+ },
+ {
+  "ids": [
+   "sv06.5-047"
+  ],
+  "text": "Kyurem\nAbility: Plasma Bane - If your opponent has any cards in their discard pile that have \"Colress\" in the name, this Pokémon can use the Trifrost attack for {C}.\nAttack: Trifrost [Water/Water/Metal/Metal/Colorless] - Discard all Energy from this Pokémon. This attack does 110 damage to 3 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "multi-target",
+   "bench-reach",
+   "recoil"
+  ],
+  "suggested": null,
+  "description": "Ability: if the opponent has cards with a certain name in their discard pile, this Pokémon can use its attack for a reduced Energy cost. Attack: discard all Energy from this Pokémon, and deal damage to three of the opponent's Pokémon, without applying Weakness and Resistance to Benched Pokémon.",
+  "rationale": "Trifrost damages 3 of the opponent's Pokémon, which earns multi-target and bench-reach since Benched Pokémon can be chosen. Discarding all Energy from itself is a self-cost, not damage to a Pokémon, so recoil does not apply; the Ability only lowers the attack cost and matches no tag.",
+  "out_tokens": 264
+ },
+ {
+  "ids": [
+   "me02.5-216"
+  ],
+  "text": "Prism Energy\nAs long as this card is attached to a Pokémon, it provides {C} Energy.\n\nIf this card is attached to a Basic Pokémon, this card provides every type of Energy but provides only 1 Energy at a time.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [],
+  "suggested": null,
+  "description": "Special Energy card that provides Colorless Energy while attached to a Pokémon. While attached to a Basic Pokémon, it instead provides every type of Energy, but only one Energy at a time.",
+  "rationale": "This is a Special Energy that only supplies Energy types; it does not accelerate attachments, move or remove Energy, or have any other effect covered by the listed tags.",
+  "out_tokens": 151
+ },
+ {
+  "ids": [
+   "mep-082"
+  ],
+  "text": "Miraidon\nAbility: Photon Cord - If this Pokémon is in the Active Spot and is Knocked Out by damage from an attack from your opponent's Pokémon, move up to 2 Basic {L} Energy cards from this Pokémon to 1 of your Benched Pokémon.\nAttack: Thunder [Lightning/Lightning] 90 - This Pokémon does 30 damage to itself.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "energy-movement",
+   "recoil"
+  ],
+  "suggested": null,
+  "description": "Ability: if this Pokémon is Active and is Knocked Out by damage from an opponent's attack, move up to a set number of basic Lightning Energy cards from it to one of your Benched Pokémon. Attack: deals damage, and this Pokémon also does damage to itself.",
+  "rationale": "Photon Cord moves Energy from this Pokémon to a Benched Pokémon, earning energy-movement (it is our own Energy, so no energy-removal). Thunder damages this Pokémon itself, which is recoil.",
+  "out_tokens": 211
+ },
+ {
+  "ids": [
+   "sv04.5-080"
+  ],
+  "text": "Iono\nEach player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "draw",
+   "hand-disruption"
+  ],
+  "suggested": null,
+  "description": "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom this way, each player draws cards equal to the number of their remaining Prize cards.",
+  "rationale": "Both players' hands are shuffled away and replaced with a new draw based on remaining Prize cards, which is the reset-hand pattern that earns draw + hand-disruption.",
+  "out_tokens": 163
+ },
+ {
+  "ids": [
+   "sv04.5-054"
+  ],
+  "text": "Charizard ex\nAbility: Infernal Reign - When you play this Pokémon from your hand to evolve 1 of your Pokémon during your turn, you may search your deck for up to 3 Basic {R} Energy cards and attach them to your Pokémon in any way you like. Then, shuffle your deck.\nAttack: Burning Darkness [Fire/Fire] 180+ - This attack does 30 more damage for each Prize card your opponent has taken.",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "acceleration",
+   "search",
+   "damage-scaling"
+  ],
+  "suggested": null,
+  "description": "When this Pokémon is played from hand to evolve one of your Pokémon during your turn, you may search your deck for several basic Fire Energy cards and attach them to your Pokémon in any way you like, then shuffle your deck. Attack does damage that increases for each Prize card the opponent has taken.",
+  "rationale": "Infernal Reign searches the deck for Basic Fire Energy (search) and attaches it beyond the normal attachment (acceleration). Burning Darkness deals more damage for each Prize card the opponent has taken, a game-state count (damage-scaling).",
+  "out_tokens": 231
+ },
+ {
+  "ids": [
+   "me03-087"
+  ],
+  "text": "Rocky Fighting Energy\nAs long as this card is attached to a Pokémon, it provides {F} Energy.\nPrevent all effects of attacks used by your opponent's Pokémon done to the {F} Pokémon this card is attached to. (Existing effects are not removed. Damage is not an effect.)",
+  "type": "succeeded",
+  "stop": "end_turn",
+  "status": "completed",
+  "tags": [
+   "effect-prevention"
+  ],
+  "suggested": null,
+  "description": "Special Energy that provides one Fighting Energy while attached. Prevents all effects of the opponent's Pokémon's attacks on the Fighting Pokémon it is attached to, though existing effects stay and damage is not prevented.",
+  "rationale": "The card prevents all effects of the opponent's attacks on the Fighting Pokémon it is attached to, which is effect-prevention. Damage is explicitly not prevented, so damage-prevention does not apply.",
+  "out_tokens": 186
+ }
+]
