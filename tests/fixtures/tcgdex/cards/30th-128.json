@@ -1,0 +1,45 @@
+{
+  "category": "Trainer",
+  "id": "30th-128",
+  "illustrator": "Yuka Morii",
+  "image": "https://assets.tcgdex.net/en/me/30th/128",
+  "localId": "128",
+  "name": "Ultra Ball",
+  "rarity": "Common",
+  "set": {
+    "cardCount": {
+      "official": 128,
+      "total": 161
+    },
+    "id": "30th",
+    "name": "30th Celebration"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 907735,
+        "tcgplayer": 716517
+      },
+      "variantId": "15i9grynjbpddvzw7dk089qr7vfcowuo"
+    }
+  ],
+  "trainerType": "Item",
+  "regulationMark": "I",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-29T10:15:39+01:00"
+}
