@@ -1,0 +1,71 @@
+{
+  "category": "Pokemon",
+  "id": "me02-013",
+  "illustrator": "takuyoa",
+  "image": "https://assets.tcgdex.net/en/me/me02/013",
+  "localId": "013",
+  "name": "Mega Charizard X ex",
+  "rarity": "Double rare",
+  "set": {
+    "cardCount": {
+      "official": 94,
+      "total": 130
+    },
+    "id": "me02",
+    "logo": "https://assets.tcgdex.net/en/me/me02/logo",
+    "name": "Phantasmal Flames"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 857588,
+        "tcgplayer": 662182,
+        "cardtrader": 353122
+      },
+      "variantId": "jr7oetx1mqug9"
+    }
+  ],
+  "dexId": [
+    6
+  ],
+  "hp": 360,
+  "types": [
+    "Fire"
+  ],
+  "evolveFrom": "Charmeleon",
+  "stage": "Stage2",
+  "suffix": "ex",
+  "attacks": [
+    {
+      "cost": [
+        "Fire",
+        "Fire"
+      ],
+      "name": "Inferno X",
+      "effect": "Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+      "damage": "90×"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Water",
+      "value": "×2"
+    }
+  ],
+  "retreat": 2,
+  "regulationMark": "I",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-30T09:39:02+01:00"
+}

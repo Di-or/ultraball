@@ -1,0 +1,87 @@
+{
+  "category": "Pokemon",
+  "id": "svp-101",
+  "illustrator": "Jiro Sasumo",
+  "image": "https://assets.tcgdex.net/en/sv/svp/101",
+  "localId": "101",
+  "name": "Pikachu",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 225,
+      "total": 226
+    },
+    "id": "svp",
+    "name": "SVP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "player-rewards-program"
+      ],
+      "thirdParty": {
+        "cardmarket": 740411,
+        "tcgplayer": 528365
+      },
+      "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "asia-2023-24"
+      ],
+      "thirdParty": {
+        "cardmarket": 726923,
+        "tcgplayer": 681225
+      },
+      "variantId": "23hmnvtwdqrd5globizi5o9apws7"
+    }
+  ],
+  "dexId": [
+    25
+  ],
+  "cameoDexIds": [
+    6
+  ],
+  "hp": 70,
+  "types": [
+    "Lightning"
+  ],
+  "description": "When it is angered, it immediately discharges the energy stored in the pouches in its cheeks.",
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Lightning",
+        "Lightning",
+        "Colorless"
+      ],
+      "name": "Scrappy Spark",
+      "effect": "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+      "damage": "30+"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fighting",
+      "value": "×2"
+    }
+  ],
+  "retreat": 1,
+  "regulationMark": "G",
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-06T11:00:03+01:00"
+}

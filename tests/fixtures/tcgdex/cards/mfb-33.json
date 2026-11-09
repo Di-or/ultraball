@@ -1,0 +1,81 @@
+{
+  "category": "Trainer",
+  "id": "mfb-33",
+  "illustrator": "Ayaka Yoshida",
+  "localId": "33",
+  "name": "Potion",
+  "rarity": "None",
+  "set": {
+    "cardCount": {
+      "official": 48,
+      "total": 48
+    },
+    "id": "mfb",
+    "name": "My First Battle"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "pikachu"
+      ],
+      "thirdParty": {
+        "cardmarket": 742007,
+        "tcgplayer": 524028
+      },
+      "variantId": "4ffrmhcfi9nxk87y2jfj869"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "squirtle"
+      ],
+      "thirdParty": {
+        "tcgplayer": 742019,
+        "cardmarket": 524029
+      },
+      "variantId": "3takscxpcqq42pzkuav61j2v"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "bulbasaur"
+      ],
+      "thirdParty": {
+        "cardmarket": 741983,
+        "tcgplayer": 524026
+      },
+      "variantId": "3a83wf50tx7zeu6ndbdxusvi7"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "charmander"
+      ],
+      "thirdParty": {
+        "cardmarket": 741995,
+        "tcgplayer": 524027
+      },
+      "variantId": "2tszcx1bprnqze5gvzp7lp2zg7"
+    }
+  ],
+  "effect": "Heal 30 damage from 1 of your Pokémon.",
+  "trainerType": "Item",
+  "regulationMark": "None",
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-04-14T22:39:39+01:00"
+}

@@ -1,0 +1,68 @@
+{
+  "category": "Pokemon",
+  "id": "mep-023",
+  "illustrator": "Saboteri",
+  "localId": "023",
+  "name": "Mega Charizard X ex",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 0,
+      "total": 112
+    },
+    "id": "mep",
+    "name": "MEP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 859033,
+        "tcgplayer": 659612
+      },
+      "variantId": "jr7oetx1mqug9"
+    }
+  ],
+  "dexId": [
+    6
+  ],
+  "hp": 360,
+  "types": [
+    "Fire"
+  ],
+  "evolveFrom": "Charmeleon",
+  "stage": "Stage2",
+  "suffix": "ex",
+  "attacks": [
+    {
+      "cost": [
+        "Fire",
+        "Fire"
+      ],
+      "name": "Inferno X",
+      "effect": "Discard any amount of [R] Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.",
+      "damage": "90×"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Water",
+      "value": "x2"
+    }
+  ],
+  "retreat": 2,
+  "regulationMark": "I",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-04T19:51:08+01:00"
+}

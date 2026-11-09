@@ -1,0 +1,75 @@
+{
+  "category": "Pokemon",
+  "id": "svp-190",
+  "illustrator": "Atsushi Furusawa",
+  "localId": "190",
+  "name": "Pikachu",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 225,
+      "total": 226
+    },
+    "id": "svp",
+    "name": "SVP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 784938
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2024"
+      ],
+      "thirdParty": {
+        "cardmarket": 780209,
+        "tcgplayer": 562088
+      },
+      "variantId": "2fnyg4g538et3q356alcjhxb9li"
+    }
+  ],
+  "dexId": [
+    25
+  ],
+  "cameoDexIds": [
+    151
+  ],
+  "hp": 50,
+  "types": [
+    "Lightning"
+  ],
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Lightning",
+        "Lightning",
+        "Colorless"
+      ],
+      "name": "Scrappy Spark",
+      "effect": "Flip a coin until you get tails. This attack does 30 more damage for each heads.",
+      "damage": "30+"
+    }
+  ],
+  "retreat": 1,
+  "regulationMark": "H",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-06T11:00:03+01:00"
+}

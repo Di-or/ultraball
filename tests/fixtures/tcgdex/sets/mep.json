@@ -1,0 +1,586 @@
+{
+  "cardCount": {
+    "firstEd": 0,
+    "holo": 148,
+    "normal": 1,
+    "official": 0,
+    "reverse": 0,
+    "total": 112
+  },
+  "cards": [
+    {
+      "id": "mep-001",
+      "localId": "001",
+      "name": "Meganium"
+    },
+    {
+      "id": "mep-002",
+      "localId": "002",
+      "name": "Inteleon"
+    },
+    {
+      "id": "mep-003",
+      "localId": "003",
+      "name": "Alakazam"
+    },
+    {
+      "id": "mep-004",
+      "localId": "004",
+      "name": "Lunatone"
+    },
+    {
+      "id": "mep-005",
+      "localId": "005",
+      "name": "Drifloon"
+    },
+    {
+      "id": "mep-006",
+      "localId": "006",
+      "name": "Drifblim"
+    },
+    {
+      "id": "mep-007",
+      "localId": "007",
+      "name": "Psyduck"
+    },
+    {
+      "id": "mep-008",
+      "localId": "008",
+      "name": "Golduck"
+    },
+    {
+      "id": "mep-009",
+      "localId": "009",
+      "name": "Alakazam"
+    },
+    {
+      "id": "mep-010",
+      "localId": "010",
+      "name": "Riolu"
+    },
+    {
+      "id": "mep-011",
+      "localId": "011",
+      "name": "Mega Latias ex"
+    },
+    {
+      "id": "mep-012",
+      "localId": "012",
+      "name": "Mega Lucario ex"
+    },
+    {
+      "id": "mep-013",
+      "localId": "013",
+      "name": "Mega Venusaur ex"
+    },
+    {
+      "id": "mep-014",
+      "localId": "014",
+      "name": "Ceruledge"
+    },
+    {
+      "id": "mep-015",
+      "localId": "015",
+      "name": "Zacian"
+    },
+    {
+      "id": "mep-016",
+      "localId": "016",
+      "name": "Flygon"
+    },
+    {
+      "id": "mep-017",
+      "localId": "017",
+      "name": "Toxtricity"
+    },
+    {
+      "id": "mep-018",
+      "localId": "018",
+      "name": "Cottonee"
+    },
+    {
+      "id": "mep-019",
+      "localId": "019",
+      "name": "Whimsicott"
+    },
+    {
+      "id": "mep-020",
+      "localId": "020",
+      "name": "Sneasel"
+    },
+    {
+      "id": "mep-021",
+      "localId": "021",
+      "name": "Weavile"
+    },
+    {
+      "id": "mep-022",
+      "localId": "022",
+      "name": "Charcadet"
+    },
+    {
+      "id": "mep-023",
+      "localId": "023",
+      "name": "Mega Charizard X ex"
+    },
+    {
+      "id": "mep-024",
+      "localId": "024",
+      "name": "Oricorio ex"
+    },
+    {
+      "id": "mep-025",
+      "localId": "025",
+      "name": "Mega Kangaskhan ex"
+    },
+    {
+      "id": "mep-026",
+      "localId": "026",
+      "name": "Meloetta"
+    },
+    {
+      "id": "mep-027",
+      "localId": "027",
+      "name": "Haunter"
+    },
+    {
+      "id": "mep-028",
+      "localId": "028",
+      "name": "Celebratory Fanfare"
+    },
+    {
+      "id": "mep-029",
+      "localId": "029",
+      "name": "Mega Charizard X ex"
+    },
+    {
+      "id": "mep-030",
+      "localId": "030",
+      "name": "Mega Charizard Y ex"
+    },
+    {
+      "id": "mep-031",
+      "localId": "031",
+      "name": "N's Zekrom"
+    },
+    {
+      "id": "mep-032",
+      "localId": "032",
+      "name": "Mega Gardevoir ex"
+    },
+    {
+      "id": "mep-033",
+      "localId": "033",
+      "name": "Mega Lucario ex"
+    },
+    {
+      "id": "mep-034",
+      "localId": "034",
+      "name": "Mega Meganium ex"
+    },
+    {
+      "id": "mep-035",
+      "localId": "035",
+      "name": "Mega Emboar ex"
+    },
+    {
+      "id": "mep-036",
+      "localId": "036",
+      "name": "Mega Feraligatr ex"
+    },
+    {
+      "id": "mep-037",
+      "localId": "037",
+      "name": "Bulbasaur"
+    },
+    {
+      "id": "mep-038",
+      "localId": "038",
+      "name": "Charmander"
+    },
+    {
+      "id": "mep-039",
+      "localId": "039",
+      "name": "Squirtle"
+    },
+    {
+      "id": "mep-040",
+      "localId": "040",
+      "name": "Turtwig"
+    },
+    {
+      "id": "mep-041",
+      "localId": "041",
+      "name": "Chimchar"
+    },
+    {
+      "id": "mep-042",
+      "localId": "042",
+      "name": "Piplup"
+    },
+    {
+      "id": "mep-043",
+      "localId": "043",
+      "name": "Rowlet"
+    },
+    {
+      "id": "mep-044",
+      "localId": "044",
+      "name": "Litten"
+    },
+    {
+      "id": "mep-045",
+      "localId": "045",
+      "name": "Popplio"
+    },
+    {
+      "id": "mep-046",
+      "localId": "046",
+      "name": "Chikorita"
+    },
+    {
+      "id": "mep-047",
+      "localId": "047",
+      "name": "Cyndaquil"
+    },
+    {
+      "id": "mep-048",
+      "localId": "048",
+      "name": "Totodile"
+    },
+    {
+      "id": "mep-049",
+      "localId": "049",
+      "name": "Snivy"
+    },
+    {
+      "id": "mep-050",
+      "localId": "050",
+      "name": "Tepig"
+    },
+    {
+      "id": "mep-051",
+      "localId": "051",
+      "name": "Oshawott"
+    },
+    {
+      "id": "mep-052",
+      "localId": "052",
+      "name": "Grookey"
+    },
+    {
+      "id": "mep-053",
+      "localId": "053",
+      "name": "Scorbunny"
+    },
+    {
+      "id": "mep-054",
+      "localId": "054",
+      "name": "Sobble"
+    },
+    {
+      "id": "mep-055",
+      "localId": "055",
+      "name": "Treecko"
+    },
+    {
+      "id": "mep-056",
+      "localId": "056",
+      "name": "Torchic"
+    },
+    {
+      "id": "mep-057",
+      "localId": "057",
+      "name": "Mudkip"
+    },
+    {
+      "id": "mep-058",
+      "localId": "058",
+      "name": "Chespin"
+    },
+    {
+      "id": "mep-059",
+      "localId": "059",
+      "name": "Fennekin"
+    },
+    {
+      "id": "mep-060",
+      "localId": "060",
+      "name": "Froakie"
+    },
+    {
+      "id": "mep-061",
+      "localId": "061",
+      "name": "Sprigatito"
+    },
+    {
+      "id": "mep-062",
+      "localId": "062",
+      "name": "Fuecoco"
+    },
+    {
+      "id": "mep-063",
+      "localId": "063",
+      "name": "Quaxly"
+    },
+    {
+      "id": "mep-064",
+      "localId": "064",
+      "name": "Serperior"
+    },
+    {
+      "id": "mep-065",
+      "localId": "065",
+      "name": "Barbaracle"
+    },
+    {
+      "id": "mep-066",
+      "localId": "066",
+      "name": "Tyrantrum"
+    },
+    {
+      "id": "mep-067",
+      "localId": "067",
+      "name": "Doublade"
+    },
+    {
+      "id": "mep-068",
+      "localId": "068",
+      "name": "Makuhita"
+    },
+    {
+      "id": "mep-069",
+      "localId": "069",
+      "name": "Chikorita"
+    },
+    {
+      "id": "mep-070",
+      "localId": "070",
+      "name": "Tyrunt"
+    },
+    {
+      "id": "mep-071",
+      "localId": "071",
+      "name": "Mega Zygarde ex"
+    },
+    {
+      "id": "mep-072",
+      "localId": "072",
+      "name": "Mega Clefable ex"
+    },
+    {
+      "id": "mep-073",
+      "localId": "073",
+      "name": "Mega Gengar ex"
+    },
+    {
+      "id": "mep-074",
+      "localId": "074",
+      "name": "Delphox"
+    },
+    {
+      "id": "mep-075",
+      "localId": "075",
+      "name": "Ampharos"
+    },
+    {
+      "id": "mep-076",
+      "localId": "076",
+      "name": "Crobat"
+    },
+    {
+      "id": "mep-077",
+      "localId": "077",
+      "name": "Goodra"
+    },
+    {
+      "id": "mep-078",
+      "localId": "078",
+      "name": "Toxel"
+    },
+    {
+      "id": "mep-079",
+      "localId": "079",
+      "name": "Charmeleon"
+    },
+    {
+      "id": "mep-080",
+      "localId": "080",
+      "name": "Fennekin"
+    },
+    {
+      "id": "mep-081",
+      "localId": "081",
+      "name": "Mega Greninja ex"
+    },
+    {
+      "id": "mep-082",
+      "localId": "082",
+      "name": "Miraidon"
+    },
+    {
+      "id": "mep-083",
+      "localId": "083",
+      "name": "Slowbro"
+    },
+    {
+      "id": "mep-084",
+      "localId": "084",
+      "name": "Dhelmise"
+    },
+    {
+      "id": "mep-085",
+      "localId": "085",
+      "name": "Bastiodon"
+    },
+    {
+      "id": "mep-086",
+      "localId": "086",
+      "name": "Slowpoke"
+    },
+    {
+      "id": "mep-087",
+      "localId": "087",
+      "name": "Binacle"
+    },
+    {
+      "id": "mep-088",
+      "localId": "088",
+      "name": "Zarude"
+    },
+    {
+      "id": "mep-089",
+      "localId": "089",
+      "name": "Mega Zeraora ex"
+    },
+    {
+      "id": "mep-090",
+      "localId": "090",
+      "name": "Mega Darkrai ex"
+    },
+    {
+      "id": "mep-091",
+      "localId": "091",
+      "name": "Mega Dragonite ex"
+    },
+    {
+      "id": "mep-092",
+      "localId": "092",
+      "name": "Paradise Resort"
+    },
+    {
+      "id": "mep-093",
+      "localId": "093",
+      "name": "Pikachu"
+    },
+    {
+      "id": "mep-094",
+      "localId": "094",
+      "name": "Alolan Exeggutor"
+    },
+    {
+      "id": "mep-095",
+      "localId": "095",
+      "name": "Lucario"
+    },
+    {
+      "id": "mep-096",
+      "localId": "096",
+      "name": "Moltres"
+    },
+    {
+      "id": "mep-097",
+      "localId": "097",
+      "name": "Articuno"
+    },
+    {
+      "id": "mep-098",
+      "localId": "098",
+      "name": "Zapdos"
+    },
+    {
+      "id": "mep-099",
+      "localId": "099",
+      "name": "Greninja ex"
+    },
+    {
+      "id": "mep-100",
+      "localId": "100",
+      "name": "Sylveon ex"
+    },
+    {
+      "id": "mep-101",
+      "localId": "101",
+      "name": "Nidorina"
+    },
+    {
+      "id": "mep-102",
+      "localId": "102",
+      "name": "Victini"
+    },
+    {
+      "id": "mep-103",
+      "localId": "103",
+      "name": "Zeraora"
+    },
+    {
+      "id": "mep-104",
+      "localId": "104",
+      "name": "Mewtwo"
+    },
+    {
+      "id": "mep-105",
+      "localId": "105",
+      "name": "Mew"
+    },
+    {
+      "id": "mep-106",
+      "localId": "106",
+      "name": "Ditto"
+    },
+    {
+      "id": "mep-107",
+      "localId": "107",
+      "name": "Pikachu ex"
+    },
+    {
+      "id": "mep-108",
+      "localId": "108",
+      "name": "Espeon ex"
+    },
+    {
+      "id": "mep-109",
+      "localId": "109",
+      "name": "Pikachu ex"
+    },
+    {
+      "id": "mep-110",
+      "localId": "110",
+      "name": "Umbreon ex"
+    },
+    {
+      "id": "mep-120",
+      "localId": "120",
+      "name": "Celebratory Fanfare"
+    },
+    {
+      "id": "mep-Museum",
+      "localId": "Museum",
+      "name": "Pikachu at the Museum"
+    }
+  ],
+  "id": "mep",
+  "legal": {
+    "expanded": true,
+    "standard": false
+  },
+  "name": "MEP Black Star Promos",
+  "releaseDate": "2025-09-26",
+  "serie": {
+    "id": "me",
+    "name": "Mega Evolution"
+  },
+  "abbreviation": {
+    "official": "MEP"
+  }
+}
