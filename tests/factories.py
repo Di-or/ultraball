@@ -98,13 +98,15 @@ def make_tcgdex_trainer(**overrides: object) -> dict[str, object]:
 
 
 def make_tcgdex_basic_energy(energy: str = "Fire", **overrides: object) -> dict[str, object]:
-    """A raw Basic Energy printing as TCGdex sends it: `energyType: "Normal"`, no effect text.
+    """A raw Basic Energy printing as TCGdex sends it: `energyType: "Normal"`, no effect text,
+    and (like every `sve` printing) no image or regulation mark.
 
     `energy` names the card (`"Water"` → `Water Energy`). `None` leaves a field out.
     """
     printing_id = str(overrides.pop("id", "sve-002"))
     base: dict[str, object] = dict(
         _tcgdex_printing_base(printing_id),
+        image=None,
         category="Energy",
         name=f"{energy} Energy",
         rarity="Common",
@@ -136,13 +138,21 @@ def make_tcgdex_special_energy(**overrides: object) -> dict[str, object]:
 def _tcgdex_printing_base(printing_id: str) -> dict[str, object]:
     """The fields every TCGdex printing carries, derived from its id (`<set id>-<local id>`)."""
     set_id, local_id = printing_id.rsplit("-", 1)
-    series = re.sub(r"[^a-z].*", "", set_id) or set_id  # "me02" → "me", as in TCGdex image URLs
     return dict(
         id=printing_id,
         localId=local_id,
         set={"id": set_id, "name": set_id},
-        image=f"https://assets.tcgdex.net/en/{series}/{set_id}/{local_id}",
+        image=f"https://assets.tcgdex.net/en/{_tcgdex_series(set_id)}/{set_id}/{local_id}",
     )
+
+
+def _tcgdex_series(set_id: str) -> str:
+    """The series segment of a TCGdex image URL: `svp` and `sve` are `sv`, `mep` and `30th` are `me`."""
+    if set_id.startswith("sv"):
+        return "sv"
+    if set_id.startswith(("me", "30th")):
+        return "me"
+    return re.sub(r"[^a-z].*", "", set_id) or set_id
 
 
 def _apply_overrides(base: dict[str, object], overrides: dict[str, object]) -> dict[str, object]:

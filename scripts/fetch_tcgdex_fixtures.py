@@ -9,7 +9,8 @@ no-cache` plus a cache-busting query parameter), because a plain request can ret
 that is weeks old (research/pre-tagging-pipeline-check.md, 2026-11-08 corrections).
 
 The JSON is stored as TCGdex sends it, except that `pricing` (on the card and on each entry of
-`variants_detailed`) is dropped: it changes daily, so it would turn every refresh into a noisy diff, and the app never reads it.
+`variants_detailed`) is dropped: it changes daily, so it would turn every refresh into a noisy
+diff, and the app never reads it.
 """
 
 import asyncio
@@ -62,9 +63,9 @@ def _write(path: Path, data: dict) -> None:
 
 async def main() -> None:
     async with httpx.AsyncClient(timeout=30) as client:
-        cards = [await _get_json(client, f"cards/{pid}") for pid in FIXTURE_PRINTINGS]
+        cards = [await _get_json(client, f"cards/{printing_id}") for printing_id in FIXTURE_PRINTINGS]
         set_ids = sorted({card["set"]["id"] for card in cards})
-        sets = [await _get_json(client, f"sets/{sid}") for sid in set_ids]
+        sets = [await _get_json(client, f"sets/{set_id}") for set_id in set_ids]
 
     for card in cards:
         card.pop("pricing", None)

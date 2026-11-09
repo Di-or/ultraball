@@ -34,11 +34,15 @@ def fixture_snapshot(set_id: str, printing_ids: list[str] | None = None) -> SetS
     """
     set_json = load_set(set_id)
     if printing_ids is None:
-        printing_ids = [pid for pid in FIXTURE_PRINTING_IDS if load_printing(pid)["set"]["id"] == set_id]
+        printing_ids = [
+            printing_id
+            for printing_id in FIXTURE_PRINTING_IDS
+            if load_printing(printing_id)["set"]["id"] == set_id
+        ]
     return SetSnapshot(
         set_id=set_id,
         release_date=date.fromisoformat(set_json["releaseDate"]),
-        cards=[load_printing(pid) for pid in printing_ids],
+        cards=[load_printing(printing_id) for printing_id in printing_ids],
         official_abbreviation=(set_json.get("abbreviation") or {}).get("official"),
         name=set_json["name"],
     )

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.ingest import run_ingest
 from app.catalog.models import Card, RawCard
+from scripts.fetch_tcgdex_fixtures import FIXTURE_PRINTINGS
 from tests.factories import (
     make_tcgdex_basic_energy,
     make_tcgdex_pokemon,
@@ -85,6 +86,10 @@ def test_no_fixture_carries_volatile_pricing() -> None:
         assert all("pricing" not in variant for variant in printing.get("variants_detailed", []))
 
 
+def test_committed_fixtures_are_exactly_the_ones_the_fetch_script_lists() -> None:
+    assert set(FIXTURE_PRINTING_IDS) == set(FIXTURE_PRINTINGS)
+
+
 def test_load_printing_returns_a_fresh_copy() -> None:
     load_printing("sve-002")["name"] = "Changed"
 
@@ -154,6 +159,11 @@ def test_pokemon_factory_writes_evolution_stages_as_tcgdex_does() -> None:
     assert made["stage"] == "Stage2"
 
 
+def test_factory_image_urls_match_tcgdex() -> None:
+    for printing_id, make in (("svp-101", make_tcgdex_pokemon), ("30th-128", make_tcgdex_trainer), ("sv04-266", make_tcgdex_special_energy)):
+        assert make(id=printing_id)["image"] == load_printing(printing_id)["image"]
+
+
 def test_trainer_factory_matches_a_real_trainer() -> None:
     made = make_tcgdex_trainer()
 
@@ -165,7 +175,7 @@ def test_trainer_factory_matches_a_real_trainer() -> None:
 def test_basic_energy_factory_matches_real_basic_energy() -> None:
     made = make_tcgdex_basic_energy()
 
-    _assert_same_shape(made, "sve-002", "me02-124")
+    _assert_same_shape(made, "sve-002")
     assert made["name"] == "Fire Energy"
     assert made["energyType"] == "Normal"
     assert "effect" not in made
