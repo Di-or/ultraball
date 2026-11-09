@@ -100,3 +100,25 @@ batch `msgbatch_01VZWna9pF6UamKKCXHaiRdn` run through the real `_to_result` and 
 
 The live Voyage embedding pass and live `/search` (parse → gate → tag/semantic → RRF) on real
 vectors didn't run (see above). Re-run them after findings 1–5 are fixed.
+
+## Corrections (2026-11-08)
+
+Re-checked against the live TCGdex API with caching bypassed (`Cache-Control: no-cache` plus a
+cache-busting query parameter), scanning every printing in the 29 sets above plus `me06`.
+
+- **Finding 10 is mostly out of date.** It came from a stale cached API response. `30th` Poké Pad
+  (`30th-126`) and Switch (`30th-127`) now have English effect text and regulation marks
+  (updated 2026-10-16), and every `30th` printing has a regulation mark. Only Ultra Ball
+  (`30th-128`) is still missing English effect text: TCGdex has just the Portuguese text, in the
+  source repo as well. Across the other sets in the run, no non-Energy card is missing its text.
+- **The ingest has to bypass TCGdex's cache.** A plain request can return a copy that is weeks
+  old.
+- **New sets arrive partly filled in.** `me06` Delta Reign (released 2026-11-06, not part of this
+  run) has 27 Trainers and Special Energies with no English text and no regulation mark on any of
+  its 141 cards. `30th` went through the same thing and was filled in about a month after
+  release.
+- **What was decided.** Sets are ingested only from an explicit list (`me06` stays out until it
+  is filled in), and remaining gaps are closed by hand-kept per-printing fixes applied during
+  ingest. See CONTEXT.md: Included sets, Catalog override.
+- `30th-c` printings have no regulation marks. They are classic reprints, so being treated as
+  non-Standard is expected.
