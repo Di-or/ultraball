@@ -23,7 +23,7 @@ The full printed `name` string (normalized) — the deck-construction unit for t
 _Avoid_: card name (when the 4-copy sense matters), title.
 
 **Representative printing**:
-The most-recent printing per `dedupe_key` — the single printing the search gate and card display operate on. Most-recent is authoritative, not merely convenient: regulation marks advance monotonically, so the newest printing carries the newest legality, reflects errata, and gives the best image. Distinct-effect cards are already distinct `dedupe_key`s, so this only ever collapses genuine reprints.
+The single printing per `dedupe_key` that the search gate and card display operate on: the one with the newest regulation mark, then the newest release date, then one with an image, then the printing id as a stable tie-break. The regulation mark leads because it is the real time signal — marks advance monotonically, so the newest-mark printing carries the newest legality and reflects errata — while release dates are unreliable for promos (a promo set shares one series-wide date). Distinct-effect cards are already distinct `dedupe_key`s, so this only ever collapses genuine reprints.
 _Avoid_: canonical printing, primary printing.
 
 **Catalog layer**:
@@ -33,6 +33,14 @@ _Avoid_: data layer, TCGdex client, importer.
 **Errata reconciliation list**:
 A curated mapping that unifies printings whose *text* diverges but which the game treats as one card (mostly Trainers corrected by official errata), so they resolve to a single card entity rather than being mistaken for distinct cards.
 _Avoid_: errata table, corrections.
+
+**Catalog override**:
+A hand-kept fix to one printing's TCGdex data (e.g. missing English effect text, a malformed regulation mark), keyed by printing id and applied by the catalog layer during ingest, so the rest of the app only ever sees the corrected printing. An override always wins over TCGdex; each ingest reports overrides where TCGdex now supplies its own value ("same" → redundant, "differs" → review), and deleting the entry is how TCGdex takes over. Distinct from the **Errata reconciliation list**: an override corrects one printing's data, the errata list declares two different texts to be one card.
+_Avoid_: patch, manual fix, data correction.
+
+**Included sets**:
+The explicit list of sets the catalog ingests. A set joins only by a deliberate addition, once TCGdex has filled it in well enough that any remaining gaps can be closed with catalog overrides — TCGdex publishes new sets partially filled (missing text and regulation marks) and completes them over the following weeks.
+_Avoid_: set allow-list, supported sets.
 
 **`sub_category`**:
 The `{ex, mega, ace-spec}` array derived at ingest from a printing's name and rarity. Encodes **mega ⊂ ex in the data itself** — a Mega card carries `["ex", "mega"]` — so the gate filters it with plain array overlap (§ Candidate pool) and never needs special-case logic to make "ex" also match Mega cards.
@@ -49,7 +57,7 @@ Whether a card may be played in the Standard format *right now* — computed by 
 _Avoid_: legal, tournament-legal.
 
 **Basic Energy exception**:
-Basic Energy cards are Standard-legal in every rotation regardless of regulation mark, and are exempt from the 4-copy deck rule. Identified by category `Energy` + energy type `Basic`. (Special Energy is *not* basic — it flows through the normal corpus, search, and 4-copy rule.)
+Basic Energy cards are Standard-legal in every rotation regardless of regulation mark, and are exempt from the 4-copy deck rule. Identified as an Energy card that has no effect text **and** whose name matches the basic pattern ("Basic <Type> Energy" / "<Type> Energy"); both must hold, so a Special Energy missing its text fails safe as an ordinary card. TCGdex's energy-type field is *not* used — it labels Basic Energy and many Special Energies alike. (Special Energy is *not* basic — it flows through the normal corpus, search, and 4-copy rule.)
 _Avoid_: energy exemption.
 
 **Ban list**:
