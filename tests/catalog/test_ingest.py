@@ -10,6 +10,7 @@ from app.catalog.queries import get_representative_printing
 from app.clients.catalog_client import SetSnapshot
 from tests.factories import make_raw_pokemon
 from tests.stubs import StubCatalogClient
+from tests.tcgdex_fixtures import fixture_snapshot
 
 _CHARIZARD = {
     "id": "base1-4",
@@ -113,6 +114,25 @@ async def test_genuine_reprints_collapse_to_one_dedupe_key(db_session: AsyncSess
         select(func.count(func.distinct(Card.dedupe_key))).where(Card.id.in_(["base1-4", "base4-4"]))
     )
     assert count == 1
+
+
+async def test_symbol_drift_reprints_ingest_as_one_card_entity(db_session: AsyncSession) -> None:
+    """Mega Charizard X ex: `mep-023` writes `[R]`, `me02-013` writes `{R}` (issue #111)."""
+    catalog_client = StubCatalogClient(
+        {
+            "mep": fixture_snapshot("mep", ["mep-023"]),
+            "me02": fixture_snapshot("me02", ["me02-013"]),
+        }
+    )
+
+    await run_ingest(db_session, catalog_client, "mep")
+    await run_ingest(db_session, catalog_client, "me02")
+
+    dedupe_keys = (
+        await db_session.scalars(select(Card.dedupe_key).where(Card.id.in_(["mep-023", "me02-013"])))
+    ).all()
+    assert len(dedupe_keys) == 2
+    assert len(set(dedupe_keys)) == 1
 
 
 async def test_representative_printing_is_the_most_recent_reprint(db_session: AsyncSession) -> None:

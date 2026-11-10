@@ -75,7 +75,7 @@ One of the 30 enum-constrained, effects-only labels (in 7 documentation-only fam
 _Avoid_: keyword, category, attribute.
 
 **Canonical card text**:
-The deterministic, effect-bearing serialization of a card (per `dedupe_key`) that is both the enrichment input and the `dedupe_key` source — one function, so enrichment input and card identity never drift. Keeps names and numbers (the model needs them to reason); excludes flavor text and filter-gate scalars (`hp`/`types`/`retreat`).
+The deterministic, effect-bearing serialization of a card (per `dedupe_key`) that is both the enrichment input and the `dedupe_key` source — one function, so enrichment input and card identity never drift. Keeps names and numbers (the model needs them to reason); excludes flavor text and filter-gate scalars (`hp`/`types`/`retreat`). Energy symbols in effect text (`[R]`, `{R}`) are written as type names (`Fire`), so reprints that differ only in notation stay one entity.
 _Avoid_: card text, raw text, prompt input.
 
 **Normalized mechanical description**:

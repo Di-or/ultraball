@@ -14,6 +14,7 @@ from tests.factories import make_card as _card
 from tests.factories import make_enrichment as _enrichment
 from tests.factories import make_raw_pokemon
 from tests.stubs import StubCatalogClient
+from tests.tcgdex_fixtures import fixture_snapshot
 
 
 async def _seed(session: AsyncSession, *rows: Card | CardEnrichment) -> None:
@@ -213,6 +214,23 @@ async def test_only_the_representative_printing_is_returned_per_dedupe_key(db_se
 
     assert total == 1
     assert results[0].id == "new"
+
+
+async def test_symbol_drift_reprints_appear_once_after_ingest(db_session: AsyncSession) -> None:
+    """Mega Charizard X ex: `mep-023` writes `[R]`, `me02-013` writes `{R}` (issue #111)."""
+    catalog_client = StubCatalogClient(
+        {
+            "mep": fixture_snapshot("mep", ["mep-023"]),
+            "me02": fixture_snapshot("me02", ["me02-013"]),
+        }
+    )
+    await run_ingest(db_session, catalog_client, "mep")
+    await run_ingest(db_session, catalog_client, "me02")
+
+    results, total = await run_search(db_session, Filters(), Facets(), limit=30, offset=0)
+
+    assert total == 1
+    assert [r.name for r in results] == ["Mega Charizard X ex"]
 
 
 async def test_faceted_mode_sorts_name_a_to_z_then_dedupe_key(db_session: AsyncSession) -> None:

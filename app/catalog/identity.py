@@ -3,6 +3,22 @@ from dataclasses import dataclass
 
 _WHITESPACE = re.compile(r"\s+")
 
+# TCGdex writes an energy type three ways in effect text: `[R]`, `{R}` and `Fire`.
+_SYMBOL_TYPE_NAMES = {
+    "R": "Fire",
+    "W": "Water",
+    "G": "Grass",
+    "L": "Lightning",
+    "P": "Psychic",
+    "F": "Fighting",
+    "D": "Darkness",
+    "M": "Metal",
+    "N": "Dragon",
+    "Y": "Fairy",
+    "C": "Colorless",
+}
+_ENERGY_SYMBOL = re.compile(r"\[([RWGLPFDMNYC])\]|\{([RWGLPFDMNYC])\}")
+
 
 @dataclass(frozen=True)
 class CardIdentity:
@@ -33,19 +49,26 @@ def _assemble_rules_text(raw: dict) -> str:
     parts: list[str] = []
 
     for ability in raw.get("abilities") or []:
-        parts.append(f"Ability: {ability.get('name', '')} - {ability.get('effect', '')}")
+        parts.append(f"Ability: {ability.get('name', '')} - {_spell_out_symbols(ability.get('effect', ''))}")
 
     for attack in raw.get("attacks") or []:
         cost = "/".join(attack.get("cost") or [])
         damage = attack.get("damage")
         damage_part = f" {damage}" if damage is not None else ""
-        parts.append(f"Attack: {attack.get('name', '')} [{cost}]{damage_part} - {attack.get('effect', '')}")
+        effect_text = _spell_out_symbols(attack.get("effect", ""))
+        parts.append(f"Attack: {attack.get('name', '')} [{cost}]{damage_part} - {effect_text}")
 
     effect = raw.get("effect")
     if effect:
-        parts.append(str(effect))
+        parts.append(_spell_out_symbols(effect))
 
     return "\n".join(part.strip() for part in parts if part.strip())
+
+
+def _spell_out_symbols(effect: object) -> str:
+    """Write `[R]` / `{R}` energy symbols as type names, so reprints that differ only
+    in notation share one dedupe_key and the tagging model reads a plain type name."""
+    return _ENERGY_SYMBOL.sub(lambda match: _SYMBOL_TYPE_NAMES[match.group(1) or match.group(2)], str(effect))
 
 
 def _normalize(text: str) -> str:
