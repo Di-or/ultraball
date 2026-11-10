@@ -123,6 +123,7 @@ async def test_a_refusal_is_applied_as_needs_repair_and_is_not_resubmitted(db_se
 
     row = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == _CHARIZARD_KEY))
     assert row is not None and row.status == status.NEEDS_REPAIR
+    assert row.normalized_description is None
 
     next_batch_id = await submit_enrichment_batch(db_session, enrichment_client)
     assert next_batch_id is None
@@ -141,3 +142,51 @@ async def test_a_card_the_batch_never_answered_is_marked_failed_and_resubmitted(
     row = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == _CHARIZARD_KEY))
     assert row is not None and row.status == status.FAILED
     assert await submit_enrichment_batch(db_session, enrichment_client) is not None
+
+
+_BLASTOISE = {
+    **_CHARIZARD,
+    "id": "base1-2",
+    "localId": "2",
+    "name": "Blastoise",
+    "types": ["Water"],
+    "attacks": [{"name": "Hydro Pump", "cost": ["Water"], "damage": 40, "effect": "Does more damage for extra Water Energy."}],
+}
+_BLASTOISE_KEY = build_card_identity(_BLASTOISE).dedupe_key
+
+
+async def test_a_repair_only_submission_re_tags_just_the_needs_repair_cards(db_session: AsyncSession) -> None:
+    await _ingest_charizard(db_session)
+    refusing_client = StubEnrichmentClient({_CHARIZARD_KEY: EnrichmentResult(dedupe_key=_CHARIZARD_KEY)})
+    first_batch_id = await submit_enrichment_batch(db_session, refusing_client)
+    assert first_batch_id is not None
+    await poll_and_apply_batch(db_session, refusing_client, first_batch_id)
+    # A card new since that run is due ordinary enrichment, not repair.
+    catalog_client = StubCatalogClient({"base1": SetSnapshot("base1", date(1999, 1, 9), [_CHARIZARD, _BLASTOISE])})
+    await run_ingest(db_session, catalog_client, "base1")
+
+    repair_client = StubEnrichmentClient(
+        {
+            _CHARIZARD_KEY: EnrichmentResult(
+                dedupe_key=_CHARIZARD_KEY, normalized_description="Discard energy and draw a card.", tags=["draw"]
+            )
+        }
+    )
+    batch_id = await submit_enrichment_batch(db_session, repair_client, repair_only=True)
+    assert batch_id is not None
+    await poll_and_apply_batch(db_session, repair_client, batch_id)
+
+    charizard = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == _CHARIZARD_KEY))
+    assert charizard is not None
+    assert charizard.status == status.COMPLETED
+    assert charizard.normalized_description == "Discard energy and draw a card."
+    blastoise = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == _BLASTOISE_KEY))
+    assert blastoise is None
+
+
+async def test_a_repair_only_submission_with_nothing_to_repair_is_a_no_op(db_session: AsyncSession) -> None:
+    await _ingest_charizard(db_session)
+
+    batch_id = await submit_enrichment_batch(db_session, StubEnrichmentClient({}), repair_only=True)
+
+    assert batch_id is None

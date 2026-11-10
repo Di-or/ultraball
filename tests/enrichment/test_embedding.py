@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,9 +49,9 @@ async def test_run_embedding_pass_embeds_pending_rows(db_session: AsyncSession) 
     await _seed_completed_row(db_session)
     embedding_client = StubEmbeddingClient()
 
-    embedded_count = await run_embedding_pass(db_session, embedding_client)
+    report = await run_embedding_pass(db_session, embedding_client)
 
-    assert embedded_count == 1
+    assert report.embedded == 1
     row = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == _DEDUPE_KEY))
     assert row is not None
     assert row.vector is not None
@@ -62,9 +63,9 @@ async def test_run_embedding_pass_on_an_unchanged_corpus_is_a_no_op(db_session: 
     embedding_client = StubEmbeddingClient()
     await run_embedding_pass(db_session, embedding_client)
 
-    embedded_count = await run_embedding_pass(db_session, embedding_client)
+    report = await run_embedding_pass(db_session, embedding_client)
 
-    assert embedded_count == 0
+    assert report.embedded == 0
 
 
 async def test_an_embedded_row_stops_being_pending(db_session: AsyncSession) -> None:
@@ -75,3 +76,45 @@ async def test_an_embedded_row_stops_being_pending(db_session: AsyncSession) -> 
     pending = await get_cards_pending_embedding(db_session)
 
     assert pending == []
+
+
+async def test_run_embedding_pass_skips_an_empty_description_and_reports_it(db_session: AsyncSession) -> None:
+    await _seed_completed_row(db_session)
+    await _seed_completed_row(db_session, "blank-card", normalized_description="")
+
+    report = await run_embedding_pass(db_session, StubEmbeddingClient())
+
+    assert report.embedded == 1
+    assert report.skipped == 1
+    blank = await db_session.scalar(select(CardEnrichment).where(CardEnrichment.dedupe_key == "blank-card"))
+    assert blank is not None and blank.vector is None
+
+
+class _FailsOnCallEmbeddingClient(StubEmbeddingClient):
+    """Embeds normally until its `fail_on_call`-th request, which raises like a provider outage."""
+
+    def __init__(self, fail_on_call: int) -> None:
+        super().__init__()
+        self._fail_on_call = fail_on_call
+        self._calls = 0
+
+    async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        self._calls += 1
+        if self._calls == self._fail_on_call:
+            raise RuntimeError("provider outage")
+        return await super().embed_documents(texts)
+
+
+async def test_a_failure_part_way_keeps_every_vector_already_committed(db_session: AsyncSession) -> None:
+    for dedupe_key in ("card-a", "card-b", "card-c"):
+        await _seed_completed_row(db_session, dedupe_key)
+
+    with pytest.raises(RuntimeError):
+        await run_embedding_pass(db_session, _FailsOnCallEmbeddingClient(fail_on_call=2), chunk_size=1)
+    await db_session.rollback()
+
+    assert [key for key, _ in await get_cards_pending_embedding(db_session)] == ["card-b", "card-c"]
+
+    report = await run_embedding_pass(db_session, StubEmbeddingClient(), chunk_size=1)
+
+    assert report.embedded == 2
