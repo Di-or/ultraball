@@ -6,7 +6,7 @@ from app.catalog.energy import not_basic_energy_clause
 from app.catalog.models import Card
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
-from app.enrichment.taxonomy import PROMPT_VERSION, TAXONOMY_VERSION
+from app.enrichment.queries import has_version_stamp
 from app.search.models import Facets, Filters, IntRange
 
 # Tag-match pool cap (CONTEXT.md: Tag-match path / Candidate pool).
@@ -209,10 +209,11 @@ def _semantic_ranked_pool(rep: type[Card], predicates: list[ColumnElement], quer
     """The semantic path's ranked pool (CONTEXT.md: Semantic search), capped and
     row-numbered so it can be paginated on its own or fed into `run_rrf_search`.
 
-    Only rows with a vector whose enrichment carries the current version stamp
-    are ranked: a vector left from an older taxonomy/prompt embeds a description
-    that re-tagging is about to replace. An exact/flat cosine scan (`<=>`, no
-    ANN index), cheap at this corpus size.
+    Only `COMPLETED` rows with a vector under the current version stamp are
+    ranked (CONTEXT.md: Enrichment identity): a vector from an older stamp, or
+    one left on a row still awaiting its new description, embeds text that
+    re-tagging replaces. An exact/flat cosine scan (`<=>`, no ANN index),
+    cheap at this corpus size.
     """
     distance = CardEnrichment.vector.cosine_distance(query_vector)
     scored = (
@@ -221,8 +222,8 @@ def _semantic_ranked_pool(rep: type[Card], predicates: list[ColumnElement], quer
         .where(
             *predicates,
             CardEnrichment.vector.is_not(None),
-            CardEnrichment.taxonomy_version == TAXONOMY_VERSION,
-            CardEnrichment.prompt_version == PROMPT_VERSION,
+            CardEnrichment.status == status.COMPLETED,
+            has_version_stamp(),
         )
     ).subquery()
 

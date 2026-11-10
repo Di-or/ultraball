@@ -10,6 +10,7 @@ from app.catalog.set_models import CatalogSet
 from app.clients.embedding_client import EmbeddingClient
 from app.clients.parse_client import ParseClient, ParseResult
 from app.config import Settings
+from app.enrichment import status
 from app.main import create_app
 from app.search.embedding_cache import QueryEmbeddingCacheEntry
 from app.search.parse import PARSE_VERSION
@@ -354,6 +355,31 @@ async def test_search_semantic_ranking_skips_vectors_from_an_older_enrichment_ve
 
     body = response.json()
     assert body["total"] == 1
+    assert [r["name"] for r in body["results"]] == ["Current"]
+
+
+async def test_search_semantic_ranking_skips_a_vector_whose_card_awaits_a_new_description(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    # A row submitted before submission cleared vectors carries the current stamp
+    # but still holds the vector of its old description; so might one whose batch then failed.
+    db_session.add_all(
+        [
+            _card(id="a", dedupe_key="a", name="Current"),
+            _enrichment(dedupe_key="a", vector=[0.0] * 1024),
+            _card(id="b", dedupe_key="b", name="Pending"),
+            _enrichment(dedupe_key="b", vector=[0.0] * 1024, status=status.PENDING),
+            _card(id="c", dedupe_key="c", name="Failed"),
+            _enrichment(dedupe_key="c", vector=[0.0] * 1024, status=status.FAILED),
+        ]
+    )
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="acceleration", concept_rewritten="attach extra energy", tags=[])
+    async with _client_with_clients(postgres_container, StubParseClient(canned), StubEmbeddingClient()) as client:
+        response = await client.post("/search", json={"query": "energy accel"})
+
+    body = response.json()
     assert [r["name"] for r in body["results"]] == ["Current"]
 
 

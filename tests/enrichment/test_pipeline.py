@@ -242,8 +242,8 @@ async def test_a_version_bump_re_tag_clears_the_vector_and_the_next_pass_re_embe
     assert (await _charizard_row(db_session)).vector is not None
 
 
-async def test_applying_a_batch_clears_a_vector_left_on_the_staked_out_row(db_session: AsyncSession) -> None:
-    # A row staked out before the stake-out cleared vectors still carries its old one;
+async def test_applying_a_batch_clears_a_vector_the_pending_row_still_held(db_session: AsyncSession) -> None:
+    # A row submitted before submission cleared vectors still carries its old one;
     # applying the new answer must not leave that vector beside the new description.
     await _ingest_charizard(db_session)
     enrichment_client = StubEnrichmentClient(
