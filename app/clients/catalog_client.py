@@ -8,6 +8,7 @@ import httpx
 
 _TCGDEX_API_URL = "https://api.tcgdex.net/v2/en"
 _ATTEMPTS = 4
+_TIMEOUT_SECONDS = 30
 
 
 @dataclass(frozen=True)
@@ -33,14 +34,14 @@ class CatalogClient(ABC):
 
 
 class HostedCatalogClient(CatalogClient):
-    """Crawls a set from the TCGdex REST API: the set, then each of its cards' full JSON."""
+    """Crawls a set from the TCGdex REST API: the set, then each of its printings' full JSON."""
 
     def __init__(self, *, max_concurrent_requests: int = 4, retry_delay_seconds: float = 1.0) -> None:
         self._max_concurrent_requests = max_concurrent_requests
         self._retry_delay_seconds = retry_delay_seconds
 
     async def fetch_set(self, set_id: str) -> SetSnapshot:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
             set_json = await self._get_json(client, f"sets/{set_id}")
             cards = await self._get_cards(client, [card["id"] for card in set_json["cards"]])
 
