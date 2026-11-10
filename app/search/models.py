@@ -31,7 +31,8 @@ class Filters(BaseModel):
     attack_cost: IntRange | None = None
     stage: Literal["Basic", "Stage 1", "Stage 2"] | None = None
     trainer_type: Literal["Item", "Supporter", "Stadium", "Tool"] | None = None
-    energy_type: str | None = None
+    # Only "Special": Basic Energy is never searchable (CONTEXT.md: Basic-Energy tray).
+    energy_type: Literal["Special"] | None = None
     set_id: str | None = None
 
 

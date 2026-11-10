@@ -12,6 +12,12 @@ def test_enforce_filters_keeps_valid_enum_values() -> None:
     assert filters.stage == "Basic"
 
 
+def test_enforce_filters_keeps_special_energy_but_drops_basic() -> None:
+    # Basic Energy lives in the tray and is never searchable (CONTEXT.md: Basic-Energy tray).
+    assert enforce_filters({"energy_type": "Special"}).energy_type == "Special"
+    assert enforce_filters({"energy_type": "Basic"}).energy_type is None
+
+
 def test_enforce_filters_drops_an_invalid_enum_value() -> None:
     filters = enforce_filters({"category": "NotACategory"})
 
