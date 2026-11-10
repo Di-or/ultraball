@@ -2,7 +2,7 @@ from sqlalchemy import ColumnElement, and_, exists, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from app.catalog.energy import not_basic_energy_clause
+from app.catalog.corpus import corpus_clause
 from app.catalog.models import Card
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
@@ -54,8 +54,8 @@ def _attack_cost_predicate(rep: type[Card], rng: IntRange) -> ColumnElement:
 def _build_predicates(rep: type[Card], filters: Filters, facets: Facets) -> list[ColumnElement]:
     """Fields conjoin (AND); a multi-valued field disjoins (OR/overlap) within itself."""
     predicates: list[ColumnElement] = [
-        # Basic Energy lives in the tray, not in search (CONTEXT.md: Basic-Energy tray).
-        not_basic_energy_clause(rep.category, rep.energy_type),
+        # Basic Energy (in the tray) and textless printings (no card entity) never reach search.
+        corpus_clause(rep),
     ]
 
     if filters.format == "standard":

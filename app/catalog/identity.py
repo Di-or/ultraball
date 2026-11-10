@@ -33,6 +33,7 @@ class CardIdentity:
 
     dedupe_key: str
     canonical_card_text: str
+    has_rules_text: bool
 
 
 def build_card_identity(raw: dict) -> CardIdentity:
@@ -40,7 +41,9 @@ def build_card_identity(raw: dict) -> CardIdentity:
     rules_text = _assemble_rules_text(raw)
     canonical_card_text = f"{name}\n{rules_text}".strip()
     dedupe_key = _normalize(f"{name} {rules_text}")
-    return CardIdentity(dedupe_key=dedupe_key, canonical_card_text=canonical_card_text)
+    return CardIdentity(
+        dedupe_key=dedupe_key, canonical_card_text=canonical_card_text, has_rules_text=bool(rules_text)
+    )
 
 
 def _assemble_rules_text(raw: dict) -> str:

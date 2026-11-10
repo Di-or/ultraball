@@ -38,6 +38,10 @@ _Avoid_: errata table, corrections.
 A hand-kept fix to one printing's TCGdex data (e.g. missing English effect text, a malformed regulation mark), keyed by printing id and applied by the catalog layer during ingest, so the rest of the app only ever sees the corrected printing. An override always wins over TCGdex; each ingest reports overrides where TCGdex now supplies its own value ("same" → redundant, "differs" → review), and deleting the entry is how TCGdex takes over. Distinct from the **Errata reconciliation list**: an override corrects one printing's data, the errata list declares two different texts to be one card.
 _Avoid_: patch, manual fix, data correction.
 
+**Textless printing**:
+A non-Energy printing with no rules text (no effect, attacks or abilities) — usually a card in a set TCGdex hasn't finished filling in. Its `dedupe_key` would be its name alone, which never matches the real card's, so it is stored as a printing but gets no card entity: never sent for enrichment, never returned by search. When TCGdex fills in the text, the next ingest gives it a real `dedupe_key` and it joins the corpus automatically. Energy is exempt: Basic Energy has no text by nature, and a Special Energy missing its text fails safe as an ordinary card (see **Basic Energy exception**). A safety net behind **Included sets** and **Catalog overrides**, which are the main controls.
+_Avoid_: blank card, empty printing.
+
 **Included sets**:
 The explicit list of sets the catalog ingests. A set joins only by a deliberate addition, once TCGdex has filled it in well enough that any remaining gaps can be closed with catalog overrides — TCGdex publishes new sets partially filled (missing text and regulation marks) and completes them over the following weeks.
 _Avoid_: set allow-list, supported sets.
