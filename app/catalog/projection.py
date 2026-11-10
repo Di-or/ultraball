@@ -36,6 +36,7 @@ class CardProjection:
     image: str | None
     dedupe_key: str
     canonical_card_text: str
+    is_textless: bool  # stored, but no card entity: kept out of enrichment and search
     is_standard_legal: bool
     release_date: date
 
@@ -80,6 +81,7 @@ def project_card(
         image=raw.get("image"),
         dedupe_key=identity.dedupe_key,
         canonical_card_text=identity.canonical_card_text,
+        is_textless=_is_textless(category=raw["category"], has_rules_text=identity.has_rules_text),
         is_standard_legal=derive_is_standard_legal(
             regulation_mark=regulation_mark,
             category=raw["category"],
@@ -90,6 +92,16 @@ def project_card(
         ),
         release_date=release_date,
     )
+
+
+def _is_textless(*, category: str, has_rules_text: bool) -> bool:
+    """A non-Energy printing TCGdex hasn't filled in yet (CONTEXT.md: Textless printing).
+
+    Its `dedupe_key` is its name alone, which never matches the real card's, so it would be
+    tagged from the model's memory. Energy is exempt: Basic Energy has no text by nature, and a
+    Special Energy missing its text fails safe as an ordinary card (CONTEXT.md: Basic Energy exception).
+    """
+    return category != "Energy" and not has_rules_text
 
 
 # TCGdex writes stages without the space; the app's filters, parse schema and frontend use it.

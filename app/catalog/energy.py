@@ -46,5 +46,5 @@ def basic_energy_clause(
 def not_basic_energy_clause(
     category: QueryableAttribute[str], energy_type: QueryableAttribute[str | None]
 ) -> ColumnElement[bool]:
-    """Everything outside Basic Energy, NULL-safe: the enriched, searchable corpus."""
+    """Everything outside Basic Energy, NULL-safe: one half of `corpus_clause`."""
     return or_(category != "Energy", energy_type.is_distinct_from("Basic"))

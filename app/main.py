@@ -59,6 +59,10 @@ def create_app(
             # `create_all` never adds a column to an existing table; backfill `set_name` (issue #90)
             # on a database from before it. Re-running ingest (or the seed script) fills real names.
             await conn.execute(text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS set_name VARCHAR NOT NULL DEFAULT ''"))
+            # Likewise `is_textless` (issue #113): re-running ingest marks the textless printings.
+            await conn.execute(
+                text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS is_textless BOOLEAN NOT NULL DEFAULT false")
+            )
             await conn.run_sync(EnrichmentBase.metadata.create_all)
             await conn.run_sync(ParseCacheBase.metadata.create_all)
             await conn.run_sync(QueryEmbeddingCacheBase.metadata.create_all)

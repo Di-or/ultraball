@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import ARRAY, Boolean, Date, DateTime, Integer, String, func
+from sqlalchemy import ARRAY, Boolean, Date, DateTime, Integer, String, false, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -53,6 +53,8 @@ class Card(Base):
 
     dedupe_key: Mapped[str] = mapped_column(String, index=True)
     canonical_card_text: Mapped[str] = mapped_column(String)
+    # A non-Energy printing with no rules text yet: stored, but outside the corpus (CONTEXT.md: Textless printing).
+    is_textless: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     is_standard_legal: Mapped[bool] = mapped_column(Boolean, index=True)
     release_date: Mapped[date] = mapped_column(Date)
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
