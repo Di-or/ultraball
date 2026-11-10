@@ -95,12 +95,7 @@ def project_card(
 
 
 def _is_textless(*, category: str, has_rules_text: bool) -> bool:
-    """A non-Energy printing TCGdex hasn't filled in yet (CONTEXT.md: Textless printing).
-
-    Its `dedupe_key` is its name alone, which never matches the real card's, so it would be
-    tagged from the model's memory. Energy is exempt: Basic Energy has no text by nature, and a
-    Special Energy missing its text fails safe as an ordinary card (CONTEXT.md: Basic Energy exception).
-    """
+    """A non-Energy printing with no rules text yet; Energy is exempt (CONTEXT.md: Textless printing)."""
     return category != "Energy" and not has_rules_text
 
 

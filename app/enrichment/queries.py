@@ -28,7 +28,7 @@ async def get_cards_pending_enrichment(
     """
     latest_text = (
         select(Card.dedupe_key, Card.canonical_card_text)
-        # Basic Energy and textless printings are stored but get no card entity to tag.
+        # Not Basic Energy (it lives in the tray) nor textless printings (no card entity yet).
         .where(corpus_clause(Card))
         .distinct(Card.dedupe_key)
         .order_by(Card.dedupe_key, Card.release_date.desc())
