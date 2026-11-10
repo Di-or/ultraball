@@ -187,11 +187,12 @@ def test_schema_limits_set_id_to_the_listed_ids_plus_null() -> None:
     assert schema["properties"]["filters"]["properties"]["set_id"]["enum"] == ["sv01", "sv06", None]
 
 
-def test_schema_limits_energy_type_to_the_stored_values_plus_null() -> None:
-    # Cards store `Basic` or `Special`; free text like "Special Energy" matched nothing (#94).
+def test_schema_limits_energy_type_to_special_plus_null() -> None:
+    # Free text like "Special Energy" matched nothing (#94). `Basic` is left out because Basic
+    # Energy is never searchable, so asking for it would always return nothing (#109).
     schema = build_parse_json_schema(_SETS)
 
-    assert schema["properties"]["filters"]["properties"]["energy_type"]["enum"] == ["Basic", "Special", None]
+    assert schema["properties"]["filters"]["properties"]["energy_type"]["enum"] == ["Special", None]
 
 
 def test_schema_with_an_empty_catalog_allows_only_a_null_set_id() -> None:

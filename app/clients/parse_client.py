@@ -46,7 +46,8 @@ _FILTERS_SCHEMA = {
             "type": ["string", "null"],
             "enum": ["Item", "Supporter", "Stadium", "Tool", None],
         },
-        "energy_type": {"type": ["string", "null"], "enum": ["Basic", "Special", None]},
+        # No "Basic": Basic Energy is never searchable (CONTEXT.md: Basic-Energy tray).
+        "energy_type": {"type": ["string", "null"], "enum": ["Special", None]},
         # `set_id` is added per set list by `build_parse_json_schema`.
     },
     "required": [

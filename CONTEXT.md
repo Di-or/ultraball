@@ -57,7 +57,7 @@ Whether a card may be played in the Standard format *right now* — computed by 
 _Avoid_: legal, tournament-legal.
 
 **Basic Energy exception**:
-Basic Energy cards are Standard-legal in every rotation regardless of regulation mark, and are exempt from the 4-copy deck rule. Identified as an Energy card that has no effect text **and** whose name matches the basic pattern ("Basic <Type> Energy" / "<Type> Energy"); both must hold, so a Special Energy missing its text fails safe as an ordinary card. TCGdex's energy-type field is *not* used — it labels Basic Energy and many Special Energies alike. (Special Energy is *not* basic — it flows through the normal corpus, search, and 4-copy rule.)
+Basic Energy cards are Standard-legal in every rotation regardless of regulation mark, and are exempt from the 4-copy deck rule. Identified as an Energy card that has no effect text **and** whose name matches the basic pattern ("Basic <Type> Energy" / "<Type> Energy", for one of the 8 tray types); both must hold, so a Special Energy missing its text fails safe as an ordinary card. TCGdex's energy-type field is *not* used — it labels Basic Energy and many Special Energies alike. (Special Energy is *not* basic — it flows through the normal corpus, search, and 4-copy rule.)
 _Avoid_: energy exemption.
 
 **Ban list**:
@@ -161,5 +161,5 @@ The always-visible live decklist (grouped Pokémon / Trainer / Energy rows with 
 _Avoid_: deck sidebar, cart.
 
 **Basic-Energy tray**:
-The fixed, uncapped, always-legal basic-Energy palette (~11 types) docked near the deck panel, outside the searchable enriched corpus. Click to add; never flagged. Distinct from Special Energy, which lives in the normal corpus.
+The fixed, uncapped, always-legal basic-Energy palette of 8 types (Grass, Fire, Water, Lightning, Psychic, Fighting, Darkness, Metal; Dragon and Colorless never had a Basic Energy, and Fairy is out of rotation) docked near the deck panel, outside the searchable enriched corpus. Click to add; never flagged. Distinct from Special Energy, which lives in the normal corpus.
 _Avoid_: energy picker, energy list.
