@@ -1,15 +1,24 @@
-from sqlalchemy import ColumnElement, func, not_, or_, select
+from sqlalchemy import ColumnElement, and_, func, not_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.corpus import corpus_clause
 from app.catalog.models import Card
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
+from app.enrichment.taxonomy import PROMPT_VERSION, TAXONOMY_VERSION
 
 # Statuses that mean "leave this dedupe_key alone" for the current version stamp:
 # already in flight, already done, or parked for human repair. FAILED is
 # deliberately excluded so a failed batch is retried on the next submit.
 _SETTLED_STATUSES = (status.PENDING, status.COMPLETED, status.NEEDS_REPAIR)
+
+
+def has_version_stamp(
+    *, taxonomy_version: str = TAXONOMY_VERSION, prompt_version: str = PROMPT_VERSION
+) -> ColumnElement[bool]:
+    """A card_enrichment row carries this version stamp — the current one by default
+    (CONTEXT.md: Enrichment identity)."""
+    return and_(CardEnrichment.taxonomy_version == taxonomy_version, CardEnrichment.prompt_version == prompt_version)
 
 
 async def get_cards_pending_enrichment(
@@ -40,8 +49,7 @@ async def get_cards_pending_enrichment(
         due = latest_text.c.dedupe_key.in_(needs_repair)
     else:
         settled = select(CardEnrichment.dedupe_key).where(
-            CardEnrichment.taxonomy_version == taxonomy_version,
-            CardEnrichment.prompt_version == prompt_version,
+            has_version_stamp(taxonomy_version=taxonomy_version, prompt_version=prompt_version),
             CardEnrichment.status.in_(_SETTLED_STATUSES),
         )
         due = not_(latest_text.c.dedupe_key.in_(settled))

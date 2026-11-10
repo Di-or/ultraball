@@ -6,6 +6,7 @@ from app.catalog.corpus import corpus_clause
 from app.catalog.models import Card
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
+from app.enrichment.queries import has_version_stamp
 from app.search.models import Facets, Filters, IntRange
 
 # Tag-match pool cap (CONTEXT.md: Tag-match path / Candidate pool).
@@ -208,14 +209,22 @@ def _semantic_ranked_pool(rep: type[Card], predicates: list[ColumnElement], quer
     """The semantic path's ranked pool (CONTEXT.md: Semantic search), capped and
     row-numbered so it can be paginated on its own or fed into `run_rrf_search`.
 
-    Only rows with a vector are ranked — an exact/flat cosine scan (`<=>`,
-    no ANN index), cheap at this corpus size.
+    Only `COMPLETED` rows with a vector under the current version stamp are
+    ranked (CONTEXT.md: Enrichment identity): a vector from an older stamp, or
+    one left on a row still awaiting its new description, embeds text that
+    re-tagging replaces. An exact/flat cosine scan (`<=>`, no ANN index),
+    cheap at this corpus size.
     """
     distance = CardEnrichment.vector.cosine_distance(query_vector)
     scored = (
         select(rep, distance.label("distance"))
         .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
-        .where(*predicates, CardEnrichment.vector.is_not(None))
+        .where(
+            *predicates,
+            CardEnrichment.vector.is_not(None),
+            CardEnrichment.status == status.COMPLETED,
+            has_version_stamp(),
+        )
     ).subquery()
 
     order = (scored.c.distance.asc(), scored.c.dedupe_key.asc())
@@ -242,7 +251,7 @@ async def run_semantic_search(
     Ranks the same gated pool `run_search` would return by cosine distance
     (`<=>`) between `query_vector` and each card's `card_enrichment.vector` —
     an exact/flat scan (no ANN index), cheap at this corpus size. Only rows
-    with a vector are ranked; the ranked pool is capped at
+    with a current-version vector are ranked; the ranked pool is capped at
     `_SEMANTIC_POOL_CAP` before pagination.
     """
     rep = aliased(Card, _representative_printings())

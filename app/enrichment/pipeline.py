@@ -47,6 +47,9 @@ async def submit_enrichment_batch(
             "tags": [],
             "suggested_new_tag": None,
             "rationale": None,
+            # The old vector embeds the old description; clearing it lets the next
+            # embedding pass embed the new one, and keeps search off it meanwhile.
+            "vector": None,
             "taxonomy_version": taxonomy_version,
             "prompt_version": prompt_version,
             "status": status.PENDING,
@@ -106,6 +109,7 @@ async def poll_and_apply_batch(
             "tags": validated.tags,
             "suggested_new_tag": result.suggested_new_tag,
             "rationale": result.rationale,
+            "vector": None,
             "taxonomy_version": taxonomy_version,
             "prompt_version": prompt_version,
             "status": validated.status,
