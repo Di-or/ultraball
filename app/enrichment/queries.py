@@ -52,8 +52,8 @@ async def get_cards_pending_enrichment(
     return [(row.dedupe_key, row.canonical_card_text) for row in result]
 
 
-def _has_description() -> ColumnElement[bool]:
-    """A description the embedding provider will accept: not NULL and not blank."""
+def _has_normalized_description() -> ColumnElement[bool]:
+    """A normalized_description the embedding provider will accept: not NULL and not blank."""
     return func.btrim(CardEnrichment.normalized_description) != ""
 
 
@@ -68,7 +68,7 @@ async def get_cards_pending_embedding(session: AsyncSession) -> list[tuple[str, 
     """
     stmt = (
         select(CardEnrichment.dedupe_key, CardEnrichment.normalized_description)
-        .where(_has_description(), CardEnrichment.vector.is_(None))
+        .where(_has_normalized_description(), CardEnrichment.vector.is_(None))
         .order_by(CardEnrichment.dedupe_key)
     )
 
@@ -83,6 +83,6 @@ async def count_cards_unembeddable(session: AsyncSession) -> int:
     """
     stmt = select(func.count()).where(
         CardEnrichment.vector.is_(None),
-        or_(CardEnrichment.normalized_description.is_(None), not_(_has_description())),
+        or_(CardEnrichment.normalized_description.is_(None), not_(_has_normalized_description())),
     )
     return await session.scalar(stmt) or 0

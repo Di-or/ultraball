@@ -33,8 +33,8 @@ def validate_enrichment_result(result: EnrichmentResult) -> ValidatedEnrichment:
     tags are kept, so the card stays reachable through tag-match while it waits.
     """
     valid_tags = [tag for tag in result.tags if tag in FUNCTIONAL_TAGS]
-    has_description = bool(result.normalized_description and result.normalized_description.strip())
-    if not has_description or len(valid_tags) != len(result.tags):
+    has_normalized_description = bool(result.normalized_description and result.normalized_description.strip())
+    if not has_normalized_description or len(valid_tags) != len(result.tags):
         return ValidatedEnrichment(tags=valid_tags, normalized_description=None, status=status.NEEDS_REPAIR)
 
     return ValidatedEnrichment(

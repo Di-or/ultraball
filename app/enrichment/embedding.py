@@ -35,7 +35,7 @@ async def run_embedding_pass(
     pending = await get_cards_pending_embedding(session)
     for start in range(0, len(pending), chunk_size):
         chunk = pending[start : start + chunk_size]
-        vectors = await embedding_client.embed_documents([description for _, description in chunk])
+        vectors = await embedding_client.embed_documents([normalized_description for _, normalized_description in chunk])
         for (dedupe_key, _), vector in zip(chunk, vectors, strict=True):
             await session.execute(
                 update(CardEnrichment).where(CardEnrichment.dedupe_key == dedupe_key).values(vector=vector)
