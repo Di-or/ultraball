@@ -160,6 +160,41 @@ async def test_hosted_fetch_set_retries_transient_failures(mock_tcgdex: MockTcgd
     assert [card["id"] for card in snapshot.cards] == ["big-000", "big-001", "big-002"]
 
 
+@pytest.mark.parametrize(
+    ("retry_after", "expected_wait_seconds"),
+    [("7", 7.0), ("3600", 60.0), ("soon", 1.0)],
+    ids=["follows-retry-after", "caps-a-long-retry-after", "ignores-an-unreadable-retry-after"],
+)
+async def test_hosted_fetch_set_waits_as_long_as_tcgdex_asks_before_retrying(
+    mock_tcgdex: MockTcgdex,
+    monkeypatch: pytest.MonkeyPatch,
+    retry_after: str,
+    expected_wait_seconds: float,
+) -> None:
+    # A server that says when to come back gets that wait, capped so one odd header can't
+    # stall the ingest; without a usable one, the normal backoff applies.
+    waits: list[float] = []
+
+    async def record_wait(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(catalog_client.asyncio, "sleep", record_wait)
+    first_answers = [httpx.Response(429, headers={"Retry-After": retry_after})]
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if _is_set_request(request):
+            return httpx.Response(200, json=_synthetic_set(1))
+        if first_answers:
+            return first_answers.pop(0)
+        return _echo_card(request)
+
+    mock_tcgdex.handler = handler
+
+    await HostedCatalogClient(retry_delay_seconds=1.0).fetch_set("big")
+
+    assert waits == [expected_wait_seconds]
+
+
 async def test_hosted_fetch_set_raises_when_a_card_keeps_failing_rather_than_dropping_it(
     mock_tcgdex: MockTcgdex,
 ) -> None:

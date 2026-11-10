@@ -2,13 +2,15 @@ import asyncio
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date, datetime
+from email.utils import parsedate_to_datetime
 
 import httpx
 
 _TCGDEX_API_URL = "https://api.tcgdex.net/v2/en"
 _ATTEMPTS = 4
 _TIMEOUT_SECONDS = 30
+_MAX_RETRY_AFTER_SECONDS = 60.0
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,7 @@ class HostedCatalogClient(CatalogClient):
         """
         for attempt in range(_ATTEMPTS):
             last_attempt = attempt == _ATTEMPTS - 1
+            wait_seconds = self._retry_delay_seconds * 2**attempt
             try:
                 # TCGdex's CDN can serve a copy that is weeks old, so every request asks
                 # for no cache and carries a query value no other request used
@@ -95,9 +98,30 @@ class HostedCatalogClient(CatalogClient):
                 if not _is_transient(response) or last_attempt:
                     response.raise_for_status()
                     return response.json()
-            await asyncio.sleep(self._retry_delay_seconds * 2**attempt)
+                if (asked_seconds := _retry_after_seconds(response)) is not None:
+                    wait_seconds = asked_seconds
+            await asyncio.sleep(wait_seconds)
         raise AssertionError("unreachable")
 
 
 def _is_transient(response: httpx.Response) -> bool:
     return response.status_code == 429 or response.is_server_error
+
+
+def _retry_after_seconds(response: httpx.Response) -> float | None:
+    """How long the server asked us to wait, capped; None if it didn't say in a usable way.
+
+    `Retry-After` is either a number of seconds or an HTTP date. The cap stops one odd
+    header from stalling the whole ingest.
+    """
+    header = response.headers.get("Retry-After")
+    if header is None:
+        return None
+    try:
+        seconds = float(header)
+    except ValueError:
+        try:
+            seconds = (parsedate_to_datetime(header) - datetime.now(UTC)).total_seconds()
+        except (TypeError, ValueError):
+            return None
+    return min(max(seconds, 0.0), _MAX_RETRY_AFTER_SECONDS)
