@@ -4,8 +4,9 @@ from typing import Literal
 from sqlalchemy import ColumnElement, or_
 from sqlalchemy.orm import QueryableAttribute
 
-# The nine types printed as Basic Energy. Dragon and Colorless never had a Basic Energy card.
-_BASIC_ENERGY_TYPES = ("Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Darkness", "Metal", "Fairy")
+# The eight Basic Energy types in play (CONTEXT.md: Basic-Energy tray). Dragon and Colorless never had a
+# Basic Energy card, and Fairy is out of rotation, so a Fairy Energy is treated as an ordinary card.
+_BASIC_ENERGY_TYPES = ("Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Darkness", "Metal")
 
 _BASIC_ENERGY_NAME = re.compile(rf"(?:basic )?(?:{'|'.join(_BASIC_ENERGY_TYPES)}) energy", re.IGNORECASE)
 

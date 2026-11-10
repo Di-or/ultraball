@@ -160,7 +160,7 @@ def _project(raw: dict) -> CardProjection:
     )
 
 
-@pytest.mark.parametrize("name", ["Fire Energy", "Basic Fire Energy", "Basic  Darkness Energy", "Fairy Energy"])
+@pytest.mark.parametrize("name", ["Fire Energy", "Basic Fire Energy", "Basic  Darkness Energy", "Metal Energy"])
 def test_a_textless_energy_with_a_basic_name_is_basic_energy(name: str) -> None:
     card = _project(make_tcgdex_basic_energy(name=name))
 
@@ -182,6 +182,11 @@ def test_a_textless_energy_with_a_non_basic_name_fails_safe_as_special() -> None
 
     assert card.energy_type == "Special"
     assert card.is_standard_legal is False  # no exception: legality falls back to its rotated mark
+
+
+@pytest.mark.parametrize("name", ["Fairy Energy", "Dragon Energy", "Colorless Energy"])
+def test_an_energy_outside_the_8_basic_types_is_not_basic(name: str) -> None:
+    assert _project(make_tcgdex_basic_energy(name=name)).energy_type == "Special"
 
 
 def test_a_non_energy_card_has_no_energy_type() -> None:
