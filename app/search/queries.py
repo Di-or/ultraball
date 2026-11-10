@@ -1,7 +1,8 @@
-from sqlalchemy import ColumnElement, and_, exists, func, or_, select, true
+from sqlalchemy import ColumnElement, and_, exists, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
+from app.catalog.energy import not_basic_energy_clause
 from app.catalog.models import Card
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
@@ -53,7 +54,7 @@ def _build_predicates(rep: type[Card], filters: Filters, facets: Facets) -> list
     """Fields conjoin (AND); a multi-valued field disjoins (OR/overlap) within itself."""
     predicates: list[ColumnElement] = [
         # Basic Energy lives in the tray, not in search (CONTEXT.md: Basic-Energy tray).
-        or_(rep.category != "Energy", rep.energy_type.is_distinct_from("Basic")),
+        not_basic_energy_clause(rep.category, rep.energy_type),
     ]
 
     if filters.format == "standard":

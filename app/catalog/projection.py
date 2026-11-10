@@ -2,7 +2,7 @@ from collections.abc import Collection, Set
 from dataclasses import dataclass
 from datetime import date
 
-from app.catalog.energy import derive_energy_type
+from app.catalog.energy import EnergyType, derive_energy_type
 from app.catalog.identity import build_card_identity
 from app.catalog.legality import derive_is_standard_legal
 from app.catalog.set_codes import derive_set_code
@@ -28,7 +28,7 @@ class CardProjection:
     regulation_mark: str | None
     rarity: str | None
     trainer_type: str | None
-    energy_type: str | None  # "Basic" / "Special", derived from card text (never TCGdex's)
+    energy_type: EnergyType | None  # derived from card text, never TCGdex's `energyType`
     attacks: list[dict]
     abilities: list[dict]
     attack_costs: list[int]
@@ -52,7 +52,7 @@ def project_card(
 ) -> CardProjection:
     attacks = raw.get("attacks") or []
     identity = build_card_identity(raw)
-    energy_type = derive_energy_type(raw)
+    energy_type = derive_energy_type(category=raw["category"], name=raw["name"], effect=raw.get("effect"))
 
     return CardProjection(
         id=raw["id"],

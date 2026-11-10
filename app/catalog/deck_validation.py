@@ -2,6 +2,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
+from app.catalog.energy import is_basic_energy
 from app.catalog.models import Card
 
 # Full Standard ruleset (CONTEXT.md: Standard-legal; docs/archive/mvp-spec.md §12.3).
@@ -49,10 +50,6 @@ class LegalityReport:
     violations: list[Violation]
 
 
-def _is_basic_energy(card: Card) -> bool:
-    return card.category == "Energy" and card.energy_type == "Basic"
-
-
 def _is_ace_spec(card: Card) -> bool:
     return "ace-spec" in card.sub_category
 
@@ -90,7 +87,7 @@ def validate_deck(
     # 4-copy rule keys on the printed Name, coarser than dedupe_key (CONTEXT.md: Name (4-copy key)).
     by_name: dict[str, list[DeckLine]] = defaultdict(list)
     for line in lines:
-        if not _is_basic_energy(line.card):
+        if not is_basic_energy(category=line.card.category, energy_type=line.card.energy_type):
             by_name[line.card.name].append(line)
 
     for name, group in by_name.items():

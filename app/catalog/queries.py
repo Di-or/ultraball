@@ -3,6 +3,7 @@ from collections.abc import Collection
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.energy import basic_energy_clause
 from app.catalog.models import Card
 from app.catalog.set_models import CatalogSet, SetSummary
 
@@ -56,7 +57,7 @@ async def get_basic_energy_palette(session: AsyncSession) -> list[Card]:
     (CONTEXT.md: Basic-Energy tray)."""
     stmt = (
         select(Card)
-        .where(Card.category == "Energy", Card.energy_type == "Basic")
+        .where(basic_energy_clause(Card.category, Card.energy_type))
         .order_by(Card.release_date.desc(), Card.ingested_at.desc())
     )
     seen: set[str] = set()

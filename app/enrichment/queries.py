@@ -1,6 +1,7 @@
-from sqlalchemy import not_, or_, select
+from sqlalchemy import not_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.catalog.energy import not_basic_energy_clause
 from app.catalog.models import Card
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
@@ -25,7 +26,7 @@ async def get_cards_pending_enrichment(
     latest_text = (
         select(Card.dedupe_key, Card.canonical_card_text)
         # Basic Energy lives in the tray, outside the enriched corpus (CONTEXT.md: Basic-Energy tray).
-        .where(or_(Card.category != "Energy", Card.energy_type.is_distinct_from("Basic")))
+        .where(not_basic_energy_clause(Card.category, Card.energy_type))
         .distinct(Card.dedupe_key)
         .order_by(Card.dedupe_key, Card.release_date.desc())
         .subquery()

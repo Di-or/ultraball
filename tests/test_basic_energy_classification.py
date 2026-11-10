@@ -6,6 +6,7 @@ real-shaped printings, then drive the HTTP endpoints and enrichment submission, 
 is checked against the one shared rule (CONTEXT.md: Basic Energy exception).
 """
 
+from dataclasses import replace
 from datetime import date
 
 from httpx import AsyncClient
@@ -24,8 +25,11 @@ from tests.tcgdex_fixtures import fixture_snapshot, load_printing
 # A Pokémon to make the decks below otherwise legal: a Basic with a current regulation mark.
 _POKEMON = make_tcgdex_pokemon(id="me01-001")
 
-# Older printings spell Basic Energy out in full.
-_BASIC_WATER_ENERGY = make_tcgdex_basic_energy(id="sv01-258", name="Basic Water Energy", regulationMark="G")
+# More of the real `sve` set: TCGdex names Basic Energy "<Type> Energy" and gives it no mark.
+_WATER_ENERGY = make_tcgdex_basic_energy("Water", id="sve-003")
+
+# A Basic Energy carrying a rotated mark: the Basic Energy exception still makes it legal.
+_G_MARKED_GRASS_ENERGY = make_tcgdex_basic_energy("Grass", id="sve-001", regulationMark="G")
 
 # An Energy with no effect text but a name that isn't basic: fails safe as an ordinary card.
 _TEXTLESS_SPECIAL = make_tcgdex_special_energy(id="me01-130", name="Mystery Energy", effect=None)
@@ -34,15 +38,20 @@ _TEXTLESS_SPECIAL = make_tcgdex_special_energy(id="me01-130", name="Mystery Ener
 async def _ingest(db_session: AsyncSession) -> None:
     catalog_client = StubCatalogClient(
         {
-            "sve": fixture_snapshot("sve", ["sve-002"]),  # Fire Energy, `energyType: "Normal"`
+            "sve": _with_cards(  # sve-002 is the real Fire Energy, `energyType: "Normal"`
+                fixture_snapshot("sve", ["sve-002"]), [_WATER_ENERGY, _G_MARKED_GRASS_ENERGY]
+            ),
             "me02": fixture_snapshot("me02", ["me02-124"]),  # Ignition Energy, Special but `"Normal"`
             "sv04": fixture_snapshot("sv04", ["sv04-266"]),  # Reversal Energy, Special but `"Normal"`
             "me01": SetSnapshot("me01", date(2025, 9, 26), [_POKEMON, _TEXTLESS_SPECIAL]),
-            "sv01": SetSnapshot("sv01", date(2023, 3, 31), [_BASIC_WATER_ENERGY]),
         }
     )
-    for set_id in ("sve", "me02", "sv04", "me01", "sv01"):
+    for set_id in ("sve", "me02", "sv04", "me01"):
         await run_ingest(db_session, catalog_client, set_id)
+
+
+def _with_cards(snapshot: SetSnapshot, cards: list[dict]) -> SetSnapshot:
+    return replace(snapshot, cards=[*snapshot.cards, *cards])
 
 
 def _dedupe_key(raw: dict) -> str:
@@ -58,7 +67,7 @@ async def test_the_basic_energy_tray_returns_the_real_normal_labelled_basic_ener
 
     assert response.status_code == 200
     printing_ids = {item["printing_id"] for item in response.json()["palette"]}
-    assert printing_ids == {"sve-002", "sv01-258"}
+    assert printing_ids == {"sve-001", "sve-002", "sve-003"}
 
 
 async def test_a_deck_with_56_basic_fire_energy_is_not_flagged(client: AsyncClient, db_session: AsyncSession) -> None:
@@ -82,7 +91,7 @@ async def test_basic_energy_with_a_rotated_mark_is_standard_legal_in_a_deck(
 
     response = await client.post(
         "/decks/validate",
-        json={"entries": [{"printing_id": "me01-001", "count": 4}, {"printing_id": "sv01-258", "count": 56}]},
+        json={"entries": [{"printing_id": "me01-001", "count": 4}, {"printing_id": "sve-001", "count": 56}]},
     )
 
     assert response.json()["violations"] == []
@@ -126,6 +135,17 @@ async def test_a_textless_energy_with_a_non_basic_name_is_subject_to_the_4_copy_
     )
 
     assert [v["code"] for v in response.json()["violations"]] == ["four_copy_limit"]
+
+
+async def test_a_ptcgl_basic_energy_line_imports_against_the_real_basic_energy(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest(db_session)
+
+    response = await client.post("/decks/import", json={"text": "8 Basic Fire Energy"})
+
+    assert response.status_code == 200
+    assert [entry["printing_id"] for entry in response.json()["entries"]] == ["sve-002"]
 
 
 async def test_basic_energy_never_appears_in_search(client: AsyncClient, db_session: AsyncSession) -> None:

@@ -1,11 +1,13 @@
 from collections.abc import Collection, Set
 
+from app.catalog.energy import EnergyType, is_basic_energy
+
 
 def derive_is_standard_legal(
     *,
     regulation_mark: str | None,
     category: str,
-    energy_type: str | None,
+    energy_type: EnergyType | None,
     dedupe_key: str,
     standard_legal_marks: Collection[str],
     banned_dedupe_keys: Set[str],
@@ -23,7 +25,7 @@ def derive_is_standard_legal(
     if dedupe_key in banned_dedupe_keys:
         return False
 
-    if category == "Energy" and energy_type == "Basic":
+    if is_basic_energy(category=category, energy_type=energy_type):
         return True
 
     if regulation_mark is None:
