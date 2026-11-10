@@ -412,6 +412,27 @@ async def test_tag_match_excludes_enrichment_rows_not_yet_completed(db_session: 
     assert [card.name for card, _matched in results] == ["Completed"]
 
 
+async def test_a_needs_repair_card_with_tags_is_reachable_through_tag_match_and_browse(
+    db_session: AsyncSession,
+) -> None:
+    # A failed answer keeps its valid tags but has no description or vector.
+    await _seed(
+        db_session,
+        _card(id="a", dedupe_key="a", name="Awaiting Repair"),
+        _enrichment(dedupe_key="a", tags=["draw"], normalized_description=None, status=status.NEEDS_REPAIR),
+    )
+
+    tag_results, tag_total = await run_tag_match_search(
+        db_session, Filters(), Facets(), ["draw"], limit=30, offset=0
+    )
+    browse_results, browse_total = await run_search(db_session, Filters(), Facets(), limit=30, offset=0)
+
+    assert tag_total == 1
+    assert [(card.name, matched) for card, matched in tag_results] == [("Awaiting Repair", ["draw"])]
+    assert browse_total == 1
+    assert [card.name for card in browse_results] == ["Awaiting Repair"]
+
+
 async def test_tag_match_pool_is_capped_at_200(db_session: AsyncSession) -> None:
     rows: list[Card | CardEnrichment] = []
     for i in range(210):

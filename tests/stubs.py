@@ -19,7 +19,11 @@ class StubParseClient(ParseClient):
 
 
 class StubEmbeddingClient(EmbeddingClient):
-    """Returns deterministic canned vectors instead of calling the hosted model."""
+    """Returns deterministic canned vectors instead of calling the hosted model.
+
+    Rejects an empty text the way the hosted provider does, so a test fails on the same
+    input production would.
+    """
 
     def __init__(self, dim: int = EMBEDDING_DIM) -> None:
         self._dim = dim
@@ -28,6 +32,8 @@ class StubEmbeddingClient(EmbeddingClient):
         return [0.0] * self._dim
 
     async def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        if any(not text for text in texts):
+            raise ValueError("embedding input must be a non-empty string")
         return [[0.0] * self._dim for _ in texts]
 
 

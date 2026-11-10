@@ -10,6 +10,7 @@ from app.search.models import Facets, Filters, IntRange
 
 # Tag-match pool cap (CONTEXT.md: Tag-match path / Candidate pool).
 _TAG_MATCH_POOL_CAP = 200
+_TAG_MATCHABLE_STATUSES = (status.COMPLETED, status.NEEDS_REPAIR)
 
 # Semantic pool cap (CONTEXT.md: Candidate pool) — exact/flat cosine scan, no ANN index.
 _SEMANTIC_POOL_CAP = 200
@@ -138,15 +139,16 @@ def _tag_ranked_pool(rep: type[Card], predicates: list[ColumnElement], tags: lis
     """The tag-match path's ranked pool (CONTEXT.md: Tag-match path), capped and
     row-numbered so it can be paginated on its own or fed into `run_rrf_search`.
 
-    Only `COMPLETED` enrichment rows are ranked — a `pending`/`failed` row's tags
-    haven't passed the post-validator, so they're not trustworthy match provenance
-    yet (CONTEXT.md: card_enrichment).
+    Only rows whose tags have been through the post-validator are ranked:
+    `COMPLETED`, and `NEEDS_REPAIR`, which keeps only its in-taxonomy tags so one
+    bad answer doesn't hide a card while it waits for repair. A `pending`/`failed`
+    row's tags aren't trustworthy match provenance yet (CONTEXT.md: card_enrichment).
     """
     overlap = _tag_overlap_count(CardEnrichment.tags, tags)
     scored = (
         select(rep, CardEnrichment.tags.label("enrichment_tags"), overlap.label("overlap"))
         .join(CardEnrichment, CardEnrichment.dedupe_key == rep.dedupe_key)
-        .where(*predicates, CardEnrichment.status == status.COMPLETED)
+        .where(*predicates, CardEnrichment.status.in_(_TAG_MATCHABLE_STATUSES))
     ).subquery()
 
     order = _tag_match_order(scored.c.overlap, scored.c.release_date, scored.c.dedupe_key)

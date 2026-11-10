@@ -7,7 +7,8 @@ EMBEDDING_DIM = 1024
 _VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings"
 _VOYAGE_DOCUMENT_MODEL = "voyage-4-large"
 _VOYAGE_QUERY_MODEL = "voyage-4"
-_VOYAGE_MAX_TEXTS_PER_REQUEST = 1000
+# Voyage caps one request at this many texts; the embedding pass commits in chunks of this size.
+MAX_DOCUMENTS_PER_REQUEST = 1000
 _VOYAGE_MAX_TOKENS_PER_REQUEST = {_VOYAGE_DOCUMENT_MODEL: 120_000, _VOYAGE_QUERY_MODEL: 320_000}
 # Covers what Voyage may add to each text: the `input_type` instruction and special tokens.
 _VOYAGE_TOKENS_ADDED_PER_TEXT = 16
@@ -80,7 +81,7 @@ def _chunks_within_limits(texts: list[str], *, max_tokens: int) -> Iterator[list
     chunk_estimated_tokens = 0
     for text in texts:
         text_estimated_tokens = len(text.encode()) + _VOYAGE_TOKENS_ADDED_PER_TEXT
-        if chunk and (len(chunk) == _VOYAGE_MAX_TEXTS_PER_REQUEST or chunk_estimated_tokens + text_estimated_tokens > max_tokens):
+        if chunk and (len(chunk) == MAX_DOCUMENTS_PER_REQUEST or chunk_estimated_tokens + text_estimated_tokens > max_tokens):
             yield chunk
             chunk, chunk_estimated_tokens = [], 0
         chunk.append(text)

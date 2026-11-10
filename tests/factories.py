@@ -164,7 +164,7 @@ def make_enrichment(**overrides: object) -> CardEnrichment:
     """A minimally-valid `CardEnrichment` row, for tests exercising tag-match retrieval."""
     base = dict(
         dedupe_key=overrides.pop("dedupe_key", "charizard-1"),
-        normalized_description="",
+        normalized_description=None,
         tags=[],
         suggested_new_tag=None,
         rationale=None,

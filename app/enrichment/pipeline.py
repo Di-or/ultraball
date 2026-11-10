@@ -16,6 +16,7 @@ async def submit_enrichment_batch(
     *,
     taxonomy_version: str = TAXONOMY_VERSION,
     prompt_version: str = PROMPT_VERSION,
+    repair_only: bool = False,
 ) -> str | None:
     """Submit one Batch call covering every dedupe_key currently due enrichment.
 
@@ -23,9 +24,12 @@ async def submit_enrichment_batch(
     unchanged-corpus re-run is a no-op). Rows are staked out as `pending` under
     that batch_id before this returns, so a crash right after submission still
     resumes cleanly via `poll_and_apply_batch`.
+
+    `repair_only` limits the batch to the `needs_repair` cards, which an ordinary
+    submit leaves alone; they're polled and applied like any other batch.
     """
     pending = await get_cards_pending_enrichment(
-        session, taxonomy_version=taxonomy_version, prompt_version=prompt_version
+        session, taxonomy_version=taxonomy_version, prompt_version=prompt_version, repair_only=repair_only
     )
     if not pending:
         return None
@@ -98,7 +102,7 @@ async def poll_and_apply_batch(
         validated = validate_enrichment_result(result)
         values = {
             "dedupe_key": result.dedupe_key,
-            "normalized_description": result.normalized_description,
+            "normalized_description": validated.normalized_description,
             "tags": validated.tags,
             "suggested_new_tag": result.suggested_new_tag,
             "rationale": result.rationale,
