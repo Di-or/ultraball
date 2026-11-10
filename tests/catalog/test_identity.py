@@ -116,7 +116,14 @@ def test_energy_symbols_in_effect_text_become_type_names(
     assert f"Search for a {type_name} Energy." in identity.canonical_card_text
 
 
-def test_symbol_drift_reprints_share_one_identity() -> None:
+def test_adjacent_energy_symbols_become_separate_type_names() -> None:
+    """Ignition Energy `me02-124` writes `{C}{C}{C}`."""
+    identity = build_card_identity(load_printing("me02-124"))
+
+    assert "provides Colorless Colorless Colorless Energy instead" in identity.canonical_card_text
+
+
+def test_symbol_drift_reprints_share_one_dedupe_key() -> None:
     """Mega Charizard X ex: `mep-023` writes `[R]`, `me02-013` writes `{R}` (issue #111)."""
     promo = build_card_identity(load_printing("mep-023"))
     set_printing = build_card_identity(load_printing("me02-013"))

@@ -17,7 +17,10 @@ _SYMBOL_TYPE_NAMES = {
     "Y": "Fairy",
     "C": "Colorless",
 }
-_ENERGY_SYMBOL = re.compile(r"\[([RWGLPFDMNYC])\]|\{([RWGLPFDMNYC])\}")
+_SYMBOL_LETTER = f"[{''.join(_SYMBOL_TYPE_NAMES)}]"
+_ENERGY_SYMBOL = re.compile(rf"\[({_SYMBOL_LETTER})\]|\{{({_SYMBOL_LETTER})\}}")
+# Adjacent symbols (`{C}{C}{C}`) are one run, written as separate words.
+_ENERGY_SYMBOL_RUN = re.compile(rf"(?:{_ENERGY_SYMBOL.pattern})+")
 
 
 @dataclass(frozen=True)
@@ -65,10 +68,16 @@ def _assemble_rules_text(raw: dict) -> str:
     return "\n".join(part.strip() for part in parts if part.strip())
 
 
-def _spell_out_symbols(effect: object) -> str:
+def _spell_out_symbols(effect_text: object) -> str:
     """Write `[R]` / `{R}` energy symbols as type names, so reprints that differ only
     in notation share one dedupe_key and the tagging model reads a plain type name."""
-    return _ENERGY_SYMBOL.sub(lambda match: _SYMBOL_TYPE_NAMES[match.group(1) or match.group(2)], str(effect))
+    return _ENERGY_SYMBOL_RUN.sub(_type_names_for_run, str(effect_text))
+
+
+def _type_names_for_run(run: re.Match[str]) -> str:
+    return " ".join(
+        _SYMBOL_TYPE_NAMES[bracketed or braced] for bracketed, braced in _ENERGY_SYMBOL.findall(run.group(0))
+    )
 
 
 def _normalize(text: str) -> str:
