@@ -2,6 +2,7 @@ from collections.abc import Collection, Set
 from dataclasses import dataclass
 from datetime import date
 
+from app.catalog.energy import derive_energy_type
 from app.catalog.identity import build_card_identity
 from app.catalog.legality import derive_is_standard_legal
 from app.catalog.set_codes import derive_set_code
@@ -27,7 +28,7 @@ class CardProjection:
     regulation_mark: str | None
     rarity: str | None
     trainer_type: str | None
-    energy_type: str | None
+    energy_type: str | None  # "Basic" / "Special", derived from card text (never TCGdex's)
     attacks: list[dict]
     abilities: list[dict]
     attack_costs: list[int]
@@ -51,6 +52,7 @@ def project_card(
 ) -> CardProjection:
     attacks = raw.get("attacks") or []
     identity = build_card_identity(raw)
+    energy_type = derive_energy_type(raw)
 
     return CardProjection(
         id=raw["id"],
@@ -68,7 +70,7 @@ def project_card(
         regulation_mark=raw.get("regulationMark"),
         rarity=raw.get("rarity"),
         trainer_type=raw.get("trainerType"),
-        energy_type=raw.get("energyType"),
+        energy_type=energy_type,
         attacks=attacks,
         abilities=raw.get("abilities") or [],
         attack_costs=[len(attack.get("cost") or []) for attack in attacks],
@@ -79,7 +81,7 @@ def project_card(
         is_standard_legal=derive_is_standard_legal(
             regulation_mark=raw.get("regulationMark"),
             category=raw["category"],
-            energy_type=raw.get("energyType"),
+            energy_type=energy_type,
             dedupe_key=identity.dedupe_key,
             standard_legal_marks=standard_legal_marks,
             banned_dedupe_keys=banned_dedupe_keys,

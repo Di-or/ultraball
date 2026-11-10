@@ -52,7 +52,7 @@ _FIRE_ENERGY = {
     "localId": "98",
     "name": "Fire Energy",
     "category": "Energy",
-    "energyType": "Basic",
+    "energyType": "Normal",  # as TCGdex labels it
     "attacks": [],
     "abilities": [],
 }

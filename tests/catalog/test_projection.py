@@ -1,6 +1,9 @@
 from datetime import date
 
-from app.catalog.projection import project_card
+import pytest
+
+from app.catalog.projection import CardProjection, project_card
+from tests.factories import make_tcgdex_basic_energy, make_tcgdex_special_energy, make_tcgdex_trainer
 
 
 def _raw_pokemon(**overrides: object) -> dict:
@@ -82,7 +85,7 @@ def test_basic_energy_projection_is_always_legal() -> None:
             "localId": "170",
             "name": "Fire Energy",
             "category": "Energy",
-            "energyType": "Basic",
+            "energyType": "Normal",  # as TCGdex labels it
             "attacks": [],
             "abilities": [],
         },
@@ -145,3 +148,41 @@ def test_dedupe_key_and_canonical_text_flow_from_the_shared_identity_assembly() 
     assert card.dedupe_key
     assert "Charizard" in card.canonical_card_text
     assert "Fire Spin" in card.canonical_card_text
+
+
+def _project(raw: dict) -> CardProjection:
+    return project_card(
+        raw,
+        set_id=str(raw["id"]).rsplit("-", 1)[0],
+        release_date=date(2025, 9, 26),
+        standard_legal_marks=frozenset({"H", "I", "J"}),
+        banned_dedupe_keys=frozenset(),
+    )
+
+
+@pytest.mark.parametrize("name", ["Fire Energy", "Basic Fire Energy", "Basic  Darkness Energy", "Fairy Energy"])
+def test_a_textless_energy_with_a_basic_name_is_basic_energy(name: str) -> None:
+    card = _project(make_tcgdex_basic_energy(name=name))
+
+    assert card.energy_type == "Basic"
+    assert card.is_standard_legal is True  # no regulation mark, still legal
+
+
+def test_tcgdex_energy_type_is_not_consulted() -> None:
+    assert _project(make_tcgdex_basic_energy(energyType="Special")).energy_type == "Basic"
+    assert _project(make_tcgdex_special_energy(energyType="Basic")).energy_type == "Special"
+
+
+def test_an_energy_with_effect_text_is_special_even_with_a_basic_name() -> None:
+    assert _project(make_tcgdex_special_energy(name="Fire Energy")).energy_type == "Special"
+
+
+def test_a_textless_energy_with_a_non_basic_name_fails_safe_as_special() -> None:
+    card = _project(make_tcgdex_basic_energy(name="Ignition Energy", regulationMark="G"))
+
+    assert card.energy_type == "Special"
+    assert card.is_standard_legal is False  # no exception: legality falls back to its rotated mark
+
+
+def test_a_non_energy_card_has_no_energy_type() -> None:
+    assert _project(make_tcgdex_trainer()).energy_type is None
