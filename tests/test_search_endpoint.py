@@ -333,6 +333,50 @@ async def test_search_mixed_query_routes_to_rrf_merge(
     assert body["results"][1]["matched"] == {"tags": ["draw"], "semantic": False}
 
 
+async def test_search_semantic_ranking_skips_vectors_from_an_older_enrichment_version(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="a", dedupe_key="a", name="Current"),
+            _enrichment(dedupe_key="a", vector=[0.0] * 1024),
+            _card(id="b", dedupe_key="b", name="StalePrompt"),
+            _enrichment(dedupe_key="b", vector=[0.0] * 1024, prompt_version="older"),
+            _card(id="c", dedupe_key="c", name="StaleTaxonomy"),
+            _enrichment(dedupe_key="c", vector=[0.0] * 1024, taxonomy_version="older"),
+        ]
+    )
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="acceleration", concept_rewritten="attach extra energy", tags=[])
+    async with _client_with_clients(postgres_container, StubParseClient(canned), StubEmbeddingClient()) as client:
+        response = await client.post("/search", json={"query": "energy accel"})
+
+    body = response.json()
+    assert body["total"] == 1
+    assert [r["name"] for r in body["results"]] == ["Current"]
+
+
+async def test_search_an_older_enrichment_version_still_tag_matches_without_the_semantic_signal(
+    postgres_container: PostgresContainer, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="a", dedupe_key="a", name="Stale"),
+            _enrichment(dedupe_key="a", tags=["draw"], vector=[0.0] * 1024, prompt_version="older"),
+        ]
+    )
+    await db_session.commit()
+
+    canned = ParseResult(filters={}, concept="draw power", concept_rewritten="draw a card", tags=["draw"])
+    async with _client_with_clients(postgres_container, StubParseClient(canned), StubEmbeddingClient()) as client:
+        response = await client.post("/search", json={"query": "cards that draw"})
+
+    body = response.json()
+    assert body["total"] == 1
+    assert body["results"][0]["matched"] == {"tags": ["draw"], "semantic": False}
+
+
 async def test_search_an_embedding_failure_degrades_to_the_plain_gate(
     postgres_container: PostgresContainer, db_session: AsyncSession
 ) -> None:
