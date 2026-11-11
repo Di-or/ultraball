@@ -1,0 +1,50 @@
+{
+  "category": "Trainer",
+  "id": "sv01-196",
+  "illustrator": "Ayaka Yoshida",
+  "image": "https://assets.tcgdex.net/en/sv/sv01/196",
+  "localId": "196",
+  "name": "Ultra Ball",
+  "rarity": "Uncommon",
+  "set": {
+    "cardCount": {
+      "official": 198,
+      "total": 258
+    },
+    "id": "sv01",
+    "logo": "https://assets.tcgdex.net/en/sv/sv01/logo",
+    "name": "Scarlet & Violet",
+    "symbol": "https://assets.tcgdex.net/univ/sv/sv01/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "variantId": "cm4kqul3x1bwlz1f"
+    }
+  ],
+  "effect": "You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.",
+  "trainerType": "Item",
+  "regulationMark": "G",
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-08-20T01:44:01+01:00",
+  "thirdParty": {
+    "cardmarket": 702492,
+    "tcgplayer": 488105
+  }
+}

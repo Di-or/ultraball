@@ -41,6 +41,12 @@ FIXTURE_PRINTINGS = {
     "30th-128": "Ultra Ball: a non-Energy printing with no English rules text",
     "mep-051": 'Oshawott: lowercase regulation mark `"j"`',
     "mfb-33": 'Potion: regulation mark and rarity are the string `"None"`',
+    # A real PTCGL export (issue #123) writes these unpadded: `SVI 196`, `PAL 185`, `OBF 125`.
+    "sv01-196": "Ultra Ball: PTCGL writes `SVI 196`, part of the real-export import test",
+    "sv02-185": "Iono: PTCGL writes `PAL 185`, part of the real-export import test",
+    "sv03-125": "Charizard ex: PTCGL writes `OBF 125`, part of the real-export import test",
+    "30th-001": "Exeggcute: set code `30C`, local id `001`, which `30th-c` also has",
+    "30th-c-001": "Charizard: `30th-c` also derives set code `30C`, so `30C 1` names two printings",
 }
 
 

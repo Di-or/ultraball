@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.deck_validation import DeckLine
+from app.catalog.identity import spell_out_energy_symbols
+from app.catalog.models import Card
 from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_and_local_id
 
 # A card line: "<count> <name...> [<set_code> <local_id>]". The set-code/local-id tail is
@@ -13,9 +15,12 @@ from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_a
 _LINE_RE = re.compile(r"^(?P<count>\d+)\s+(?P<rest>.+)$")
 # `local_id` must contain a digit so a plain "<Type> Energy" name (no trailing set/number)
 # isn't mistaken for a two-token set-code tail (e.g. "Fire Energy" is not "set=Fire, id=Energy").
+# `set_code` must contain a letter but may start with a digit (`30C`, issue #123).
 _SET_TAIL_RE = re.compile(
-    r"^(?P<name>.+?)\s+(?P<set_code>[A-Za-z][A-Za-z0-9]{1,5})\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*)$"
+    r"^(?P<name>.+?)\s+(?P<set_code>(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{2,6})"
+    r"\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*)$"
 )
+_WHITESPACE_RE = re.compile(r"\s+")
 
 
 @dataclass(frozen=True)
@@ -86,18 +91,28 @@ def parse_ptcgl(text: str) -> list[ParsedLine]:
     return lines
 
 
-def _matches_basic_energy_name(candidate_name: str, palette_name: str) -> bool:
-    candidate = candidate_name.strip().lower()
-    palette = palette_name.strip().lower()
-    return candidate == palette or palette == f"{candidate} energy"
+def _basic_energy_type_word(name: str) -> str:
+    """The type word a Basic Energy name boils down to: "Basic {R} Energy", "Basic Fire Energy",
+    "Fire Energy" and "Fire" all give "fire" (issue #123). Any other name gives itself, lowercased,
+    so it can't match a palette entry by accident."""
+    word = _WHITESPACE_RE.sub(" ", spell_out_energy_symbols(name)).strip().lower()
+    word = word.removeprefix("basic ")
+    return word.removesuffix(" energy")
+
+
+def _palette_match(name: str, palette: list[Card]) -> Card | None:
+    wanted = _basic_energy_type_word(name)
+    return next((card for card in palette if _basic_energy_type_word(card.name) == wanted), None)
 
 
 async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLine]:
     """Resolve PTCGL decklist text into deck lines, all-or-nothing (issue #28).
 
-    A line with a set code + local id resolves against that exact printing; a bare-name
-    line resolves against the fixed basic-Energy palette. If any line fails to resolve,
-    `DeckImportError` carries every failing line so the whole import can be rejected.
+    A line with a set code + local id resolves against that exact printing. A Basic Energy
+    line resolves against the fixed basic-Energy palette when it has no set tail, or when its
+    tail names no printing (older exports wrote Basic Energy's set code as `Energy`). If any
+    line fails to resolve, `DeckImportError` carries every failing line so the whole import can
+    be rejected.
 
     Returns the resolved `Card` alongside each count (not just the printing id) so the
     caller can render the imported deck without a second round trip (issue #31).
@@ -109,13 +124,11 @@ async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLin
     unresolved: list[str] = []
 
     for line in parsed:
+        card = None
         if line.set_code and line.local_id:
-            card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id)
-        else:
-            card = next(
-                (candidate for candidate in palette if _matches_basic_energy_name(line.name, candidate.name)),
-                None,
-            )
+            card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id, name=line.name)
+        if card is None:
+            card = _palette_match(line.name, palette)
 
         if card is None:
             unresolved.append(line.raw)
