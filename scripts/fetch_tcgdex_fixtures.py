@@ -34,6 +34,8 @@ FIXTURE_PRINTINGS = {
     "me02-013": "Mega Charizard X ex: the other half of the drift pair, with an image",
     "svp-101": "Pikachu promo with an image (mark G); svp shares one series-wide release date",
     "svp-190": "Pikachu promo without an image (mark H, different HP), same svp release date",
+    "svp-045": "Paradise Resort promo (mark G, not Standard), one half of the promo-tie pair",
+    "svp-150": "Paradise Resort promo (mark H, Standard), the other half; same svp release date",
     "30th-128": "Ultra Ball: a non-Energy printing with no English rules text",
     "mep-051": 'Oshawott: lowercase regulation mark `"j"`',
     "mfb-33": 'Potion: regulation mark and rarity are the string `"None"`',
