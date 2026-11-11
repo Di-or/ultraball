@@ -95,7 +95,8 @@ Keep energy types named inside an effect ("attach a Fire Energy"), but not the P
 - `rationale`: written before you choose tags. One or two sentences naming each effect on the \
 card and the tag definition it meets, or why a near-miss tag does not apply.
 - `tags`: the tags your rationale found earned: every functional tag whose definition the \
-card's effect meets, across all of its attacks and Abilities. An empty array if none do (a vanilla attacker, a basic Energy). \
+card's effect meets, across all of its attacks and Abilities. An empty array if none do \
+(a vanilla attacker, a basic Energy). \
 `bench-reach`, `multi-target` and `counter-placement` combine freely: an attack that damages \
 the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three.
 - `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null."""
