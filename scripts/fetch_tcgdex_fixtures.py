@@ -47,6 +47,36 @@ FIXTURE_PRINTINGS = {
     "sv03-125": "Charizard ex: PTCGL writes `OBF 125`, part of the real-export import test",
     "30th-001": "Exeggcute: set code `30C`, local id `001`, which `30th-c` also has",
     "30th-c-001": "Charizard: `30th-c` also derives set code `30C`, so `30C 1` names two printings",
+    # Every printing in a decklist exported by Limitless's deckbuilder that PTCGL imported cleanly
+    # (`tests/fixtures/ptcgl/limitless_export.txt`, issue #123): SV promos are `PR-SV`, Mega
+    # promos `MEP`, and Basic Energy is written by name with its set code.
+    **{
+        printing_id: "part of the PTCGL-compatible decklist export"
+        for printing_id in (
+            "mep-007",
+            "mep-020",
+            "svp-187",
+            "svp-202",
+            "mep-010",
+            "mep-034",
+            "me05-080",
+            "me02.5-181",
+            "sv06.5-055",
+            "sv06.5-054",
+            "sv06.5-060",
+            "sv06-145",
+            "sve-001",
+            "sve-003",
+            "mee-004",
+            "mee-005",
+            "mee-006",
+            "mee-007",
+            "mee-008",
+            "mee-012",
+            "sv05-161",
+            "me04-084",
+        )
+    },
 }
 
 

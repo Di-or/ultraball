@@ -1,0 +1,48 @@
+{
+  "category": "Energy",
+  "id": "mee-006",
+  "localId": "006",
+  "name": "Fighting Energy",
+  "rarity": "Common",
+  "set": {
+    "cardCount": {
+      "official": 16,
+      "total": 16
+    },
+    "id": "mee",
+    "name": "Mega Evolution Energy"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 851013,
+        "tcgplayer": 656268
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 851013,
+        "tcgplayer": 656268
+      },
+      "variantId": "cm4kqul3x1bwlz1f"
+    }
+  ],
+  "energyType": "Normal",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-16T20:25:32Z"
+}

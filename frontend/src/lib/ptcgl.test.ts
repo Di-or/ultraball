@@ -1,34 +1,79 @@
 import { describe, expect, it } from "vitest";
+// A decklist exported by Limitless's deckbuilder that PTCGL imported cleanly (issue #123).
+// The backend imports the same file (tests/test_ptcgl_real_export.py), so the two together
+// check the round trip.
+import ptcglCompatibleExport from "../../../tests/fixtures/ptcgl/limitless_export.txt?raw";
 import type { DeckLine } from "../state/deckState";
 import { exportToPtcgl } from "./ptcgl";
 
+// That deck as the app holds it: TCGdex's names and zero-padded local ids, set codes as the
+// catalog derives them (`svp` is `PR-SV`), in the order the cards were added.
+const pokemon = (printing_id: string, count: number, name: string, set_code: string, local_id: string): DeckLine => ({
+  printing_id,
+  count,
+  name,
+  category: "Pokemon",
+  set_code,
+  local_id,
+  energy_type: null,
+});
+const trainer = (printing_id: string, name: string, set_code: string, local_id: string): DeckLine => ({
+  printing_id,
+  count: 1,
+  name,
+  category: "Trainer",
+  set_code,
+  local_id,
+  energy_type: null,
+});
+const energy = (
+  printing_id: string,
+  count: number,
+  name: string,
+  set_code: string,
+  local_id: string,
+  energy_type: "Basic" | "Special",
+): DeckLine => ({ printing_id, count, name, category: "Energy", set_code, local_id, energy_type });
+
+const DECK: DeckLine[] = [
+  pokemon("mep-007", 2, "Psyduck", "MEP", "007"),
+  pokemon("mep-020", 2, "Sneasel", "MEP", "020"),
+  pokemon("svp-187", 2, "Yanmega", "PR-SV", "187"),
+  pokemon("svp-202", 1, "Kangaskhan", "PR-SV", "202"),
+  pokemon("mep-010", 1, "Riolu", "MEP", "010"),
+  pokemon("mep-034", 1, "Mega Meganium ex", "MEP", "034"),
+  trainer("me05-080", "Misty's Vitality", "PBL", "080"),
+  trainer("me02.5-181", "Air Balloon", "ASC", "181"),
+  trainer("sv06.5-055", "Binding Mochi", "SFA", "055"),
+  trainer("sv06.5-054", "Academy at Night", "SFA", "054"),
+  trainer("sv06.5-060", "Neutralization Zone", "SFA", "060"),
+  trainer("sv06-145", "Carmine", "TWM", "145"),
+  energy("sve-001", 1, "Grass Energy", "SVE", "001", "Basic"),
+  energy("sve-002", 2, "Fire Energy", "SVE", "002", "Basic"),
+  energy("sve-003", 2, "Water Energy", "SVE", "003", "Basic"),
+  energy("mee-004", 1, "Lightning Energy", "MEE", "004", "Basic"),
+  energy("mee-005", 1, "Psychic Energy", "MEE", "005", "Basic"),
+  energy("mee-006", 1, "Fighting Energy", "MEE", "006", "Basic"),
+  energy("mee-007", 1, "Darkness Energy", "MEE", "007", "Basic"),
+  energy("mee-008", 1, "Metal Energy", "MEE", "008", "Basic"),
+  // TCGdex names this printing "Basic Lightning Energy"; PTCGL writes "Lightning Energy".
+  energy("mee-012", 1, "Basic Lightning Energy", "MEE", "012", "Basic"),
+  energy("sv05-161", 1, "Mist Energy", "TEF", "161", "Special"),
+  energy("me04-084", 1, "Bubbly Water Energy", "CRI", "084", "Special"),
+];
+
 describe("exportToPtcgl", () => {
-  it("groups lines by category, sums section counts, and totals the deck", () => {
-    const lines: DeckLine[] = [
-      { printing_id: "obf-10", count: 4, name: "Charmander", category: "Pokemon", set_code: "OBF", local_id: "10", energy_type: null },
-      { printing_id: "paf-80", count: 1, name: "Iono", category: "Trainer", set_code: "PAF", local_id: "80", energy_type: null },
-      { printing_id: "base4-98", count: 8, name: "Fire Energy", category: "Energy", set_code: "BASE4", local_id: "98", energy_type: "Basic" },
-    ];
-
-    const text = exportToPtcgl(lines);
-
-    expect(text).toContain("Pokémon: 4");
-    expect(text).toContain("4 Charmander OBF 10");
-    expect(text).toContain("Trainer Cards: 1");
-    expect(text).toContain("1 Iono PAF 80");
-    expect(text).toContain("Energy: 8");
-    expect(text).toContain("8 Fire Energy BASE4 98");
-    expect(text).toContain("Total Cards: 13");
+  it("writes a deck exactly as a PTCGL-compatible export does", () => {
+    expect(exportToPtcgl(DECK)).toBe(ptcglCompatibleExport.replace(/\r\n/g, "\n").trimEnd());
   });
 
   it("omits empty sections", () => {
-    const lines: DeckLine[] = [
-      { printing_id: "obf-10", count: 60, name: "Charmander", category: "Pokemon", set_code: "OBF", local_id: "10", energy_type: null },
-    ];
+    const text = exportToPtcgl([pokemon("mep-007", 60, "Psyduck", "MEP", "007")]);
 
-    const text = exportToPtcgl(lines);
+    expect(text).toBe("Pokémon: 60\n60 Psyduck MEP 7");
+  });
 
-    expect(text).not.toContain("Trainer Cards");
-    expect(text).not.toContain("Energy:");
+  it("keeps a local id of zero", () => {
+    expect(exportToPtcgl([trainer("x-000", "Card", "XYZ", "000")])).toBe("Trainer: 1\n1 Card XYZ 0");
   });
 });

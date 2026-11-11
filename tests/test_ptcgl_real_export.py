@@ -6,6 +6,8 @@ both have a card `001`. Basic Energy lines come as `Basic {R} Energy SVE 2` or a
 `Basic Fire Energy`.
 """
 
+from pathlib import Path
+
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -142,3 +144,47 @@ async def test_a_name_that_matches_no_printing_with_that_number_still_fails(
 
     assert response.status_code == 422
     assert response.json()["detail"]["lines"] == ["4 Iono SVI 999"]
+
+
+# A decklist exported by Limitless's deckbuilder that PTCGL imported cleanly: SV promos as
+# `PR-SV`, Basic Energy by name with its set code, from both the SV and Mega Energy sets.
+_PTCGL_COMPATIBLE_EXPORT = (Path(__file__).parent / "fixtures" / "ptcgl" / "limitless_export.txt").read_text(
+    encoding="utf-8"
+)
+_EXPORT_SETS = ("svp", "sve", "mee", "mep", "me05", "me02.5", "sv06.5", "sv06", "sv05", "me04")
+
+
+async def test_a_ptcgl_compatible_export_imports_every_printing_exactly(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    catalog_client = StubCatalogClient({set_id: fixture_snapshot(set_id) for set_id in _EXPORT_SETS})
+    for set_id in _EXPORT_SETS:
+        await run_ingest(db_session, catalog_client, set_id)
+
+    entries = await _import(client, _PTCGL_COMPATIBLE_EXPORT)
+
+    assert entries == [
+        ("mep-007", 2),
+        ("mep-020", 2),
+        ("svp-187", 2),
+        ("svp-202", 1),
+        ("mep-010", 1),
+        ("mep-034", 1),
+        ("me05-080", 1),
+        ("me02.5-181", 1),
+        ("sv06.5-055", 1),
+        ("sv06.5-054", 1),
+        ("sv06.5-060", 1),
+        ("sv06-145", 1),
+        ("sve-001", 1),
+        ("sve-002", 2),
+        ("sve-003", 2),
+        ("mee-004", 1),
+        ("mee-005", 1),
+        ("mee-006", 1),
+        ("mee-007", 1),
+        ("mee-008", 1),
+        ("mee-012", 1),  # a second Lightning printing: the exact one, not the palette's
+        ("sv05-161", 1),
+        ("me04-084", 1),
+    ]

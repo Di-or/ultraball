@@ -1,0 +1,77 @@
+{
+  "category": "Pokemon",
+  "id": "mep-010",
+  "illustrator": "GOSSAN",
+  "localId": "010",
+  "name": "Riolu",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 0,
+      "total": 112
+    },
+    "id": "mep",
+    "name": "MEP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 851058,
+        "tcgplayer": 656260
+      },
+      "variantId": "jr7oetx1mqug9"
+    },
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "pokemon-center"
+      ],
+      "thirdParty": {
+        "cardmarket": 851059,
+        "tcgplayer": 656262
+      },
+      "variantId": "23hmnvtwdrrnjw8wxr5005pugcpk"
+    }
+  ],
+  "dexId": [
+    447
+  ],
+  "hp": 80,
+  "types": [
+    "Fighting"
+  ],
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Fighting"
+      ],
+      "name": "Accelerating Stab",
+      "effect": "During your next turn, this Pokémon can't use Accelerating Stab.",
+      "damage": 30
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Psychic",
+      "value": "x2"
+    }
+  ],
+  "retreat": 2,
+  "regulationMark": "I",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-29T15:17:17+01:00"
+}

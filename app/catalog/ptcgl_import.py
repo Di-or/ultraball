@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.deck_validation import DeckLine
-from app.catalog.energy import basic_energy_type_named
+from app.catalog.energy import basic_energy_type_named, is_basic_energy
 from app.catalog.models import Card
 from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_and_local_id
 
@@ -15,9 +15,10 @@ from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_a
 _LINE_RE = re.compile(r"^(?P<count>\d+)\s+(?P<rest>.+)$")
 # `local_id` must contain a digit so a plain "<Type> Energy" name (no trailing set/number)
 # isn't mistaken for a two-token set-code tail (e.g. "Fire Energy" is not "set=Fire, id=Energy").
-# `set_code` must contain a letter but may start with a digit (`30C`, issue #123).
+# `set_code` must contain a letter but may start with a digit (`30C`) or hold a hyphen
+# (`PR-SV`, the SV promos) (issue #123).
 _SET_TAIL_RE = re.compile(
-    r"^(?P<name>.+?)\s+(?P<set_code>(?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]{2,6})"
+    r"^(?P<name>.+?)\s+(?P<set_code>(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9-]{1,5})"
     r"\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*)$"
 )
 
@@ -90,6 +91,14 @@ def parse_ptcgl(text: str) -> list[ParsedLine]:
     return lines
 
 
+def _is_basic_energy_of_type(card: Card | None, energy_type: str) -> bool:
+    return (
+        card is not None
+        and is_basic_energy(category=card.category, energy_type=card.energy_type)
+        and basic_energy_type_named(card.name) == energy_type
+    )
+
+
 def _palette_match(energy_type: str, palette: list[Card]) -> Card | None:
     return next((card for card in palette if basic_energy_type_named(card.name) == energy_type), None)
 
@@ -97,10 +106,11 @@ def _palette_match(energy_type: str, palette: list[Card]) -> Card | None:
 async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLine]:
     """Resolve PTCGL decklist text into deck lines, all-or-nothing (issue #28).
 
-    A Basic Energy line (`Basic {R} Energy SVE 2`, `Basic Fire Energy`) resolves against the
-    fixed basic-Energy palette whatever its set tail says: older exports wrote the set code as
-    `Energy`, which names no set (issue #123). Any other line resolves against the printing its
-    set code + local id identify. If any line fails to resolve, `DeckImportError` carries every
+    A line resolves against the printing its set code + local id identify. A Basic Energy line
+    (`Lightning Energy MEE 12`, `Basic {R} Energy SVE 2`, `Basic Fire Energy`) keeps that exact
+    printing only if it is Basic Energy of the named type; otherwise (no tail, or a tail like
+    older exports' `Energy 2` that names no set, or one naming another card) it resolves against
+    the fixed basic-Energy palette (issue #123). If any line fails to resolve, `DeckImportError` carries every
     failing line so the whole import can be rejected.
 
     Returns the resolved `Card` alongside each count (not just the printing id) so the
@@ -115,10 +125,10 @@ async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLin
     for line in parsed:
         energy_type = basic_energy_type_named(line.name)
         card = None
-        if energy_type is not None:
-            card = _palette_match(energy_type, palette)
-        elif line.set_code and line.local_id:
+        if line.set_code and line.local_id:
             card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id, name=line.name)
+        if energy_type is not None and not _is_basic_energy_of_type(card, energy_type):
+            card = _palette_match(energy_type, palette)
 
         if card is None:
             unresolved.append(line.raw)

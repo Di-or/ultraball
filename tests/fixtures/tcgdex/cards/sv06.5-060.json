@@ -1,0 +1,45 @@
+{
+  "category": "Trainer",
+  "id": "sv06.5-060",
+  "illustrator": "imoniii",
+  "image": "https://assets.tcgdex.net/en/sv/sv06.5/060",
+  "localId": "060",
+  "name": "Neutralization Zone",
+  "rarity": "ACE SPEC Rare",
+  "set": {
+    "cardCount": {
+      "official": 64,
+      "total": 99
+    },
+    "id": "sv06.5",
+    "logo": "https://assets.tcgdex.net/en/sv/sv06.5/logo",
+    "name": "Shrouded Fable",
+    "symbol": "https://assets.tcgdex.net/univ/sv/sv06.5/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 780956,
+        "tcgplayer": 560371
+      },
+      "variantId": "jr7oetx1mqug9"
+    }
+  ],
+  "effect": "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.",
+  "trainerType": "Stadium",
+  "regulationMark": "H",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-20T00:57:43Z"
+}
