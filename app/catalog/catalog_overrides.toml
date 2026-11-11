@@ -1,0 +1,17 @@
+# Catalog overrides (CONTEXT.md): hand-kept fixes to individual printings' TCGdex data.
+#
+# Each table is a printing id; each key in it is a field of TCGdex's card JSON, set to the
+# value the catalog should use instead. Overrides are applied before projection, so they
+# reach every column and the dedupe_key; the raw snapshot keeps TCGdex's own values.
+#
+# An override always wins. Each ingest reports overrides whose field TCGdex now supplies:
+# "same" means the entry is redundant and can be deleted, "differs" means review it.
+# Deleting an entry is how TCGdex takes over that field.
+
+# TCGdex has only Portuguese text for this printing. The English text is the same as the
+# other Ultra Ball printings' (e.g. sv01-196, me01-131), so it joins that card entity.
+["30th-128"]
+effect = """\
+You can use this card only if you discard 2 other cards from your hand.
+
+Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."""
