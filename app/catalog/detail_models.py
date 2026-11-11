@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from app.catalog.images import entity_image_url, image_url
 from app.catalog.models import Card
 from app.search.models import Matched
 
@@ -23,13 +24,16 @@ class Printing(BaseModel):
             set_id=card.set_id,
             regulation_mark=card.regulation_mark,
             rarity=card.rarity,
-            image=card.image,
+            image=image_url(card.image, "high"),
             is_standard_legal=card.is_standard_legal,
         )
 
 
 class CardDetail(BaseModel):
     """The card-detail view (docs/archive/mvp-spec.md §12.4) for the representative printing.
+
+    `printings` is the whole entity in representative order, the representative first. `image`
+    falls back to the next printing with art when the representative has none.
 
     Deliberately excludes `normalized_description` — internal-only, would
     contradict the printed text shown beside it (CONTEXT.md: Normalized
@@ -88,7 +92,7 @@ class CardDetail(BaseModel):
             attacks=card.attacks,
             abilities=card.abilities,
             attack_costs=card.attack_costs,
-            image=card.image,
+            image=entity_image_url(printings, "high"),
             is_standard_legal=card.is_standard_legal,
             tags=tags,
             printings=[Printing.from_card(printing) for printing in printings],

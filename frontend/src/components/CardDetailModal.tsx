@@ -59,7 +59,7 @@ export function CardDetailModal({ printingId, matched, onClose }: CardDetailModa
         {detail && (
           <>
             <div className="modal-header">
-              {detail.image && <img src={`${detail.image}/high.webp`} alt={detail.name} className="modal-image" />}
+              {detail.image && <img src={detail.image} alt={detail.name} className="modal-image" />}
               <div>
                 <h2>{detail.name}</h2>
                 <p className="card-meta">

@@ -30,7 +30,7 @@ async def test_card_detail_returns_the_full_printed_record(
     assert body["attacks"] == []
     assert body["abilities"] == []
     assert body["attack_costs"] == [4]
-    assert body["image"] == "https://assets.tcgdex.net/en/swsh/swsh1/1"
+    assert body["image"] == "https://assets.tcgdex.net/en/swsh/swsh1/1/high.webp"
     assert body["tags"] == ["acceleration"]
 
 

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from app.catalog.images import image_url
 from app.catalog.models import Card
 
 
@@ -23,7 +24,7 @@ class EnergyBasic(BaseModel):
             name=card.name,
             energy_type=card.energy_type,
             types=card.types,
-            image=card.image,
+            image=image_url(card.image, "low"),
             set_code=card.set_code,
             local_id=card.local_id,
         )

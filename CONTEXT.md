@@ -23,7 +23,7 @@ The full printed `name` string (normalized) — the deck-construction unit for t
 _Avoid_: card name (when the 4-copy sense matters), title.
 
 **Representative printing**:
-The single printing per `dedupe_key` that the search gate and card display operate on: the one with the newest regulation mark, then the newest release date, then one with an image, then the printing id as a stable tie-break. The regulation mark leads because it is the real time signal — marks advance monotonically, so the newest-mark printing carries the newest legality and reflects errata — while release dates are unreliable for promos (a promo set shares one series-wide date). Distinct-effect cards are already distinct `dedupe_key`s, so this only ever collapses genuine reprints.
+The single printing per `dedupe_key` that the search gate and card display operate on: the one with the newest regulation mark, then the newest release date, then one with an image, then the printing id as a stable tie-break. The regulation mark leads because it is the real time signal — marks advance monotonically, so the newest-mark printing carries the newest legality and reflects errata — while release dates are unreliable for promos (a promo set shares one series-wide date). Distinct-effect cards are already distinct `dedupe_key`s, so this only ever collapses genuine reprints. Its card art falls back to the next printing in that order that has an image, when it has none of its own: every printing shows the same card, and TCGdex leaves whole promo sets without art.
 _Avoid_: canonical printing, primary printing.
 
 **Catalog layer**:
@@ -35,7 +35,7 @@ A curated mapping that unifies printings whose *text* diverges but which the gam
 _Avoid_: errata table, corrections.
 
 **Catalog override**:
-A hand-kept fix to one printing's TCGdex data (e.g. missing English effect text, a malformed regulation mark), keyed by printing id and applied by the catalog layer during ingest, so the rest of the app only ever sees the corrected printing. An override always wins over TCGdex; each ingest reports overrides where TCGdex now supplies its own value ("same" → redundant, "differs" → review), and deleting the entry is how TCGdex takes over. Distinct from the **Errata reconciliation list**: an override corrects one printing's data, the errata list declares two different texts to be one card.
+A hand-kept fix to one printing's TCGdex data (e.g. missing English effect text, a malformed regulation mark, missing card art — an `image` override may be any complete image URL, hosted anywhere), keyed by printing id and applied by the catalog layer during ingest, so the rest of the app only ever sees the corrected printing. An override always wins over TCGdex; each ingest reports overrides where TCGdex now supplies its own value ("same" → redundant, "differs" → review), and deleting the entry is how TCGdex takes over. Distinct from the **Errata reconciliation list**: an override corrects one printing's data, the errata list declares two different texts to be one card.
 _Avoid_: patch, manual fix, data correction.
 
 **Textless printing**:

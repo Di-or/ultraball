@@ -48,7 +48,8 @@ class Card(Base):
     attack_costs: Mapped[list[int]] = mapped_column(ARRAY(Integer), default=list)
     sub_category: Mapped[list[str]] = mapped_column(ARRAY(String), default=list)
 
-    # TCGdex base URL — render `{image}/high.webp` (detail) or `{image}/low.webp` (grid).
+    # A TCGdex base URL, or a complete image URL from a catalog override; `images.image_url`
+    # turns either into a URL a browser can load.
     image: Mapped[str | None] = mapped_column(String)
 
     dedupe_key: Mapped[str] = mapped_column(String, index=True)
