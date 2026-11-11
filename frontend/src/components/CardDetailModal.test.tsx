@@ -45,7 +45,7 @@ describe("CardDetailModal", () => {
     vi.unstubAllGlobals();
   });
 
-  it("fetches by printing code and renders the card's printed info, tags, printings, and matched chip", async () => {
+  it("fetches by printing id and renders the card's printed info, tags, printings, and matched chip", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(detailResponse(CHARIZARD));
 
     render(<CardDetailModal printingId="swsh4-1" onClose={vi.fn()} />);

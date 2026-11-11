@@ -244,7 +244,7 @@ describe("App", () => {
     });
   });
 
-  it("opens a card-detail modal by printing code, even when the dedupe_key contains a slash", async () => {
+  it("opens a card-detail modal by printing id, even when the dedupe_key contains a slash", async () => {
     const fetchMock = stubFetch(
       [
         {

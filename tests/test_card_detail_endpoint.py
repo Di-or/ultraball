@@ -160,13 +160,13 @@ async def test_card_detail_matched_is_null_when_not_reached_via_search(
     assert response.json()["matched"] is None
 
 
-async def test_card_detail_404s_for_an_unknown_printing(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_card_detail_404s_for_an_unknown_printing(client: AsyncClient) -> None:
     response = await client.get("/cards/does-not-exist")
 
     assert response.status_code == 404
 
 
-async def test_card_detail_is_no_longer_addressed_by_dedupe_key(
+async def test_card_detail_404s_when_addressed_by_dedupe_key(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     db_session.add_all([_card(id="swsh1-1", dedupe_key="charizard")])
