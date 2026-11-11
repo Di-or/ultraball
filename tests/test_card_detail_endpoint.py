@@ -18,7 +18,7 @@ async def test_card_detail_returns_the_full_printed_record(
     )
     await db_session.commit()
 
-    response = await client.get("/cards/charizard")
+    response = await client.get("/cards/swsh1-1")
 
     assert response.status_code == 200
     body = response.json()
@@ -45,7 +45,7 @@ async def test_card_detail_never_exposes_normalized_description(
     )
     await db_session.commit()
 
-    response = await client.get("/cards/charizard")
+    response = await client.get("/cards/swsh1-1")
 
     assert "normalized_description" not in response.json()
 
@@ -61,11 +61,49 @@ async def test_card_detail_lists_all_printings_of_the_entity(
     )
     await db_session.commit()
 
-    response = await client.get("/cards/charizard")
+    response = await client.get("/cards/swsh1-1")
 
     body = response.json()
-    assert body["printing_id"] == "swsh4-1"  # representative = most recent
+    assert body["printing_id"] == "swsh4-1"  # representative = most recent, whichever printing was asked for
     assert [p["printing_id"] for p in body["printings"]] == ["swsh4-1", "swsh1-1"]
+
+
+async def test_card_detail_is_the_same_for_any_printing_of_the_entity(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="swsh1-1", dedupe_key="charizard", set_id="swsh1", release_date=date(2020, 1, 1)),
+            _card(id="swsh4-1", dedupe_key="charizard", set_id="swsh4", release_date=date(2021, 1, 1)),
+            _enrichment(dedupe_key="charizard", tags=["acceleration"]),
+        ]
+    )
+    await db_session.commit()
+
+    older = await client.get("/cards/swsh1-1")
+    newer = await client.get("/cards/swsh4-1")
+
+    assert older.status_code == newer.status_code == 200
+    assert older.json() == newer.json()
+
+
+async def test_card_detail_opens_a_card_whose_dedupe_key_contains_a_slash(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    dedupe_key = "charizard fire spin [fire/fire/colorless] discard 2 energy"
+    db_session.add_all(
+        [
+            _card(id="sv04-266", dedupe_key=dedupe_key),
+            _enrichment(dedupe_key=dedupe_key, tags=["acceleration"]),
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.get("/cards/sv04-266")
+
+    assert response.status_code == 200
+    assert response.json()["entity_id"] == dedupe_key
+    assert response.json()["tags"] == ["acceleration"]
 
 
 async def test_card_detail_tags_are_empty_when_enrichment_is_not_completed(
@@ -81,7 +119,7 @@ async def test_card_detail_tags_are_empty_when_enrichment_is_not_completed(
     )
     await db_session.commit()
 
-    response = await client.get("/cards/charizard")
+    response = await client.get("/cards/swsh1-1")
 
     assert response.json()["tags"] == []
 
@@ -92,7 +130,7 @@ async def test_card_detail_tags_are_empty_without_an_enrichment_row(
     db_session.add_all([_card(id="swsh1-1", dedupe_key="charizard")])
     await db_session.commit()
 
-    response = await client.get("/cards/charizard")
+    response = await client.get("/cards/swsh1-1")
 
     assert response.status_code == 200
     assert response.json()["tags"] == []
@@ -105,7 +143,7 @@ async def test_card_detail_passes_through_the_matched_chip_from_search(
     await db_session.commit()
 
     response = await client.get(
-        "/cards/charizard", params={"matched_tags": ["acceleration"], "matched_semantic": "true"}
+        "/cards/swsh1-1", params={"matched_tags": ["acceleration"], "matched_semantic": "true"}
     )
 
     assert response.json()["matched"] == {"tags": ["acceleration"], "semantic": True}
@@ -117,12 +155,23 @@ async def test_card_detail_matched_is_null_when_not_reached_via_search(
     db_session.add_all([_card(id="swsh1-1", dedupe_key="charizard")])
     await db_session.commit()
 
-    response = await client.get("/cards/charizard")
+    response = await client.get("/cards/swsh1-1")
 
     assert response.json()["matched"] is None
 
 
-async def test_card_detail_404s_for_an_unknown_entity(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_card_detail_404s_for_an_unknown_printing(client: AsyncClient, db_session: AsyncSession) -> None:
     response = await client.get("/cards/does-not-exist")
+
+    assert response.status_code == 404
+
+
+async def test_card_detail_is_no_longer_addressed_by_dedupe_key(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    db_session.add_all([_card(id="swsh1-1", dedupe_key="charizard")])
+    await db_session.commit()
+
+    response = await client.get("/cards/charizard")
 
     assert response.status_code == 404

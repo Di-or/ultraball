@@ -244,13 +244,13 @@ describe("App", () => {
     });
   });
 
-  it("opens a card-detail modal from a result and closes it", async () => {
-    stubFetch(
+  it("opens a card-detail modal by printing code, even when the dedupe_key contains a slash", async () => {
+    const fetchMock = stubFetch(
       [
         {
           results: [
             {
-              entity_id: "charizard",
+              entity_id: "charizard fire spin [fire/fire]",
               printing_id: "swsh4-1",
               name: "Charizard",
               category: "Pokemon",
@@ -275,7 +275,7 @@ describe("App", () => {
       ],
       {
         cardDetail: {
-          entity_id: "charizard",
+          entity_id: "charizard fire spin [fire/fire]",
           printing_id: "swsh4-1",
           name: "Charizard",
           category: "Pokemon",
@@ -308,6 +308,10 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: /Charizard/ }));
 
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
+    const detailUrls = fetchMock.mock.calls
+      .map(([input]) => (typeof input === "string" ? input : input.toString()))
+      .filter((url) => url.startsWith("/cards/"));
+    expect(detailUrls).toEqual(["/cards/swsh4-1"]);
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
