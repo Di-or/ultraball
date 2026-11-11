@@ -15,7 +15,6 @@ from app.catalog.deck_models import (
 from app.catalog.deck_validation import DeckLine, UnresolvedEntry, validate_deck
 from app.catalog.detail_models import CardDetail
 from app.catalog.energy_models import EnergyBasic, EnergyBasicsResponse
-from app.catalog.models import Base as CatalogBase
 from app.catalog.models import Card
 from app.catalog.ptcgl_import import DeckImportError, resolve_ptcgl_import
 from app.catalog.queries import (
@@ -30,13 +29,11 @@ from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
 from app.db import make_engine, make_session_factory
+from app.schema import create_schema
 from app.enrichment import status as enrichment_status
-from app.enrichment.models import Base as EnrichmentBase
 from app.enrichment.models import CardEnrichment
-from app.search.embedding_cache import Base as QueryEmbeddingCacheBase
 from app.search.gate import resolve_search_gate
 from app.search.models import Matched, SearchRequest, SearchResponse, SearchResult
-from app.search.parse_cache import Base as ParseCacheBase
 from app.search.queries import run_rrf_search, run_search, run_semantic_search, run_tag_match_search
 
 
@@ -54,19 +51,7 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        async with engine.begin() as conn:
-            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-            await conn.run_sync(CatalogBase.metadata.create_all)
-            # `create_all` never adds a column to an existing table; backfill `set_name` (issue #90)
-            # on a database from before it. Re-running ingest (or the seed script) fills real names.
-            await conn.execute(text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS set_name VARCHAR NOT NULL DEFAULT ''"))
-            # Likewise `is_textless` (issue #113): re-running ingest marks the textless printings.
-            await conn.execute(
-                text("ALTER TABLE cards ADD COLUMN IF NOT EXISTS is_textless BOOLEAN NOT NULL DEFAULT false")
-            )
-            await conn.run_sync(EnrichmentBase.metadata.create_all)
-            await conn.run_sync(ParseCacheBase.metadata.create_all)
-            await conn.run_sync(QueryEmbeddingCacheBase.metadata.create_all)
+        await create_schema(engine)
         # Loaded once: a set ingested while the app runs only reaches the parse prompt, schema
         # and cache key after a restart (issue #90 — no live reload).
         async with session_factory() as session:
