@@ -4,7 +4,7 @@ import type { CardDetail, Matched } from "../lib/types";
 import { MatchedChips } from "./MatchedChips";
 
 interface CardDetailModalProps {
-  entityId: string;
+  printingId: string;
   matched?: Matched | null;
   onClose: () => void;
 }
@@ -12,7 +12,7 @@ interface CardDetailModalProps {
 // Opens as an overlay on top of the still-mounted results grid (docs/archive/mvp-spec.md
 // §12.4, cited by app/catalog/detail_models.py), so the grid's scroll position is untouched
 // by construction — nothing navigates away.
-export function CardDetailModal({ entityId, matched, onClose }: CardDetailModalProps) {
+export function CardDetailModal({ printingId, matched, onClose }: CardDetailModalProps) {
   const [detail, setDetail] = useState<CardDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +21,7 @@ export function CardDetailModal({ entityId, matched, onClose }: CardDetailModalP
     setDetail(null);
     setError(null);
 
-    getCardDetail(entityId, matched, controller.signal)
+    getCardDetail(printingId, matched, controller.signal)
       .then(setDetail)
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
@@ -30,7 +30,7 @@ export function CardDetailModal({ entityId, matched, onClose }: CardDetailModalP
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityId]);
+  }, [printingId]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {

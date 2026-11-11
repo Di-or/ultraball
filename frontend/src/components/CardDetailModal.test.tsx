@@ -45,14 +45,14 @@ describe("CardDetailModal", () => {
     vi.unstubAllGlobals();
   });
 
-  it("fetches and renders the card's printed info, tags, printings, and matched chip", async () => {
+  it("fetches by printing id and renders the card's printed info, tags, printings, and matched chip", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(detailResponse(CHARIZARD));
 
-    render(<CardDetailModal entityId="charizard" onClose={vi.fn()} />);
+    render(<CardDetailModal printingId="swsh4-1" onClose={vi.fn()} />);
 
     await waitFor(() => expect(screen.getByRole("heading", { name: "Charizard" })).toBeInTheDocument());
 
-    expect(fetch).toHaveBeenCalledWith("/cards/charizard", expect.anything());
+    expect(fetch).toHaveBeenCalledWith("/cards/swsh4-1", expect.anything());
     expect(screen.getByText(/170 HP/)).toBeInTheDocument();
     expect(screen.getByText(/Fire Spin/)).toBeInTheDocument();
     expect(screen.getAllByText("acceleration").length).toBeGreaterThan(0);
@@ -64,7 +64,7 @@ describe("CardDetailModal", () => {
 
     render(
       <CardDetailModal
-        entityId="charizard"
+        printingId="swsh4-1"
         matched={{ tags: ["acceleration"], semantic: true }}
         onClose={vi.fn()}
       />
@@ -79,7 +79,7 @@ describe("CardDetailModal", () => {
   it("closes on backdrop click, close button, and Escape", async () => {
     vi.mocked(fetch).mockResolvedValue(detailResponse(CHARIZARD));
     const onClose = vi.fn();
-    const { container, rerender } = render(<CardDetailModal entityId="charizard" onClose={onClose} />);
+    const { container, rerender } = render(<CardDetailModal printingId="swsh4-1" onClose={onClose} />);
     await waitFor(() => expect(screen.getByRole("heading", { name: "Charizard" })).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -91,7 +91,7 @@ describe("CardDetailModal", () => {
     fireEvent.click(container.querySelector(".modal-backdrop")!);
     expect(onClose).toHaveBeenCalledTimes(2);
 
-    rerender(<CardDetailModal entityId="charizard" onClose={onClose} />);
+    rerender(<CardDetailModal printingId="swsh4-1" onClose={onClose} />);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(3);
   });

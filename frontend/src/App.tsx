@@ -125,7 +125,7 @@ export function App() {
       </main>
       {selectedCard && (
         <CardDetailModal
-          entityId={selectedCard.entity_id}
+          printingId={selectedCard.printing_id}
           matched={selectedCard.matched}
           onClose={() => setSelectedCard(null)}
         />

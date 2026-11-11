@@ -25,7 +25,7 @@ export async function search(request: SearchRequest, signal?: AbortSignal): Prom
 }
 
 export async function getCardDetail(
-  entityId: string,
+  printingId: string,
   matched?: Matched | null,
   signal?: AbortSignal
 ): Promise<CardDetail> {
@@ -34,7 +34,7 @@ export async function getCardDetail(
   if (matched?.semantic) params.set("matched_semantic", "true");
 
   const query = params.toString();
-  const response = await fetch(`/cards/${encodeURIComponent(entityId)}${query ? `?${query}` : ""}`, {
+  const response = await fetch(`/cards/${encodeURIComponent(printingId)}${query ? `?${query}` : ""}`, {
     signal,
   });
   if (!response.ok) {

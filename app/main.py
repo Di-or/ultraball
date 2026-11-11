@@ -16,6 +16,7 @@ from app.catalog.deck_validation import DeckLine, UnresolvedEntry, validate_deck
 from app.catalog.detail_models import CardDetail
 from app.catalog.energy_models import EnergyBasic, EnergyBasicsResponse
 from app.catalog.models import Base as CatalogBase
+from app.catalog.models import Card
 from app.catalog.ptcgl_import import DeckImportError, resolve_ptcgl_import
 from app.catalog.queries import (
     get_basic_energy_palette,
@@ -149,19 +150,22 @@ def create_app(
             filters=gate.filters,
         )
 
-    @app.get("/cards/{entity_id}")
+    @app.get("/cards/{printing_id}")
     async def card_detail(
-        entity_id: str,
+        printing_id: str,
         matched_tags: list[str] | None = Query(default=None),
         matched_semantic: bool = Query(default=False),
         session: AsyncSession = Depends(get_session),
     ) -> CardDetail:
-        printings = await get_printings(session, entity_id)
-        if not printings:
+        # Addressed by printing id, not dedupe_key: most real keys contain `/` (attack costs
+        # like `[fire/fire]`), which no URL path segment survives (issue #121).
+        printing = await session.get(Card, printing_id)
+        if printing is None:
             raise HTTPException(status_code=404, detail="card not found")
+        printings = await get_printings(session, printing.dedupe_key)
         card = printings[0]  # newest-first (CONTEXT.md: Representative printing)
 
-        enrichment = await session.get(CardEnrichment, entity_id)
+        enrichment = await session.get(CardEnrichment, card.dedupe_key)
         tags = enrichment.tags if enrichment and enrichment.status == enrichment_status.COMPLETED else []
 
         matched = (

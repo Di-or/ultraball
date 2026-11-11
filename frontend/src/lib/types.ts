@@ -78,7 +78,7 @@ export interface SearchResponse {
 export const EMPTY_FILTERS: Filters = { format: "standard" };
 export const EMPTY_FACETS: Facets = {};
 
-// Mirrors app/catalog/detail_models.py — GET /cards/{entity_id}.
+// Mirrors app/catalog/detail_models.py — GET /cards/{printing_id}.
 
 export interface Attack {
   name: string;
