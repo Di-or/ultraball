@@ -66,11 +66,13 @@ ENRICHMENT_JSON_SCHEMA = {
     "type": "object",
     "properties": {
         "normalized_description": {"type": "string"},
+        # Before `tags`: output is generated in schema order, so the rationale must come first
+        # to inform the tag choice (#118).
+        "rationale": {"type": "string"},
         "tags": {"type": "array", "items": {"type": "string", "enum": sorted(FUNCTIONAL_TAGS)}},
         "suggested_new_tag": {"type": ["string", "null"]},
-        "rationale": {"type": "string"},
     },
-    "required": ["normalized_description", "tags", "suggested_new_tag", "rationale"],
+    "required": ["normalized_description", "rationale", "tags", "suggested_new_tag"],
     "additionalProperties": False,
 }
 
@@ -90,12 +92,14 @@ The user message is one card's text: its name, then its Abilities, attacks or ef
 embedded for semantic search, so describe effects, not flavour or strategy. Strip proper names \
 (the card's own and any it names) and numeric magnitudes ("deal damage", not "deal 120 damage"). \
 Keep energy types named inside an effect ("attach a Fire Energy"), but not the Pokémon's own type.
-- `tags`: every functional tag whose definition the card's effect meets, across all of its \
-attacks and Abilities. An empty array if none do (a vanilla attacker, a basic Energy). \
+- `rationale`: written before you choose tags. One or two sentences naming each effect on the \
+card and the tag definition it meets, or why a near-miss tag does not apply.
+- `tags`: the tags your rationale found earned: every functional tag whose definition the \
+card's effect meets, across all of its attacks and Abilities. An empty array if none do \
+(a vanilla attacker, a basic Energy). \
 `bench-reach`, `multi-target` and `counter-placement` combine freely: an attack that damages \
 the Active and puts damage counters on the Bench in any way you like (Dragapult ex) carries all three.
-- `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null.
-- `rationale`: one or two sentences tying each tag to the card text that earns it."""
+- `suggested_new_tag`: a short kebab-case name for a distinct effect no tag above covers, or null."""
 )
 
 
