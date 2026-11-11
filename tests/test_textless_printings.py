@@ -30,7 +30,8 @@ _ULTRA_BALL_TEXT = (
     "Search your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck."
 )
 
-# The real `30th-128` Ultra Ball: TCGdex still has no English text for it.
+# The real `30th-128` Ultra Ball: TCGdex still has no English text for it. Ingested without
+# the catalog overrides, which would fill that text in.
 _TEXTLESS_TRAINER_ID = "30th-128"
 
 # A Pokémon from a half-filled set: a name, hp and stage, but no attacks or abilities yet.
@@ -59,7 +60,7 @@ async def _ingest(db_session: AsyncSession, *, ultra_ball: dict | None = None, o
         }
     )
     for set_id in ("30th", "me06", "me01", "sve"):
-        await run_ingest(db_session, catalog_client, set_id)
+        await run_ingest(db_session, catalog_client, set_id, overrides={})
 
 
 async def _submitted_dedupe_keys(db_session: AsyncSession) -> set[str]:
