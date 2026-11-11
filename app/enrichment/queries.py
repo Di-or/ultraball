@@ -1,4 +1,7 @@
-from sqlalchemy import ColumnElement, and_, func, not_, or_, select
+from collections.abc import Collection
+from dataclasses import dataclass
+
+from sqlalchemy import ColumnElement, SQLColumnExpression, and_, func, not_, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.corpus import corpus_clause
@@ -22,7 +25,12 @@ def has_version_stamp(
 
 
 async def get_cards_pending_enrichment(
-    session: AsyncSession, *, taxonomy_version: str, prompt_version: str, repair_only: bool = False
+    session: AsyncSession,
+    *,
+    taxonomy_version: str,
+    prompt_version: str,
+    repair_only: bool = False,
+    dedupe_keys: Collection[str] | None = None,
 ) -> list[tuple[str, str]]:
     """(dedupe_key, canonical_card_text) pairs due a (re)enrichment Batch call.
 
@@ -34,6 +42,8 @@ async def get_cards_pending_enrichment(
 
     With `repair_only`, the due cards are exactly the `needs_repair` ones instead:
     the deliberate repair re-run, which leaves every other card for the ordinary submit.
+
+    `dedupe_keys`, if given, limits the result to those card entities (the runner's trial).
     """
     latest_text = (
         select(Card.dedupe_key, Card.canonical_card_text)
@@ -54,10 +64,41 @@ async def get_cards_pending_enrichment(
         )
         due = not_(latest_text.c.dedupe_key.in_(settled))
 
-    stmt = select(latest_text.c.dedupe_key, latest_text.c.canonical_card_text).where(due)
+    stmt = select(latest_text.c.dedupe_key, latest_text.c.canonical_card_text).where(
+        due, _in_scope(latest_text.c.dedupe_key, dedupe_keys)
+    )
 
     result = await session.execute(stmt)
     return [(row.dedupe_key, row.canonical_card_text) for row in result]
+
+
+@dataclass(frozen=True)
+class InFlightBatch:
+    """A submitted batch with `pending` rows, and the version stamp it was submitted under."""
+
+    batch_id: str
+    taxonomy_version: str
+    prompt_version: str
+
+
+async def get_in_flight_batches(session: AsyncSession) -> list[InFlightBatch]:
+    """Batches that still have `pending` rows: submitted, but not yet polled to the end.
+
+    Polling these is how a run resumes after a crash, since a submit leaves pending rows alone.
+    Each must be applied under its own stamp, which may predate a version bump: applied under
+    the current one, an old prompt's answers would pass as current and never be re-tagged.
+    """
+    stmt = (
+        select(CardEnrichment.batch_id, CardEnrichment.taxonomy_version, CardEnrichment.prompt_version)
+        .where(CardEnrichment.status == status.PENDING, CardEnrichment.batch_id.is_not(None))
+        .distinct()
+        .order_by(CardEnrichment.batch_id)
+    )
+    return [
+        InFlightBatch(row.batch_id, row.taxonomy_version, row.prompt_version)
+        for row in await session.execute(stmt)
+        if row.batch_id is not None
+    ]
 
 
 def _has_normalized_description() -> ColumnElement[bool]:
@@ -65,7 +106,14 @@ def _has_normalized_description() -> ColumnElement[bool]:
     return func.btrim(CardEnrichment.normalized_description) != ""
 
 
-async def get_cards_pending_embedding(session: AsyncSession) -> list[tuple[str, str]]:
+def _in_scope(dedupe_key: SQLColumnExpression[str], dedupe_keys: Collection[str] | None) -> ColumnElement[bool]:
+    """No limit when `dedupe_keys` is None; otherwise just those card entities."""
+    return true() if dedupe_keys is None else dedupe_key.in_(dedupe_keys)
+
+
+async def get_cards_pending_embedding(
+    session: AsyncSession, *, dedupe_keys: Collection[str] | None = None
+) -> list[tuple[str, str]]:
     """(dedupe_key, normalized_description) pairs that have a description but no vector yet.
 
     Decoupled from the tagging pass's own resumability bookkeeping (status,
@@ -76,7 +124,11 @@ async def get_cards_pending_embedding(session: AsyncSession) -> list[tuple[str, 
     """
     stmt = (
         select(CardEnrichment.dedupe_key, CardEnrichment.normalized_description)
-        .where(_has_normalized_description(), CardEnrichment.vector.is_(None))
+        .where(
+            _has_normalized_description(),
+            CardEnrichment.vector.is_(None),
+            _in_scope(CardEnrichment.dedupe_key, dedupe_keys),
+        )
         .order_by(CardEnrichment.dedupe_key)
     )
 
@@ -84,7 +136,7 @@ async def get_cards_pending_embedding(session: AsyncSession) -> list[tuple[str, 
     return [(row.dedupe_key, row.normalized_description) for row in result]
 
 
-async def count_cards_unembeddable(session: AsyncSession) -> int:
+async def count_cards_unembeddable(session: AsyncSession, *, dedupe_keys: Collection[str] | None = None) -> int:
     """Rows with no vector that the embedding pass can't embed: no description, or a blank one.
 
     These are the cards waiting on (re)tagging — pending, failed or needs_repair.
@@ -92,5 +144,6 @@ async def count_cards_unembeddable(session: AsyncSession) -> int:
     stmt = select(func.count()).where(
         CardEnrichment.vector.is_(None),
         or_(CardEnrichment.normalized_description.is_(None), not_(_has_normalized_description())),
+        _in_scope(CardEnrichment.dedupe_key, dedupe_keys),
     )
     return await session.scalar(stmt) or 0

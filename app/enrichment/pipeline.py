@@ -1,3 +1,5 @@
+from collections.abc import Collection
+
 from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +19,7 @@ async def submit_enrichment_batch(
     taxonomy_version: str = TAXONOMY_VERSION,
     prompt_version: str = PROMPT_VERSION,
     repair_only: bool = False,
+    dedupe_keys: Collection[str] | None = None,
 ) -> str | None:
     """Submit one Batch call covering every dedupe_key currently due enrichment.
 
@@ -27,9 +30,15 @@ async def submit_enrichment_batch(
 
     `repair_only` limits the batch to the `needs_repair` cards, which an ordinary
     submit leaves alone; they're polled and applied like any other batch.
+
+    `dedupe_keys`, if given, limits the batch to those card entities.
     """
     pending = await get_cards_pending_enrichment(
-        session, taxonomy_version=taxonomy_version, prompt_version=prompt_version, repair_only=repair_only
+        session,
+        taxonomy_version=taxonomy_version,
+        prompt_version=prompt_version,
+        repair_only=repair_only,
+        dedupe_keys=dedupe_keys,
     )
     if not pending:
         return None
