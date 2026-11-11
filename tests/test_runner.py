@@ -53,14 +53,20 @@ def _answer(raw: dict, *, description: str = "Does a thing.") -> EnrichmentResul
 _ANSWERS = {_key(raw): _answer(raw) for raw in (_CHARMANDER, _VULPIX, _GROWLITHE)}
 
 
-async def _run(session: AsyncSession, enrichment_client: StubEnrichmentClient, **kwargs: Any) -> RunReport:
+async def _run(
+    session: AsyncSession,
+    enrichment_client: StubEnrichmentClient,
+    *,
+    snapshots: dict[str, SetSnapshot] = _SNAPSHOTS,
+    **kwargs: Any,
+) -> RunReport:
     return await run_catalog_build(
         session,
-        StubCatalogClient(_SNAPSHOTS),
+        StubCatalogClient(snapshots),
         enrichment_client,
         StubEmbeddingClient(),
         **{
-            "set_ids": list(_SNAPSHOTS),
+            "set_ids": list(snapshots),
             "overrides": {},
             "poll_interval_seconds": 0,
             "say": lambda _line: None,
@@ -103,15 +109,7 @@ async def test_a_re_run_re_tags_only_changed_text_and_needs_repair_cards(db_sess
     reworded = {**_CHARMANDER, "attacks": [{**_CHARMANDER["attacks"][0], "effect": "Discard 2 Energy."}]}
     snapshots = {**_SNAPSHOTS, "sv01": SetSnapshot("sv01", date(2023, 3, 31), [reworded, _VULPIX])}
     enrichment_client = StubEnrichmentClient({**_ANSWERS, _key(reworded): _answer(reworded)})
-    report = await run_catalog_build(
-        db_session,
-        StubCatalogClient(snapshots),
-        enrichment_client,
-        StubEmbeddingClient(),
-        set_ids=list(snapshots),
-        poll_interval_seconds=0,
-        say=lambda _line: None,
-    )
+    report = await _run(db_session, enrichment_client, snapshots=snapshots)
 
     assert sum(report.submitted.values()) == 2
     rows = await _enrichments(db_session)
@@ -133,6 +131,21 @@ async def test_a_re_run_after_a_crash_applies_the_batch_still_in_flight(db_sessi
     assert report.batch_statuses == {"batch-1": status.COMPLETED}
     rows = await _enrichments(db_session)
     assert all(row.status == status.COMPLETED and row.vector is not None for row in rows.values())
+
+
+async def test_a_batch_left_in_flight_across_a_version_bump_is_applied_not_paid_for_twice(
+    db_session: AsyncSession,
+) -> None:
+    enrichment_client = StubEnrichmentClient(_ANSWERS)
+    for set_id in _SNAPSHOTS:
+        await run_ingest(db_session, StubCatalogClient(_SNAPSHOTS), set_id)
+    await submit_enrichment_batch(db_session, enrichment_client, prompt_version="previous")
+
+    report = await _run(db_session, enrichment_client)
+
+    # The old batch is applied first; its cards are then due under the new stamp, once.
+    assert report.batch_statuses["batch-1"] == status.COMPLETED
+    assert report.submitted == {"batch-2": 3}
 
 
 async def test_printing_ids_limit_the_run_to_those_printings_sets_and_entities(db_session: AsyncSession) -> None:

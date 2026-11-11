@@ -22,7 +22,7 @@ It connects to Postgres on `localhost:5432` (the port `docker compose` publishes
 
 ## Building the catalog
 
-The runner builds the real catalog from TCGdex: it ingests every **Included set** (`app/catalog/included_sets.py`) and prints the Catalog override report, then submits tagging batches for new, changed, failed and `needs_repair` card entities, waits for them and applies them, and finally embeds every card that has a description but no vector. It prints a summary of each step as it goes.
+The runner builds the real catalog from TCGdex: it ingests every **Included set** (`app/catalog/included_sets.py`) and prints the Catalog override report, then submits tagging batches for new, changed, failed and `needs_repair` card entities, waits for them and applies them, and finally embeds every card entity that has a normalized description but no vector. It prints a summary of each step as it goes.
 
 ```
 uv run python -m scripts.build_catalog
@@ -30,7 +30,7 @@ uv run python -m scripts.build_catalog
 
 It writes to `DATABASE_URL` (the local Postgres by default) and spends real money: it needs `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) with Console credits and `VOYAGE_API_KEY`. The full catalog costs about $4.50. Run it in its own terminal, not inside an agent session. The tagging batch usually takes minutes to an hour, but can take up to 24h.
 
-Every step is idempotent, so re-running is safe: it only tags cards whose text is new or changed (plus failed and `needs_repair` ones), only embeds cards without a current vector, and after a crash it picks up a batch still in flight. To add a set, add its id to `INCLUDED_SETS` and run it again.
+Every step is idempotent, so re-running is safe: it only tags cards whose text is new or changed (plus failed and `needs_repair` ones), only embeds cards without a current vector, and after a crash it first finishes any batch still in flight (applying it under the version stamp it was submitted with). Re-tagging `needs_repair` cards on every run means a card that keeps failing is paid for again each time; at about $0.0014 a card that's negligible, but check the listed `needs_repair` cards rather than re-running in a loop. To add a set, add its id to `INCLUDED_SETS` and run it again.
 
 To run on just some printings (the 72-card trial), pass their printing ids. The run is then limited to those printings' sets, and tagging and embedding to their card entities:
 

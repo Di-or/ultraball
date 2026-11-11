@@ -1,4 +1,5 @@
 from collections.abc import Collection
+from dataclasses import dataclass
 
 from sqlalchemy import ColumnElement, SQLColumnExpression, and_, func, not_, or_, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,18 +72,33 @@ async def get_cards_pending_enrichment(
     return [(row.dedupe_key, row.canonical_card_text) for row in result]
 
 
-async def get_in_flight_batch_ids(session: AsyncSession) -> list[str]:
-    """Batch ids that still have `pending` rows: submitted, but not yet polled to the end.
+@dataclass(frozen=True)
+class InFlightBatch:
+    """A submitted batch with `pending` rows, and the version stamp it was submitted under."""
+
+    batch_id: str
+    taxonomy_version: str
+    prompt_version: str
+
+
+async def get_in_flight_batches(session: AsyncSession) -> list[InFlightBatch]:
+    """Batches that still have `pending` rows: submitted, but not yet polled to the end.
 
     Polling these is how a run resumes after a crash, since a submit leaves pending rows alone.
+    Each must be applied under its own stamp, which may predate a version bump: applied under
+    the current one, an old prompt's answers would pass as current and never be re-tagged.
     """
     stmt = (
-        select(CardEnrichment.batch_id)
+        select(CardEnrichment.batch_id, CardEnrichment.taxonomy_version, CardEnrichment.prompt_version)
         .where(CardEnrichment.status == status.PENDING, CardEnrichment.batch_id.is_not(None))
         .distinct()
         .order_by(CardEnrichment.batch_id)
     )
-    return [batch_id for batch_id in await session.scalars(stmt) if batch_id is not None]
+    return [
+        InFlightBatch(row.batch_id, row.taxonomy_version, row.prompt_version)
+        for row in await session.execute(stmt)
+        if row.batch_id is not None
+    ]
 
 
 def _has_normalized_description() -> ColumnElement[bool]:

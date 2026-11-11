@@ -9,7 +9,7 @@ import time
 from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.included_sets import INCLUDED_SETS
@@ -23,7 +23,8 @@ from app.enrichment import status
 from app.enrichment.embedding import EmbeddingPassReport, run_embedding_pass
 from app.enrichment.models import CardEnrichment
 from app.enrichment.pipeline import poll_and_apply_batch, submit_enrichment_batch
-from app.enrichment.queries import get_in_flight_batch_ids
+from app.enrichment.queries import InFlightBatch, get_in_flight_batches
+from app.enrichment.taxonomy import PROMPT_VERSION, TAXONOMY_VERSION
 
 # Since #115 a re-tagged card has no vector until the embedding step, and semantic search only
 # ranks cards with a current vector. The app and the runner read the same version constants,
@@ -31,8 +32,11 @@ from app.enrichment.queries import get_in_flight_batch_ids
 REMINDER_AFTER_SUBMIT = (
     "Reminder: concept search returns nothing for these cards until this run finishes. "
     "Semantic-only queries come back empty for them and mixed queries rank them by tags only; "
-    "filtering and browsing are unaffected. After a version bump, run this straight away and let it finish."
+    "filtering and browsing are unaffected. The routine is: bump the version, then run the runner "
+    "straight away, and let it finish."
 )
+
+type Say = Callable[[str], None]
 
 
 @dataclass(frozen=True)
@@ -40,12 +44,12 @@ class RunReport:
     """What one run did, step by step."""
 
     printings_ingested: dict[str, int]
-    """Set id → printings ingested from it."""
+    """Set id → its printings in the catalog after ingest."""
     override_report: list[OverrideCheck]
     submitted: dict[str, int]
     """Batch id → card entities staked out under it, for each batch this run submitted."""
     batch_statuses: dict[str, str]
-    """Batch id → how it ended, for every batch this run polled."""
+    """Batch id → how it ended, for every batch this run polled (including a crashed run's)."""
     embedding: EmbeddingPassReport
     missing_printing_ids: list[str] = field(default_factory=list)
     """Printing ids asked for that TCGdex didn't return, so weren't ingested."""
@@ -61,7 +65,7 @@ async def run_catalog_build(
     printing_ids: Collection[str] | None = None,
     overrides: CatalogOverrides | None = None,
     poll_interval_seconds: float = 60,
-    say: Callable[[str], None] = print,
+    say: Say = print,
 ) -> RunReport:
     """Ingest `set_ids`, tag every entity that is due, wait for the batches, then embed.
 
@@ -94,6 +98,15 @@ async def run_catalog_build(
         if missing_printing_ids:
             say(f"   Not returned by TCGdex: {', '.join(missing_printing_ids)}")
 
+    batch_statuses: dict[str, str] = {}
+    # A crashed run's batch is seen to the end first. Its rows may carry a stamp from before a
+    # version bump, and an ordinary submit would re-stake them and pay for them twice.
+    if crashed_runs_batches := await get_in_flight_batches(session):
+        say("   Finishing the batches a previous run left in flight")
+        batch_statuses |= await _poll_until_done(
+            session, enrichment_client, crashed_runs_batches, poll_interval_seconds, say
+        )
+
     say("2. Submit tagging")
     # New, changed or failed entities first; then the needs_repair ones, which an ordinary
     # submit leaves alone. A card in the first batch is no longer needs_repair, so none is sent twice.
@@ -112,21 +125,26 @@ async def run_catalog_build(
         say("   Nothing to tag")
 
     say("3. Poll and apply")
-    # Includes any batch a crashed earlier run submitted but never saw to the end.
-    in_flight = await get_in_flight_batch_ids(session)
-    batch_statuses = await _poll_until_done(session, enrichment_client, in_flight, poll_interval_seconds, say)
+    new_batches = [InFlightBatch(batch_id, TAXONOMY_VERSION, PROMPT_VERSION) for batch_id in submitted]
+    batch_statuses |= await _poll_until_done(session, enrichment_client, new_batches, poll_interval_seconds, say)
     for batch_id, batch_status in batch_statuses.items():
         say(f"   {batch_id}: {batch_status}")
-    if not batch_statuses:
-        say("   No batch in flight")
-    await _say_cards_left_untagged(session, printing_ids, say)
+    await _say_tagging_outcome(session, dedupe_keys, say)
 
     say("4. Embed")
     embedding = await run_embedding_pass(session, embedding_client, dedupe_keys=dedupe_keys)
-    say(f"   Embedded {embedding.embedded}; {embedding.skipped} without a usable description left unembedded")
+    say(
+        f"   Embedded {embedding.embedded}; {embedding.skipped} left unembedded "
+        "(no normalized description: pending, failed or needs_repair)"
+    )
 
     return RunReport(
-        printings_ingested, override_report, submitted, batch_statuses, embedding, missing_printing_ids
+        printings_ingested=printings_ingested,
+        override_report=override_report,
+        submitted=submitted,
+        batch_statuses=batch_statuses,
+        embedding=embedding,
+        missing_printing_ids=missing_printing_ids,
     )
 
 
@@ -150,7 +168,7 @@ def sets_of_printings(printing_ids: Collection[str], set_ids: Sequence[str]) -> 
     return [set_id for set_id in set_ids if set_id in wanted]
 
 
-def _say_override_report(report: list[OverrideCheck], say: Callable[[str], None]) -> None:
+def _say_override_report(report: list[OverrideCheck], say: Say) -> None:
     if not report:
         say("   Catalog overrides: none that TCGdex now supplies")
         return
@@ -163,20 +181,23 @@ def _say_override_report(report: list[OverrideCheck], say: Callable[[str], None]
             say(f"       TCGdex:   {check.tcgdex_value!r}")
 
 
-async def _say_cards_left_untagged(
-    session: AsyncSession, printing_ids: Collection[str] | None, say: Callable[[str], None]
-) -> None:
-    """Lists the card entities whose tagging failed or needs repair, one printing each."""
-    stmt = (
+async def _say_tagging_outcome(session: AsyncSession, dedupe_keys: Collection[str] | None, say: Say) -> None:
+    """Card entities per enrichment status, then the failed and needs_repair ones by a printing each."""
+    in_scope = CardEnrichment.dedupe_key.in_(dedupe_keys) if dedupe_keys is not None else true()
+
+    counts = await session.execute(
+        select(CardEnrichment.status, func.count()).where(in_scope).group_by(CardEnrichment.status)
+    )
+    say("   Card entities by status: " + (", ".join(f"{row[0]} {row[1]}" for row in sorted(counts)) or "none"))
+
+    untagged = await session.execute(
         select(Card.id, Card.name, CardEnrichment.status)
         .join(CardEnrichment, CardEnrichment.dedupe_key == Card.dedupe_key)
-        .where(CardEnrichment.status.in_((status.NEEDS_REPAIR, status.FAILED)))
+        .where(in_scope, CardEnrichment.status.in_((status.NEEDS_REPAIR, status.FAILED)))
         .distinct(Card.dedupe_key)
         .order_by(Card.dedupe_key, Card.id)
     )
-    if printing_ids is not None:
-        stmt = stmt.where(Card.id.in_(printing_ids))
-    rows = sorted((await session.execute(stmt)).all(), key=lambda row: (row.status, row.id))
+    rows = sorted(untagged, key=lambda row: (row.status, row.id))
     for row in rows:
         say(f"   {row.status}: {row.id} {row.name}")
     if any(row.status == status.NEEDS_REPAIR for row in rows):
@@ -196,21 +217,28 @@ async def _count_staked(session: AsyncSession, batch_id: str) -> int:
 async def _poll_until_done(
     session: AsyncSession,
     enrichment_client: EnrichmentClient,
-    batch_ids: list[str],
+    batches: list[InFlightBatch],
     poll_interval_seconds: float,
-    say: Callable[[str], None],
+    say: Say,
 ) -> dict[str, str]:
-    """Polls each batch until it leaves `pending`, applying its results as it ends."""
+    """Polls each batch until it leaves `pending`, applying its results under its own stamp."""
     started = time.monotonic()
     ended: dict[str, str] = {}
-    waiting = list(batch_ids)
+    waiting = list(batches)
     while waiting:
-        for batch_id in list(waiting):
-            batch_status = await poll_and_apply_batch(session, enrichment_client, batch_id)
+        for batch in list(waiting):
+            batch_status = await poll_and_apply_batch(
+                session,
+                enrichment_client,
+                batch.batch_id,
+                taxonomy_version=batch.taxonomy_version,
+                prompt_version=batch.prompt_version,
+            )
             if batch_status != status.PENDING:
-                ended[batch_id] = batch_status
-                waiting.remove(batch_id)
+                ended[batch.batch_id] = batch_status
+                waiting.remove(batch)
         if waiting:
-            say(f"   Still processing after {time.monotonic() - started:.0f}s: {', '.join(waiting)}")
+            still = ", ".join(batch.batch_id for batch in waiting)
+            say(f"   Still processing after {time.monotonic() - started:.0f}s: {still}")
             await asyncio.sleep(poll_interval_seconds)
     return ended

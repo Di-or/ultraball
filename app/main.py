@@ -29,9 +29,9 @@ from app.clients.embedding_client import EmbeddingClient, HostedEmbeddingClient
 from app.clients.parse_client import HostedParseClient, ParseClient
 from app.config import Settings
 from app.db import make_engine, make_session_factory
-from app.schema import create_schema
 from app.enrichment import status as enrichment_status
 from app.enrichment.models import CardEnrichment
+from app.schema import create_schema
 from app.search.gate import resolve_search_gate
 from app.search.models import Matched, SearchRequest, SearchResponse, SearchResult
 from app.search.queries import run_rrf_search, run_search, run_semantic_search, run_tag_match_search
