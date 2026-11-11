@@ -89,8 +89,8 @@ async def test_hosted_fetch_set_builds_a_snapshot_from_the_set_and_each_printing
     assert snapshot.name == "MEP Black Star Promos"
     assert snapshot.release_date == date(2025, 9, 26)
     assert snapshot.official_abbreviation == "MEP"
-    assert [card["id"] for card in snapshot.cards] == ["mep-023", "mep-051"]
-    assert snapshot.cards == [load_printing("mep-023"), load_printing("mep-051")]
+    assert [card["id"] for card in snapshot.cards] == ["mep-023", "mep-051", "mep-092"]
+    assert snapshot.cards == [load_printing("mep-023"), load_printing("mep-051"), load_printing("mep-092")]
 
 
 async def test_hosted_fetch_set_bypasses_the_cdn_cache_on_every_request(mock_tcgdex: MockTcgdex) -> None:
@@ -99,7 +99,7 @@ async def test_hosted_fetch_set_bypasses_the_cdn_cache_on_every_request(mock_tcg
     # no earlier request used.
     await HostedCatalogClient(retry_delay_seconds=0).fetch_set("mep")
 
-    assert len(mock_tcgdex.requests) == 3
+    assert len(mock_tcgdex.requests) == 4  # the set, then each of its 3 committed printings
     assert all(request.headers.get("Cache-Control") == "no-cache" for request in mock_tcgdex.requests)
     cache_busters = [request.url.params.get("cb") for request in mock_tcgdex.requests]
     assert None not in cache_busters

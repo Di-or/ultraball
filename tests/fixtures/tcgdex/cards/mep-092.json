@@ -1,0 +1,66 @@
+{
+  "category": "Trainer",
+  "id": "mep-092",
+  "illustrator": "Naoki Saito",
+  "localId": "092",
+  "name": "Paradise Resort",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 0,
+      "total": 112
+    },
+    "id": "mep",
+    "name": "MEP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 903686,
+        "tcgplayer": 714597
+      },
+      "variantId": "jr7oetx1mqug9"
+    },
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "staff"
+      ],
+      "thirdParty": {
+        "tcgplayer": 714598,
+        "cardmarket": 905263
+      },
+      "variantId": "81yyszqt25dphmu2olh"
+    }
+  ],
+  "cameoDexIds": [
+    25,
+    54,
+    185,
+    363,
+    700,
+    737,
+    926,
+    950,
+    999,
+    1018
+  ],
+  "effect": "The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less.",
+  "trainerType": "Stadium",
+  "regulationMark": "J",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-10-05T23:02:00+01:00"
+}

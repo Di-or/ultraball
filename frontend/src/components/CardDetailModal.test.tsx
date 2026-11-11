@@ -26,7 +26,7 @@ const CHARIZARD: CardDetail = {
   attacks: [{ name: "Fire Spin", cost: ["Fire", "Fire", "Colorless", "Colorless"], damage: 120, effect: "Discard 2 Energy." }],
   abilities: [],
   attack_costs: [4],
-  image: "https://assets.tcgdex.net/en/swsh/swsh4/1",
+  image: "https://assets.tcgdex.net/en/swsh/swsh4/1/high.webp",
   is_standard_legal: false,
   tags: ["acceleration"],
   printings: [
@@ -57,6 +57,15 @@ describe("CardDetailModal", () => {
     expect(screen.getByText(/Fire Spin/)).toBeInTheDocument();
     expect(screen.getAllByText("acceleration").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/swsh4|swsh1/).length).toBeGreaterThan(0);
+  });
+
+  it("shows the card's art from the URL the API gives, wherever it is hosted", async () => {
+    const art = "https://images.example.com/charizard.png";
+    vi.mocked(fetch).mockResolvedValueOnce(detailResponse({ ...CHARIZARD, image: art }));
+
+    render(<CardDetailModal printingId="swsh4-1" onClose={vi.fn()} />);
+
+    expect(await screen.findByRole("img", { name: "Charizard" })).toHaveAttribute("src", art);
   });
 
   it("passes matched provenance through as query params", async () => {

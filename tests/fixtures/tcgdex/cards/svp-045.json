@@ -1,0 +1,113 @@
+{
+  "category": "Trainer",
+  "id": "svp-045",
+  "illustrator": "Naoki Saito",
+  "image": "https://assets.tcgdex.net/en/sv/svp/045",
+  "localId": "045",
+  "name": "Paradise Resort",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 225,
+      "total": 226
+    },
+    "id": "svp",
+    "name": "SVP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023"
+      ],
+      "thirdParty": {
+        "cardmarket": 726924,
+        "tcgplayer": 518863
+      },
+      "variantId": "2fnyg4g538et3q356alc6ux0gon"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023",
+        "staff"
+      ],
+      "thirdParty": {
+        "cardmarket": 727542,
+        "tcgplayer": 583700
+      },
+      "variantId": "15i9grynje65aa1e83ryxy8jbbw3tldl"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023",
+        "top-thirty-two"
+      ],
+      "variantId": "at0bsq1t2l5u5t9hxbggz3u52zobmg2gbkyv8cwg"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023",
+        "top-sixteen"
+      ],
+      "variantId": "gx8bq2hegwv129n5tu9ke7s7kgk9mgamr4ye5"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023",
+        "top-eight"
+      ],
+      "variantId": "mtltux8qutph45acr11u9bug5qjsrk63ptc"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023",
+        "semi-finalist"
+      ],
+      "variantId": "cjr38ywaj8xwi0ydrwvrslxpbsutcio4qs0bp9o"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "worlds-2023",
+        "finalist"
+      ],
+      "variantId": "qi4g3e7u0mc9fnp7kl6nachts85radmv9n"
+    }
+  ],
+  "cameoDexIds": [
+    25,
+    54,
+    131,
+    906,
+    909,
+    912,
+    925
+  ],
+  "effect": "The Retreat Cost of each Psyduck in play (both yours and your opponent's) is {C} less.",
+  "trainerType": "Stadium",
+  "regulationMark": "G",
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-30T09:41:20+01:00"
+}

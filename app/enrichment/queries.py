@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.corpus import corpus_clause
 from app.catalog.models import Card
+from app.catalog.representative import representative_order
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
 from app.enrichment.taxonomy import PROMPT_VERSION, TAXONOMY_VERSION
@@ -50,7 +51,7 @@ async def get_cards_pending_enrichment(
         # Not Basic Energy (it lives in the tray) nor textless printings (no card entity yet).
         .where(corpus_clause(Card))
         .distinct(Card.dedupe_key)
-        .order_by(Card.dedupe_key, Card.release_date.desc())
+        .order_by(Card.dedupe_key, *representative_order(Card))
         .subquery()
     )
 

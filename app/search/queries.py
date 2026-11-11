@@ -4,6 +4,7 @@ from sqlalchemy.orm import aliased
 
 from app.catalog.corpus import corpus_clause
 from app.catalog.models import Card
+from app.catalog.representative import representative_order
 from app.enrichment import status
 from app.enrichment.models import CardEnrichment
 from app.enrichment.queries import has_version_stamp
@@ -21,11 +22,11 @@ _RRF_K = 60
 
 
 def _representative_printings():
-    """One row per `dedupe_key` — the newest printing (CONTEXT.md: Representative printing)."""
+    """One row per `dedupe_key`: its representative printing (CONTEXT.md: Representative printing)."""
     return (
         select(Card)
         .distinct(Card.dedupe_key)
-        .order_by(Card.dedupe_key, Card.release_date.desc(), Card.ingested_at.desc())
+        .order_by(Card.dedupe_key, *representative_order(Card))
         .cte("representative_printing")
     )
 

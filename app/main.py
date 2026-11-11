@@ -148,7 +148,7 @@ def create_app(
         if printing is None:
             raise HTTPException(status_code=404, detail="card not found")
         printings = await get_printings(session, printing.dedupe_key)
-        card = printings[0]  # newest-first (CONTEXT.md: Representative printing)
+        card = printings[0]  # representative first (CONTEXT.md: Representative printing)
 
         enrichment = await session.get(CardEnrichment, card.dedupe_key)
         tags = enrichment.tags if enrichment and enrichment.status == enrichment_status.COMPLETED else []
