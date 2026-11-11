@@ -134,6 +134,22 @@ async def test_submit_constrains_output_to_the_enrichment_schema_with_tags_from_
     assert schema["properties"]["tags"]["items"]["enum"] == sorted(FUNCTIONAL_TAGS)
 
 
+async def test_submit_has_the_model_write_its_rationale_before_choosing_tags(
+    batches_api: _FakeBatchesApi,
+) -> None:
+    # Structured output is generated in schema order, so a rationale written after the tags
+    # can't inform them (#118).
+    await HostedEnrichmentClient(api_key="test-key").submit_batch([_NEST_BALL])
+
+    params = batches_api.created_bodies[0]["requests"][0]["params"]
+    schema = params["output_config"]["format"]["schema"]
+    properties = list(schema["properties"])
+    assert properties.index("rationale") < properties.index("tags")
+    assert schema["required"].index("rationale") < schema["required"].index("tags")
+    [system_block] = params["system"]
+    assert system_block["text"].index("- `rationale`") < system_block["text"].index("- `tags`")
+
+
 async def test_submit_puts_the_tag_glossary_in_a_cached_system_prefix_shared_by_every_request(
     batches_api: _FakeBatchesApi,
 ) -> None:
