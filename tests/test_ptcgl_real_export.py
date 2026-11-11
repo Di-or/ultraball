@@ -17,17 +17,17 @@ _SETS = ("sv01", "sv02", "sv03", "sv04", "sve", "me02", "30th", "30th-c")
 
 # As PTCGL's "Export" button writes it, section headers and total included.
 _REAL_EXPORT = """\
-Pokémon: 3
+Pokémon: 4
 2 Charizard ex OBF 125
 1 Mega Charizard X ex PFL 13
 1 Charizard 30C 1
 
-Trainer: 3
+Trainer: 9
 4 Iono PAL 185
 4 Ultra Ball SVI 196
 1 Ultra Ball 30C 128
 
-Energy: 3
+Energy: 11
 2 Ignition Energy PFL 124
 1 Reversal Energy PAR 266
 8 Basic {R} Energy SVE 2
@@ -112,6 +112,25 @@ async def test_a_basic_energy_line_with_an_unknown_set_tail_falls_back_to_the_pa
 
     # Older PTCGL exports wrote the set code for Basic Energy as "Energy".
     assert await _import(client, "8 Basic {R} Energy Energy 2") == [("sve-002", 8)]
+
+
+async def test_a_basic_energy_line_resolves_to_the_palette_whatever_its_set_tail_names(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest(db_session)
+
+    # `SVI 196` is Ultra Ball: the Basic Energy name wins over the tail.
+    assert await _import(client, "8 Basic {R} Energy SVI 196") == [("sve-002", 8)]
+
+
+async def test_a_line_whose_set_tail_names_no_printing_fails_even_if_its_name_is_energy_like(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest(db_session)
+
+    response = await client.post("/decks/import", json={"text": "2 Ignition Energy PFL 999"})
+
+    assert response.status_code == 422
 
 
 async def test_a_name_that_matches_no_printing_with_that_number_still_fails(

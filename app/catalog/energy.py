@@ -4,11 +4,18 @@ from typing import Literal
 from sqlalchemy import ColumnElement, or_
 from sqlalchemy.orm import QueryableAttribute
 
+from app.catalog.identity import spell_out_energy_symbols
+
 # The eight Basic Energy types in play (CONTEXT.md: Basic-Energy tray). Dragon and Colorless never had a
 # Basic Energy card, and Fairy is out of rotation, so a Fairy Energy is treated as an ordinary card.
 _BASIC_ENERGY_TYPES = ("Grass", "Fire", "Water", "Lightning", "Psychic", "Fighting", "Darkness", "Metal")
 
 _BASIC_ENERGY_NAME = re.compile(rf"(?:basic )?(?:{'|'.join(_BASIC_ENERGY_TYPES)}) energy", re.IGNORECASE)
+
+# How a decklist names Basic Energy: also `Basic {R} Energy`, or the bare type (`Fire`).
+_DECKLIST_BASIC_ENERGY_NAME = re.compile(
+    rf"(?:basic )?(?P<type>{'|'.join(_BASIC_ENERGY_TYPES)})(?: energy)?", re.IGNORECASE
+)
 
 EnergyType = Literal["Basic", "Special"]
 
@@ -29,6 +36,16 @@ def derive_energy_type(*, category: str, name: str, effect: str | None) -> Energ
         return "Basic"
 
     return "Special"
+
+
+def basic_energy_type_named(name: str) -> str | None:
+    """The type a decklist line's Basic Energy name names ("Fire" for `Basic {R} Energy`,
+    `Basic Fire Energy`, `Fire Energy` or `Fire`), or `None` if it doesn't name Basic Energy.
+
+    Looser than `derive_energy_type`'s name test, which reads card names rather than
+    decklist lines (issue #123)."""
+    match = _DECKLIST_BASIC_ENERGY_NAME.fullmatch(" ".join(spell_out_energy_symbols(name).split()))
+    return match.group("type").title() if match else None
 
 
 def is_basic_energy(*, category: str, energy_type: str | None) -> bool:
