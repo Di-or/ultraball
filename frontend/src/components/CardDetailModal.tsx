@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getCardDetail } from "../lib/api";
+import { printingLabel } from "../lib/ptcgl";
 import type { CardDetail, Category, Matched, Printing } from "../lib/types";
 import type { DeckCardInput } from "../state/deckState";
 import { MatchedChips } from "./MatchedChips";
@@ -134,11 +135,11 @@ export function CardDetailModal({ printingId, matched, onClose, onAddToDeck }: C
               <h3>Printings</h3>
               <ul className="printings-list" aria-label="Printings">
                 {detail.printings.map((printing) => {
-                  const version = `${printing.set_code} ${printing.local_id}`;
+                  const label = printingLabel(printing.set_code, printing.local_id);
                   return (
                     <li key={printing.printing_id}>
                       <span>
-                        {version}
+                        {label}
                         {printing.rarity ? ` · ${printing.rarity}` : ""}
                         {printing.regulation_mark ? ` · Mark ${printing.regulation_mark}` : ""}
                         {!printing.is_standard_legal && <span className="illegal-flag"> · not Standard-legal</span>}
@@ -146,7 +147,7 @@ export function CardDetailModal({ printingId, matched, onClose, onAddToDeck }: C
                       <button
                         type="button"
                         className="add-version"
-                        aria-label={`Add this version (${version}) to deck`}
+                        aria-label={`Add this version (${label}) to deck`}
                         onClick={() => onAddToDeck(deckCardFor(detail, printing))}
                       >
                         Add this version

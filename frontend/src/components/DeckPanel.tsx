@@ -1,7 +1,7 @@
 import { useEffect, useState, type Dispatch } from "react";
 import { DeckImportRejected, getEnergyBasics, importDeck, validateDeck } from "../lib/api";
 import { DECK_CATEGORY_ORDER } from "../lib/deckCategories";
-import { exportToPtcgl } from "../lib/ptcgl";
+import { exportToPtcgl, printingLabel } from "../lib/ptcgl";
 import type { Category, Counts, EnergyBasic, Violation } from "../lib/types";
 import type { DeckAction, DeckLine } from "../state/deckState";
 
@@ -156,7 +156,7 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
                   <span className="deck-row-name">
                     {line.name}{" "}
                     <span className="deck-row-printing">
-                      {line.set_code} {line.local_id}
+                      {printingLabel(line.set_code, line.local_id)}
                     </span>
                   </span>
                   <DeckStepper

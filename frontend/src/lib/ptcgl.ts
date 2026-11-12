@@ -30,7 +30,7 @@ export function exportToPtcgl(lines: DeckLine[]): string {
 
     const count = linesInSection.reduce((sum, line) => sum + line.count, 0);
     const body = linesInSection
-      .map((line) => `${line.count} ${ptcglName(line)} ${line.set_code} ${ptcglNumber(line.local_id)}`)
+      .map((line) => `${line.count} ${ptcglName(line)} ${printingLabel(line.set_code, line.local_id)}`)
       .join("\n");
     sections.push(`${SECTION_HEADINGS[category]}: ${count}\n${body}`);
   }
@@ -44,6 +44,12 @@ export function exportToPtcgl(lines: DeckLine[]): string {
 function ptcglName(line: DeckLine): string {
   const name = line.energy_type === "Basic" ? line.name.replace(/^Basic\s+/i, "") : line.name;
   return name.replace(/ (GX|EX)$/, "-$1");
+}
+
+// A printing's set code + number as PTCGL writes it ("OBF 125") — the export's tail, and the
+// label card detail and the deck panel show, so what the player picks is what gets exported.
+export function printingLabel(setCode: string, localId: string): string {
+  return `${setCode} ${ptcglNumber(localId)}`;
 }
 
 // TCGdex zero-pads card numbers ("007"); PTCGL doesn't ("MEP 7").

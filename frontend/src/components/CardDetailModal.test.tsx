@@ -56,7 +56,7 @@ describe("CardDetailModal", () => {
     expect(screen.getByText(/170 HP/)).toBeInTheDocument();
     expect(screen.getByText(/Fire Spin/)).toBeInTheDocument();
     expect(screen.getAllByText("acceleration").length).toBeGreaterThan(0);
-    expect(screen.getByText(/VIV 025/)).toBeInTheDocument();
+    expect(screen.getByText(/VIV 25/)).toBeInTheDocument();
     expect(screen.getByText(/SSH 1/)).toBeInTheDocument();
   });
 
@@ -115,7 +115,7 @@ describe("CardDetailModal", () => {
 
     const printings = await screen.findByRole("list", { name: "Printings" });
     expect(within(printings).getAllByRole("button", { name: /Add this version/ })).toHaveLength(2);
-    expect(within(printings).getByText(/VIV 025/)).toBeInTheDocument();
+    expect(within(printings).getByText(/VIV 25/)).toBeInTheDocument();
   });
 
   it("closes on backdrop click, close button, and Escape", async () => {
