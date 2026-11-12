@@ -73,6 +73,11 @@ describe("exportToPtcgl", () => {
     expect(text).toBe("Pokémon: 60\n60 Psyduck MEP 7");
   });
 
+  it("writes a 30th Celebration card as PTCGL does", () => {
+    // Copied from a real PTCGL export.
+    expect(exportToPtcgl([pokemon("30th-017", 1, "Lapras", "30C", "017")])).toBe("Pokémon: 1\n1 Lapras 30C 17");
+  });
+
   it("keeps a local id of zero", () => {
     expect(exportToPtcgl([trainer("x-000", "Card", "XYZ", "000")])).toBe("Trainer: 1\n1 Card XYZ 0");
   });

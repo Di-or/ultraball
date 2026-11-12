@@ -47,6 +47,8 @@ FIXTURE_PRINTINGS = {
     "sv03-125": "Charizard ex: PTCGL writes `OBF 125`, part of the real-export import test",
     "30th-001": "Exeggcute: set code `30C`, local id `001`, which `30th-c` also has",
     "30th-c-001": "Charizard: `30th-c` also derives set code `30C`, so `30C 1` names two printings",
+    "30th-017": "Lapras: PTCGL writes `Lapras 30C 17`, a line taken from a real PTCGL export",
+    "30th-c-017": "Solgaleo GX: the other `30C 17`, so only the name tells the two apart",
     # Every printing in a decklist exported by Limitless's deckbuilder that PTCGL imported cleanly
     # (`tests/fixtures/ptcgl/limitless_export.txt`, issue #123): SV promos are `PR-SV`, Mega
     # promos `MEP`, and Basic Energy is written by name with its set code.

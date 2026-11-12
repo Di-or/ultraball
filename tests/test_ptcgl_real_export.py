@@ -188,3 +188,12 @@ async def test_a_ptcgl_compatible_export_imports_every_printing_exactly(
         ("sv05-161", 1),
         ("me04-084", 1),
     ]
+
+
+async def test_a_line_from_a_real_ptcgl_export_picks_its_30c_set_by_name(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest(db_session)
+
+    # Copied from PTCGL. `30th-c-017` is Solgaleo GX, also `30C 17`.
+    assert await _import(client, "1 Lapras 30C 17") == [("30th-017", 1)]
