@@ -39,8 +39,11 @@ export function exportToPtcgl(lines: DeckLine[]): string {
 }
 
 // TCGdex names some Basic Energy printings "Basic Lightning Energy"; PTCGL writes "Lightning Energy".
+// TCGdex writes older rule boxes as "Solgaleo GX" / "M Gardevoir EX"; PTCGL hyphenates them
+// ("Solgaleo-GX"). Modern lowercase "ex" ("Charizard ex") has no hyphen.
 function ptcglName(line: DeckLine): string {
-  return line.energy_type === "Basic" ? line.name.replace(/^Basic\s+/i, "") : line.name;
+  const name = line.energy_type === "Basic" ? line.name.replace(/^Basic\s+/i, "") : line.name;
+  return name.replace(/ (GX|EX)$/, "-$1");
 }
 
 // TCGdex zero-pads card numbers ("007"); PTCGL doesn't ("MEP 7").

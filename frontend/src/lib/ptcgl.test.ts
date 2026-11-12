@@ -78,6 +78,29 @@ describe("exportToPtcgl", () => {
     expect(exportToPtcgl([pokemon("30th-017", 1, "Lapras", "30C", "017")])).toBe("Pokémon: 1\n1 Lapras 30C 17");
   });
 
+  it("writes Classic Collection cards as PTCGL does", () => {
+    // Copied from a real PTCGL export. The catalog stores the printed `CC` number; TCGdex
+    // writes the name "Solgaleo GX".
+    const deck = [
+      pokemon("30th-c-024", 1, "Shining Celebi", "30C", "CC6"),
+      pokemon("30th-c-017", 1, "Solgaleo GX", "30C", "CC23"),
+    ];
+
+    expect(exportToPtcgl(deck)).toBe("Pokémon: 2\n1 Shining Celebi 30C CC6\n1 Solgaleo-GX 30C CC23");
+  });
+
+  it("hyphenates older GX and EX names but leaves modern ex alone", () => {
+    const deck = [
+      pokemon("30th-c-008", 1, "Pikachu & Zekrom GX", "30C", "CC25"),
+      pokemon("30th-c-023", 1, "M Gardevoir EX", "30C", "CC21"),
+      pokemon("sv03-125", 1, "Charizard ex", "OBF", "125"),
+    ];
+
+    expect(exportToPtcgl(deck)).toBe(
+      "Pokémon: 3\n1 Pikachu & Zekrom-GX 30C CC25\n1 M Gardevoir-EX 30C CC21\n1 Charizard ex OBF 125",
+    );
+  });
+
   it("keeps a local id of zero", () => {
     expect(exportToPtcgl([trainer("x-000", "Card", "XYZ", "000")])).toBe("Trainer: 1\n1 Card XYZ 0");
   });

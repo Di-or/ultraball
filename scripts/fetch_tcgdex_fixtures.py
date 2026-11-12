@@ -48,7 +48,8 @@ FIXTURE_PRINTINGS = {
     "30th-001": "Exeggcute: set code `30C`, local id `001`, which `30th-c` also has",
     "30th-c-001": "Charizard: `30th-c` also derives set code `30C`, so `30C 1` names two printings",
     "30th-017": "Lapras: PTCGL writes `Lapras 30C 17`, a line taken from a real PTCGL export",
-    "30th-c-017": "Solgaleo GX: the other `30C 17`, so only the name tells the two apart",
+    "30th-c-017": "Solgaleo GX: TCGdex numbers it `017`, PTCGL writes `Solgaleo-GX 30C CC23`",
+    "30th-c-024": "Shining Celebi: TCGdex numbers it `024`, PTCGL writes `Shining Celebi 30C CC6`",
     # Every printing in a decklist exported by Limitless's deckbuilder that PTCGL imported cleanly
     # (`tests/fixtures/ptcgl/limitless_export.txt`, issue #123): SV promos are `PR-SV`, Mega
     # promos `MEP`, and Basic Energy is written by name with its set code.

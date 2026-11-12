@@ -2,8 +2,8 @@
 
 The catalog is ingested from real TCGdex JSON, which zero-pads card numbers (`localId: "086"`)
 while PTCGL writes them bare (`SVI 86`). `30th` and `30th-c` both derive the set code `30C`, and
-both have a card `001`. Basic Energy lines come as `Basic {R} Energy SVE 2` or a bare
-`Basic Fire Energy`.
+both have a card `001` in TCGdex, though PTCGL numbers the Classic Collection `CC1`-`CC30`.
+Basic Energy lines come as `Basic {R} Energy SVE 2` or a bare `Basic Fire Energy`.
 """
 
 from pathlib import Path
@@ -22,7 +22,7 @@ _REAL_EXPORT = """\
 Pokémon: 4
 2 Charizard ex OBF 125
 1 Mega Charizard X ex PFL 13
-1 Charizard 30C 1
+1 Charizard 30C CC2
 
 Trainer: 9
 4 Iono PAL 185
@@ -72,14 +72,25 @@ async def test_every_line_of_a_real_export_resolves_to_its_zero_padded_printing(
     )
 
 
-async def test_a_set_code_shared_by_two_sets_resolves_by_the_line_s_card_name(
+async def test_a_set_code_shared_by_two_sets_finds_each_set_s_cards(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _ingest(db_session)
 
-    entries = await _import(client, "1 Exeggcute 30C 1\n1 Charizard 30C 1")
+    entries = await _import(client, "1 Exeggcute 30C 1\n1 Charizard 30C CC2")
 
     assert entries == [("30th-001", 1), ("30th-c-001", 1)]
+
+
+async def test_classic_collection_lines_from_a_real_ptcgl_export_resolve_by_cc_number(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest(db_session)
+
+    # Copied from PTCGL. TCGdex numbers these `024` and `017`.
+    entries = await _import(client, "1 Shining Celebi 30C CC6\n1 Solgaleo-GX 30C CC23")
+
+    assert entries == [("30th-c-024", 1), ("30th-c-017", 1)]
 
 
 async def test_a_set_code_shared_by_two_sets_finds_a_number_only_one_of_them_has(
@@ -190,10 +201,11 @@ async def test_a_ptcgl_compatible_export_imports_every_printing_exactly(
     ]
 
 
-async def test_a_line_from_a_real_ptcgl_export_picks_its_30c_set_by_name(
+async def test_a_30th_celebration_line_from_a_real_ptcgl_export_resolves(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _ingest(db_session)
 
-    # Copied from PTCGL. `30th-c-017` is Solgaleo GX, also `30C 17`.
+    # Copied from PTCGL. TCGdex also numbers Solgaleo GX `017` (`30th-c-017`), but PTCGL calls it
+    # `CC23`, so only Lapras is `30C 17`.
     assert await _import(client, "1 Lapras 30C 17") == [("30th-017", 1)]
