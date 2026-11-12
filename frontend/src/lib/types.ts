@@ -95,6 +95,8 @@ export interface Ability {
 export interface Printing {
   printing_id: string;
   set_id: string;
+  set_code: string;
+  local_id: string;
   regulation_mark: string | null;
   rarity: string | null;
   image: string | null;

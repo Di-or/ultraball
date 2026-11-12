@@ -128,6 +128,7 @@ export function App() {
           printingId={selectedCard.printing_id}
           matched={selectedCard.matched}
           onClose={() => setSelectedCard(null)}
+          onAddToDeck={(card) => deckDispatch({ type: "card-added", card })}
         />
       )}
     </div>

@@ -6,12 +6,18 @@ from app.search.models import Matched
 
 
 class Printing(BaseModel):
-    """One printing of the card entity (CONTEXT.md: Printing) — for the reprint list."""
+    """One printing of the card entity (CONTEXT.md: Printing) — for the reprint list.
+
+    Carries `set_code` + `local_id` so "add this version" can put this exact printing in a
+    deck line, and the PTCGL export can write it (issue #122).
+    """
 
     model_config = {"from_attributes": True}
 
     printing_id: str
     set_id: str
+    set_code: str
+    local_id: str
     regulation_mark: str | None
     rarity: str | None
     image: str | None
@@ -22,6 +28,8 @@ class Printing(BaseModel):
         return cls(
             printing_id=card.id,
             set_id=card.set_id,
+            set_code=card.set_code,
+            local_id=card.local_id,
             regulation_mark=card.regulation_mark,
             rarity=card.rarity,
             image=image_url(card.image, "high"),

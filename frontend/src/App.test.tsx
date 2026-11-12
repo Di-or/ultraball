@@ -314,4 +314,79 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  it("puts the printing chosen in card detail into the deck, and its set code and number into the export", async () => {
+    stubFetch(
+      [
+        {
+          results: [
+            {
+              printing_id: "sv03-125",
+              name: "Charizard ex",
+              category: "Pokemon",
+              hp: 330,
+              types: ["Darkness"],
+              stage: "Stage 2",
+              sub_category: ["ex"],
+              regulation_mark: "G",
+              rarity: "Double Rare",
+              set_id: "sv03",
+              set_code: "OBF",
+              local_id: "125",
+              is_standard_legal: true,
+              matched: null,
+            },
+          ],
+          total: 1,
+          limit: 30,
+          offset: 0,
+          filters: { format: "standard" },
+        },
+      ],
+      {
+        cardDetail: {
+          dedupe_key: "charizard ex",
+          printing_id: "sv03-125",
+          name: "Charizard ex",
+          category: "Pokemon",
+          hp: 330,
+          types: ["Darkness"],
+          stage: "Stage 2",
+          evolve_from: "Charmeleon",
+          retreat: 2,
+          regulation_mark: "G",
+          rarity: "Double Rare",
+          set_id: "sv03",
+          sub_category: ["ex"],
+          trainer_type: null,
+          energy_type: null,
+          attacks: [],
+          abilities: [],
+          attack_costs: [],
+          image: null,
+          is_standard_legal: true,
+          tags: [],
+          printings: [
+            { printing_id: "sv03-125", set_id: "sv03", set_code: "OBF", local_id: "125", regulation_mark: "G", rarity: "Double Rare", image: null, is_standard_legal: true },
+            { printing_id: "sv03-223", set_id: "sv03", set_code: "OBF", local_id: "223", regulation_mark: "G", rarity: "Special Illustration Rare", image: null, is_standard_legal: true },
+          ],
+          matched: null,
+        },
+      }
+    );
+
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Charizard ex")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /Charizard ex/ }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add this version (OBF 223) to deck" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    const deck = screen.getByRole("complementary", { name: "Deck" });
+    expect(within(deck).getByText("OBF 223")).toBeInTheDocument();
+    fireEvent.click(within(deck).getByRole("button", { name: "Export to PTCGL" }));
+    expect((within(deck).getByLabelText("PTCGL export") as HTMLTextAreaElement).value).toContain(
+      "1 Charizard ex OBF 223"
+    );
+  });
 });

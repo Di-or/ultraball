@@ -153,7 +153,12 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
             <ul>
               {sectionLines.map((line) => (
                 <li key={line.printing_id} className="deck-row">
-                  <span className="deck-row-name">{line.name}</span>
+                  <span className="deck-row-name">
+                    {line.name}{" "}
+                    <span className="deck-row-printing">
+                      {line.set_code} {line.local_id}
+                    </span>
+                  </span>
                   <DeckStepper
                     count={line.count}
                     onChange={(count) => changeCount(line.printing_id, count)}

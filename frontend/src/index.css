@@ -340,8 +340,22 @@ header {
 }
 
 .printings-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.25rem 0;
   border-bottom: 1px solid #f0f0f0;
+}
+
+.add-version {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+}
+
+.deck-row-printing {
+  color: #6b7280;
+  font-size: 0.75rem;
 }
 
 .illegal-flag {
