@@ -107,7 +107,23 @@ async def test_search_returns_the_gated_output_contract(client: AsyncClient, db_
     assert body["limit"] == 30
     assert body["offset"] == 0
     assert {r["name"] for r in body["results"]} == {"Charizard", "Blastoise"}
-    assert body["results"][0]["entity_id"] == "b"  # name A→Z: Blastoise before Charizard
+    assert body["results"][0]["printing_id"] == "b"  # name A→Z: Blastoise before Charizard
+    assert set(body["results"][0]) == {
+        "printing_id",
+        "name",
+        "category",
+        "hp",
+        "types",
+        "stage",
+        "sub_category",
+        "regulation_mark",
+        "rarity",
+        "set_id",
+        "set_code",
+        "local_id",
+        "is_standard_legal",
+        "matched",
+    }
 
 
 async def test_search_applies_structured_filters(client: AsyncClient, db_session: AsyncSession) -> None:

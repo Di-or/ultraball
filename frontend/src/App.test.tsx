@@ -105,7 +105,6 @@ describe("App", () => {
       {
         results: [
           {
-            entity_id: "charizard",
             printing_id: "swsh4-1",
             name: "Charizard",
             category: "Pokemon",
@@ -250,7 +249,6 @@ describe("App", () => {
         {
           results: [
             {
-              entity_id: "charizard fire spin [fire/fire]",
               printing_id: "swsh4-1",
               name: "Charizard",
               category: "Pokemon",
@@ -275,7 +273,7 @@ describe("App", () => {
       ],
       {
         cardDetail: {
-          entity_id: "charizard fire spin [fire/fire]",
+          dedupe_key: "charizard fire spin [fire/fire]",
           printing_id: "swsh4-1",
           name: "Charizard",
           category: "Pokemon",

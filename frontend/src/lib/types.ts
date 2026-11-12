@@ -50,7 +50,6 @@ export interface Matched {
 }
 
 export interface SearchResult {
-  entity_id: string;
   printing_id: string;
   name: string;
   category: string;
@@ -103,7 +102,7 @@ export interface Printing {
 }
 
 export interface CardDetail {
-  entity_id: string;
+  dedupe_key: string;
   printing_id: string;
   name: string;
   category: string;

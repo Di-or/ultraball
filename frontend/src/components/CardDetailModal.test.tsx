@@ -8,7 +8,7 @@ function detailResponse(body: CardDetail): Response {
 }
 
 const CHARIZARD: CardDetail = {
-  entity_id: "charizard",
+  dedupe_key: "charizard",
   printing_id: "swsh4-1",
   name: "Charizard",
   category: "Pokemon",

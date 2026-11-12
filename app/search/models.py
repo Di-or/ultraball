@@ -63,7 +63,6 @@ class SearchResult(BaseModel):
 
     model_config = {"from_attributes": True}
 
-    entity_id: str
     printing_id: str
     name: str
     category: str
@@ -82,7 +81,6 @@ class SearchResult(BaseModel):
     @classmethod
     def from_card(cls, card: Card, *, matched: Matched | None = None) -> "SearchResult":
         return cls(
-            entity_id=card.dedupe_key,
             printing_id=card.id,
             name=card.name,
             category=card.category,
