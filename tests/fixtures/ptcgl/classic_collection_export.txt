@@ -1,3 +1,4 @@
+Pokémon: 31
 1 Pikachu 30C CC1
 1 Charizard 30C CC2
 1 Erika's Jigglypuff 30C CC4
@@ -29,3 +30,7 @@
 1 Mew 30C G
 1 Mew 30C R
 1 Mew 30C B
+
+Trainer: 2
+1 Misty 30C CC3
+1 N 30C CC18

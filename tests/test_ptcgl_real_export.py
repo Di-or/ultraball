@@ -211,8 +211,8 @@ async def test_a_30th_celebration_line_from_a_real_ptcgl_export_resolves(
     assert await _import(client, "1 Lapras 30C 17") == [("30th-017", 1)]
 
 
-# Every Classic Collection card PTCGL lists (Misty, CC3, and N, CC18, aside), then the three
-# RGB Mews, whose card numbers are letters. Copied from PTCGL.
+# All 30 Classic Collection cards and the three RGB Mews, whose card numbers are letters.
+# Lines copied from PTCGL, grouped into sections as an export writes them.
 _CLASSIC_COLLECTION_EXPORT = (Path(__file__).parent / "fixtures" / "ptcgl" / "classic_collection_export.txt").read_text(
     encoding="utf-8"
 )
@@ -257,6 +257,8 @@ async def test_every_classic_collection_and_rgb_mew_line_from_ptcgl_resolves(
         "30th-G",
         "30th-R",
         "30th-B",
+        "30th-c-005",  # CC3 Misty
+        "30th-c-021",  # CC18 N
     ]
 
 

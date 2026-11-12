@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 // The backend imports the same file (tests/test_ptcgl_real_export.py), so the two together
 // check the round trip.
 import ptcglCompatibleExport from "../../../tests/fixtures/ptcgl/limitless_export.txt?raw";
-// Every Classic Collection card PTCGL lists and the three RGB Mews, copied from PTCGL (issue #123).
+// All 30 Classic Collection cards and the three RGB Mews, lines copied from PTCGL (issue #123).
 import classicCollectionExport from "../../../tests/fixtures/ptcgl/classic_collection_export.txt?raw";
 import type { DeckLine } from "../state/deckState";
 import { exportToPtcgl } from "./ptcgl";
@@ -139,9 +139,13 @@ describe("exportToPtcgl", () => {
       ["30th-R", "Mew", "R"],
       ["30th-B", "Mew", "B"],
     ];
-    const deck = cards.map(([printing_id, name, local_id]) => pokemon(printing_id, 1, name, "30C", local_id));
+    const deck = [
+      ...cards.map(([printing_id, name, local_id]) => pokemon(printing_id, 1, name, "30C", local_id)),
+      trainer("30th-c-005", "Misty", "30C", "CC3"),
+      trainer("30th-c-021", "N", "30C", "CC18"),
+    ];
 
-    expect(exportToPtcgl(deck)).toBe(`Pokémon: 31\n${classicCollectionExport.replace(/\r\n/g, "\n").trimEnd()}`);
+    expect(exportToPtcgl(deck)).toBe(classicCollectionExport.replace(/\r\n/g, "\n").trimEnd());
   });
 
   it("keeps a local id of zero", () => {
