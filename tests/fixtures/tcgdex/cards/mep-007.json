@@ -1,0 +1,72 @@
+{
+  "category": "Pokemon",
+  "id": "mep-007",
+  "illustrator": "Jiro Sasumo",
+  "localId": "007",
+  "name": "Psyduck",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 0,
+      "total": 112
+    },
+    "id": "mep",
+    "name": "MEP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 851053,
+        "tcgplayer": 656257
+      },
+      "variantId": "jr7oetx1mqug9"
+    }
+  ],
+  "dexId": [
+    54
+  ],
+  "hp": 70,
+  "types": [
+    "Water"
+  ],
+  "stage": "Basic",
+  "abilities": [
+    {
+      "type": "Ability",
+      "name": "Damp",
+      "effect": "Pokémon in play (both yours and your opponent's) lose all Abilities that require those Pokémon to be Knocked Out."
+    }
+  ],
+  "attacks": [
+    {
+      "cost": [
+        "Colorless",
+        "Colorless"
+      ],
+      "name": "Collision",
+      "damage": 20
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Lightning",
+      "value": "x2"
+    }
+  ],
+  "retreat": 1,
+  "regulationMark": "I",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-04T19:51:08+01:00"
+}

@@ -5,7 +5,7 @@ from datetime import date
 from app.catalog.energy import EnergyType, derive_energy_type
 from app.catalog.identity import build_card_identity
 from app.catalog.legality import derive_is_standard_legal
-from app.catalog.set_codes import derive_set_code
+from app.catalog.set_codes import derive_local_id, derive_set_code
 from app.catalog.sub_category import derive_sub_category
 
 
@@ -62,7 +62,7 @@ def project_card(
         set_id=set_id,
         set_code=derive_set_code(set_id, official_abbreviation),
         set_name=set_name,
-        local_id=str(raw.get("localId", "")),
+        local_id=derive_local_id(raw["id"], str(raw.get("localId", ""))),
         name=raw["name"],
         category=raw["category"],
         hp=raw.get("hp"),

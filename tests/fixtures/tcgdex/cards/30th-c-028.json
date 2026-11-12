@@ -1,0 +1,83 @@
+{
+  "category": "Pokemon",
+  "id": "30th-c-028",
+  "illustrator": "5ban Graphics",
+  "localId": "028",
+  "name": "Zacian V",
+  "rarity": "None",
+  "set": {
+    "cardCount": {
+      "official": 30,
+      "total": 30
+    },
+    "id": "30th-c",
+    "name": "30th Classic Collection"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 907964,
+        "tcgplayer": 716209
+      },
+      "variantId": "1jz5lzkp5cg8gmrsxmftf0fur0t08j"
+    }
+  ],
+  "dexId": [
+    888
+  ],
+  "hp": 220,
+  "types": [
+    "Metal"
+  ],
+  "stage": "Basic",
+  "suffix": "V",
+  "abilities": [
+    {
+      "type": "Ability",
+      "name": "Intrepid Sword",
+      "effect": "Once during your turn, you may look at the top 3 cards of your deck and attach any number of Metal Energy cards you find there to this Pokémon. Put the other cards into your hand. If you use this Ability, your turn ends."
+    }
+  ],
+  "attacks": [
+    {
+      "cost": [
+        "Metal",
+        "Metal",
+        "Metal"
+      ],
+      "name": "Brave Blade",
+      "effect": "During your next turn, this Pokémon can't attack.",
+      "damage": 230
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "×2"
+    }
+  ],
+  "resistances": [
+    {
+      "type": "Grass",
+      "value": "-30"
+    }
+  ],
+  "retreat": 2,
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-22T10:07:07+01:00"
+}

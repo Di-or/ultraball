@@ -1,0 +1,54 @@
+{
+  "category": "Trainer",
+  "id": "sv06-145",
+  "illustrator": "kantaro",
+  "image": "https://assets.tcgdex.net/en/sv/sv06/145",
+  "localId": "145",
+  "name": "Carmine",
+  "rarity": "Uncommon",
+  "set": {
+    "cardCount": {
+      "official": 167,
+      "total": 226
+    },
+    "id": "sv06",
+    "logo": "https://assets.tcgdex.net/en/sv/sv06/logo",
+    "name": "Twilight Masquerade",
+    "symbol": "https://assets.tcgdex.net/univ/sv/sv06/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 769319,
+        "tcgplayer": 550189
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 769319,
+        "tcgplayer": 550189
+      },
+      "variantId": "cm4kqul3x1bwlz1f"
+    }
+  ],
+  "effect": "If you go first, you may use this card during your first turn.\n\nDiscard your hand and draw 5 cards.",
+  "trainerType": "Supporter",
+  "regulationMark": "H",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-20T00:53:54Z"
+}

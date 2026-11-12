@@ -1,0 +1,69 @@
+{
+  "category": "Pokemon",
+  "id": "30th-001",
+  "illustrator": "Nelnal",
+  "image": "https://assets.tcgdex.net/en/me/30th/001",
+  "localId": "001",
+  "name": "Exeggcute",
+  "rarity": "Common",
+  "set": {
+    "cardCount": {
+      "official": 128,
+      "total": 161
+    },
+    "id": "30th",
+    "name": "30th Celebration"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 907607,
+        "tcgplayer": 716435
+      },
+      "variantId": "15i9grynjbpddvzw7dk089qr7vfcowuo"
+    }
+  ],
+  "dexId": [
+    102
+  ],
+  "hp": 60,
+  "types": [
+    "Grass"
+  ],
+  "description": "Using telepathy only fellow Exeggcute can pick up on, they always form a cluster of six.",
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless"
+      ],
+      "name": "Hypnosis",
+      "effect": "Your opponent's Active Pokémon is now Asleep."
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "×2"
+    }
+  ],
+  "retreat": 1,
+  "regulationMark": "J",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-30T09:39:02+01:00"
+}

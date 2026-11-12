@@ -1,0 +1,54 @@
+{
+  "category": "Trainer",
+  "id": "sv06.5-054",
+  "illustrator": "AYUMI ODASHIMA",
+  "image": "https://assets.tcgdex.net/en/sv/sv06.5/054",
+  "localId": "054",
+  "name": "Academy at Night",
+  "rarity": "Uncommon",
+  "set": {
+    "cardCount": {
+      "official": 64,
+      "total": 99
+    },
+    "id": "sv06.5",
+    "logo": "https://assets.tcgdex.net/en/sv/sv06.5/logo",
+    "name": "Shrouded Fable",
+    "symbol": "https://assets.tcgdex.net/univ/sv/sv06.5/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 780950,
+        "tcgplayer": 560365
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 780950,
+        "tcgplayer": 560365
+      },
+      "variantId": "cm4kqul3x1bwlz1f"
+    }
+  ],
+  "effect": "Once during each player's turn, that player may put a card from their hand on top of their deck.",
+  "trainerType": "Stadium",
+  "regulationMark": "H",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-20T00:57:43Z"
+}

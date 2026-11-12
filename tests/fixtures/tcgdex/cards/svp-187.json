@@ -1,0 +1,64 @@
+{
+  "category": "Pokemon",
+  "id": "svp-187",
+  "illustrator": "Dsuke",
+  "image": "https://assets.tcgdex.net/en/sv/svp/187",
+  "localId": "187",
+  "name": "Yanmega",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 225,
+      "total": 226
+    },
+    "id": "svp",
+    "name": "SVP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "foil": "cosmos",
+      "thirdParty": {
+        "cardmarket": 817778,
+        "tcgplayer": 627724
+      },
+      "variantId": "5zs5af49g93yryvw1ftj"
+    }
+  ],
+  "dexId": [
+    469
+  ],
+  "hp": 130,
+  "types": [
+    "Grass"
+  ],
+  "evolveFrom": "Yanma",
+  "stage": "Stage1",
+  "attacks": [
+    {
+      "cost": [
+        "Grass",
+        "Grass",
+        "Colorless"
+      ],
+      "name": "Gyro Shockwave",
+      "effect": "Switch this Pokémon with 1 of your Benched Pokémon.",
+      "damage": 110
+    }
+  ],
+  "retreat": 1,
+  "regulationMark": "H",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-06-17T18:43:13+01:00"
+}

@@ -1,0 +1,59 @@
+{
+  "category": "Trainer",
+  "id": "sv02-185",
+  "illustrator": "Sanosuke Sakuma",
+  "image": "https://assets.tcgdex.net/en/sv/sv02/185",
+  "localId": "185",
+  "name": "Iono",
+  "rarity": "Uncommon",
+  "set": {
+    "cardCount": {
+      "official": 193,
+      "total": 279
+    },
+    "id": "sv02",
+    "logo": "https://assets.tcgdex.net/en/sv/sv02/logo",
+    "name": "Paldea Evolved",
+    "symbol": "https://assets.tcgdex.net/univ/sv/sv02/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 715660,
+        "tcgplayer": 497557,
+        "cardtrader": 248837
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 715660,
+        "tcgplayer": 497557,
+        "cardtrader": 248837
+      },
+      "variantId": "cm4kqul3x1bwlz1f"
+    }
+  ],
+  "cameoDexIds": [
+    81
+  ],
+  "effect": "Each player shuffles their hand and puts it on the bottom of their deck. If either player put any cards on the bottom of their deck in this way, each player draws a card for each of their remaining Prize cards.",
+  "trainerType": "Supporter",
+  "regulationMark": "G",
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-30T09:41:20+01:00"
+}

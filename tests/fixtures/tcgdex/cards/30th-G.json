@@ -1,0 +1,74 @@
+{
+  "category": "Pokemon",
+  "id": "30th-G",
+  "illustrator": "YOSHIROTTEN",
+  "image": "https://assets.tcgdex.net/en/me/30th/G",
+  "localId": "G",
+  "name": "Mew",
+  "rarity": "RGB Rare",
+  "set": {
+    "cardCount": {
+      "official": 128,
+      "total": 161
+    },
+    "id": "30th",
+    "name": "30th Celebration"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 909510,
+        "tcgplayer": 717608
+      },
+      "variantId": "jr7oetx1mqug9"
+    }
+  ],
+  "dexId": [
+    151
+  ],
+  "hp": 60,
+  "types": [
+    "Psychic"
+  ],
+  "description": "So rare that it is still said to be a mirage by many experts. Only a few people have seen it worldwide.",
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Psychic",
+        "Psychic"
+      ],
+      "name": "Psychic",
+      "effect": "This attack does 40 more damage for each Energy attached to your opponent's Active Pokémon.",
+      "damage": "10+"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Darkness",
+      "value": "×2"
+    }
+  ],
+  "resistances": [
+    {
+      "type": "Fighting",
+      "value": "-30"
+    }
+  ],
+  "retreat": 1,
+  "regulationMark": "J",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-30T09:39:02+01:00"
+}

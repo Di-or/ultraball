@@ -1,0 +1,82 @@
+{
+  "category": "Pokemon",
+  "id": "30th-c-026",
+  "illustrator": "5ban Graphics",
+  "localId": "026",
+  "name": "Mew VMAX",
+  "rarity": "None",
+  "set": {
+    "cardCount": {
+      "official": 30,
+      "total": 30
+    },
+    "id": "30th-c",
+    "name": "30th Classic Collection"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 907966,
+        "tcgplayer": 716207
+      },
+      "variantId": "1jz5lzkp5cg8gmrsxmftf0fur0t08j"
+    }
+  ],
+  "dexId": [
+    151
+  ],
+  "hp": 310,
+  "types": [
+    "Psychic"
+  ],
+  "stage": "VMAX",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless",
+        "Colorless"
+      ],
+      "name": "Cross Fusion Strike",
+      "effect": "Choose 1 of your Benched Fusion Strike Pokémon's attacks and use it as this attack."
+    },
+    {
+      "cost": [
+        "Psychic",
+        "Psychic"
+      ],
+      "name": "Max Miracle",
+      "effect": "This attack's damage isn't affected by any effects on your opponent's Active Pokémon.",
+      "damage": 130
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Darkness",
+      "value": "×2"
+    }
+  ],
+  "resistances": [
+    {
+      "type": "Fighting",
+      "value": "-30"
+    }
+  ],
+  "retreat": 0,
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-22T10:07:07+01:00"
+}

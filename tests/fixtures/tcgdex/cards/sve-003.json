@@ -1,0 +1,94 @@
+{
+  "category": "Energy",
+  "id": "sve-003",
+  "localId": "003",
+  "name": "Water Energy",
+  "rarity": "Common",
+  "set": {
+    "cardCount": {
+      "official": 24,
+      "total": 24
+    },
+    "id": "sve",
+    "name": "Scarlet & Violet Energy"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 689753,
+        "tcgplayer": 475427
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "foil": "cosmos",
+      "thirdParty": {
+        "cardmarket": 735367,
+        "tcgplayer": 517179
+      },
+      "variantId": "3ts5hd5swdcuwzv63t639rp"
+    },
+    {
+      "type": "normal",
+      "size": "standard",
+      "stamp": [
+        "player-rewards-program"
+      ],
+      "thirdParty": {
+        "tcgplayer": 515644
+      },
+      "variantId": "gx8bq2hegum3q6irsxlvqxm955ikw9gd1h311"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "stamp": [
+        "player-rewards-program"
+      ],
+      "foil": "cosmos",
+      "thirdParty": {
+        "tcgplayer": 622937
+      },
+      "variantId": "4f6221d6q70q1pd5gz5mpleqajtabtd6nalq8mg91zztu"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "foil": "pokeball",
+      "thirdParty": {
+        "cardmarket": 780805,
+        "tcgplayer": 563014
+      },
+      "variantId": "3739bbtj3i910y5ynn9xc6ryf"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "stamp": [
+        "professor-program"
+      ],
+      "foil": "cosmos",
+      "thirdParty": {
+        "tcgplayer": 599458
+      },
+      "variantId": "9c65uu02o61jw39cfwj25zehzm7vtmrthwuo6xen"
+    }
+  ],
+  "energyType": "Normal",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-06-18T14:32:08+01:00"
+}

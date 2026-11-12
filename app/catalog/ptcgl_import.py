@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.deck_validation import DeckLine
+from app.catalog.energy import basic_energy_type_named, is_basic_energy
+from app.catalog.models import Card
 from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_and_local_id
 
 # A card line: "<count> <name...> [<set_code> <local_id>]". The set-code/local-id tail is
@@ -13,8 +15,12 @@ from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_a
 _LINE_RE = re.compile(r"^(?P<count>\d+)\s+(?P<rest>.+)$")
 # `local_id` must contain a digit so a plain "<Type> Energy" name (no trailing set/number)
 # isn't mistaken for a two-token set-code tail (e.g. "Fire Energy" is not "set=Fire, id=Energy").
+# The one exception is a single capital letter: the 30th Celebration's RGB Mews are
+# `Mew 30C G` / `R` / `B`. `set_code` must contain a letter but may start with a digit (`30C`)
+# or hold a hyphen (`PR-SV`, the SV promos) (issue #123).
 _SET_TAIL_RE = re.compile(
-    r"^(?P<name>.+?)\s+(?P<set_code>[A-Za-z][A-Za-z0-9]{1,5})\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*)$"
+    r"^(?P<name>.+?)\s+(?P<set_code>(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9-]{1,5})"
+    r"\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*|[A-Z])$"
 )
 
 
@@ -86,18 +92,27 @@ def parse_ptcgl(text: str) -> list[ParsedLine]:
     return lines
 
 
-def _matches_basic_energy_name(candidate_name: str, palette_name: str) -> bool:
-    candidate = candidate_name.strip().lower()
-    palette = palette_name.strip().lower()
-    return candidate == palette or palette == f"{candidate} energy"
+def _is_basic_energy_of_type(card: Card | None, energy_type: str) -> bool:
+    return (
+        card is not None
+        and is_basic_energy(category=card.category, energy_type=card.energy_type)
+        and basic_energy_type_named(card.name) == energy_type
+    )
+
+
+def _palette_match(energy_type: str, palette: list[Card]) -> Card | None:
+    return next((card for card in palette if basic_energy_type_named(card.name) == energy_type), None)
 
 
 async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLine]:
     """Resolve PTCGL decklist text into deck lines, all-or-nothing (issue #28).
 
-    A line with a set code + local id resolves against that exact printing; a bare-name
-    line resolves against the fixed basic-Energy palette. If any line fails to resolve,
-    `DeckImportError` carries every failing line so the whole import can be rejected.
+    A line resolves against the printing its set code + local id identify. A Basic Energy line
+    (`Lightning Energy MEE 12`, `Basic {R} Energy SVE 2`, `Basic Fire Energy`) keeps that exact
+    printing only if it is Basic Energy of the named type; otherwise (no tail, or a tail like
+    older exports' `Energy 2` that names no set, or one naming another card) it resolves against
+    the fixed basic-Energy palette (issue #123). If any line fails to resolve, `DeckImportError` carries every
+    failing line so the whole import can be rejected.
 
     Returns the resolved `Card` alongside each count (not just the printing id) so the
     caller can render the imported deck without a second round trip (issue #31).
@@ -109,13 +124,12 @@ async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLin
     unresolved: list[str] = []
 
     for line in parsed:
+        energy_type = basic_energy_type_named(line.name)
+        card = None
         if line.set_code and line.local_id:
-            card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id)
-        else:
-            card = next(
-                (candidate for candidate in palette if _matches_basic_energy_name(line.name, candidate.name)),
-                None,
-            )
+            card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id, name=line.name)
+        if energy_type is not None and not _is_basic_energy_of_type(card, energy_type):
+            card = _palette_match(energy_type, palette)
 
         if card is None:
             unresolved.append(line.raw)

@@ -1,0 +1,43 @@
+{
+  "category": "Energy",
+  "id": "mee-012",
+  "illustrator": "YOSHIROTTEN",
+  "localId": "012",
+  "name": "Basic Lightning Energy",
+  "rarity": "Common",
+  "set": {
+    "cardCount": {
+      "official": 16,
+      "total": 16
+    },
+    "id": "mee",
+    "name": "Mega Evolution Energy"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 909312,
+        "tcgplayer": 713251
+      },
+      "variantId": "1jz5lzkp5cg8gmrsxmftf0fur0t08j"
+    }
+  ],
+  "energyType": "Normal",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-09-22T07:34:46Z"
+}

@@ -55,23 +55,23 @@ def _assemble_rules_text(raw: dict) -> str:
     parts: list[str] = []
 
     for ability in raw.get("abilities") or []:
-        parts.append(f"Ability: {ability.get('name', '')} - {_spell_out_symbols(ability.get('effect', ''))}")
+        parts.append(f"Ability: {ability.get('name', '')} - {spell_out_energy_symbols(ability.get('effect', ''))}")
 
     for attack in raw.get("attacks") or []:
         cost = "/".join(attack.get("cost") or [])
         damage = attack.get("damage")
         damage_part = f" {damage}" if damage is not None else ""
-        effect_text = _spell_out_symbols(attack.get("effect", ""))
+        effect_text = spell_out_energy_symbols(attack.get("effect", ""))
         parts.append(f"Attack: {attack.get('name', '')} [{cost}]{damage_part} - {effect_text}")
 
     effect = raw.get("effect")
     if effect:
-        parts.append(_spell_out_symbols(effect))
+        parts.append(spell_out_energy_symbols(effect))
 
     return "\n".join(part.strip() for part in parts if part.strip())
 
 
-def _spell_out_symbols(effect_text: object) -> str:
+def spell_out_energy_symbols(effect_text: object) -> str:
     """Write `[R]` / `{R}` energy symbols as type names, so reprints that differ only
     in notation share one dedupe_key and the tagging model reads a plain type name."""
     return _ENERGY_SYMBOL_RUN.sub(_type_names_for_run, str(effect_text))

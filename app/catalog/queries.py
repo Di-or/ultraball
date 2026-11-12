@@ -31,10 +31,24 @@ async def get_cards_by_ids(session: AsyncSession, printing_ids: Collection[str])
 
 
 async def get_card_by_set_code_and_local_id(
-    session: AsyncSession, set_code: str, local_id: str
+    session: AsyncSession, set_code: str, local_id: str, *, name: str
 ) -> Card | None:
-    """The printing a PTCGL line's `{set_code} {local_id}` tail identifies (issue #28)."""
-    stmt = select(Card).where(Card.set_code == set_code.upper(), Card.local_id == local_id)
+    """The printing a PTCGL line's `{name} {set_code} {local_id}` identifies (issues #28, #123).
+
+    TCGdex zero-pads local ids (`"086"`) and PTCGL doesn't (`SVI 86`), so both sides are
+    compared with leading zeros stripped. A set code can belong to more than one set (`30th`
+    and `30th-c` both derive `30C`), so every matching set is searched; when more than one has
+    that number, the printing whose name matches the line wins.
+    """
+    stmt = (
+        select(Card)
+        .where(
+            Card.set_code == set_code.upper(),
+            func.ltrim(Card.local_id, "0") == local_id.lstrip("0"),
+        )
+        .order_by((func.lower(Card.name) == name.strip().lower()).desc(), *representative_order(Card))
+        .limit(1)
+    )
     return await session.scalar(stmt)
 
 

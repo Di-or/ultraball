@@ -52,3 +52,19 @@ def test_set_code_is_uppercased() -> None:
     lines = parse_ptcgl("4 Charmander obf 10")
 
     assert lines[0].set_code == "OBF"
+
+
+def test_a_set_code_may_start_with_a_digit() -> None:
+    lines = parse_ptcgl("4 Ultra Ball 30C 128")
+
+    assert lines[0].name == "Ultra Ball"
+    assert lines[0].set_code == "30C"
+    assert lines[0].local_id == "128"
+
+
+def test_a_basic_energy_line_with_a_symbol_and_set_tail() -> None:
+    lines = parse_ptcgl("8 Basic {R} Energy SVE 2")
+
+    assert lines[0].name == "Basic {R} Energy"
+    assert lines[0].set_code == "SVE"
+    assert lines[0].local_id == "2"

@@ -1,0 +1,78 @@
+{
+  "category": "Pokemon",
+  "id": "mep-034",
+  "illustrator": "5ban Graphics",
+  "localId": "034",
+  "name": "Mega Meganium ex",
+  "rarity": "Promo",
+  "set": {
+    "cardCount": {
+      "official": 0,
+      "total": 112
+    },
+    "id": "mep",
+    "name": "MEP Black Star Promos"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 873717,
+        "tcgplayer": 692120
+      },
+      "variantId": "jr7oetx1mqug9"
+    },
+    {
+      "type": "lenticular",
+      "size": "jumbo",
+      "thirdParty": {
+        "cardmarket": 873718,
+        "tcgplayer": 692115
+      },
+      "variantId": "bnwmvuoa0dnsbnou"
+    }
+  ],
+  "dexId": [
+    154
+  ],
+  "hp": 360,
+  "types": [
+    "Grass"
+  ],
+  "evolveFrom": "Bayleef",
+  "stage": "Stage2",
+  "suffix": "ex",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless",
+        "Colorless",
+        "Colorless"
+      ],
+      "name": "Giant Bouquet",
+      "effect": "This attack does 50 more damage for each {G} Energy attached to this Pokémon.",
+      "damage": "70+"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "x2"
+    }
+  ],
+  "retreat": 2,
+  "regulationMark": "J",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-04T19:51:08+01:00"
+}

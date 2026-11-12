@@ -10,6 +10,9 @@ from app.clients import catalog_client
 from app.clients.catalog_client import HostedCatalogClient
 from tests.tcgdex_fixtures import FIXTURE_PRINTING_IDS, load_printing, load_set
 
+# The `mep` printings committed as fixtures, in set order: the ones the mock serves.
+_MEP_PRINTING_IDS = [printing_id for printing_id in FIXTURE_PRINTING_IDS if printing_id.startswith("mep-")]
+
 
 def _serve_fixtures(request: httpx.Request) -> httpx.Response:
     """Answers like TCGdex from the committed fixtures.
@@ -89,8 +92,8 @@ async def test_hosted_fetch_set_builds_a_snapshot_from_the_set_and_each_printing
     assert snapshot.name == "MEP Black Star Promos"
     assert snapshot.release_date == date(2025, 9, 26)
     assert snapshot.official_abbreviation == "MEP"
-    assert [card["id"] for card in snapshot.cards] == ["mep-023", "mep-051", "mep-092"]
-    assert snapshot.cards == [load_printing("mep-023"), load_printing("mep-051"), load_printing("mep-092")]
+    assert [card["id"] for card in snapshot.cards] == _MEP_PRINTING_IDS
+    assert snapshot.cards == [load_printing(printing_id) for printing_id in _MEP_PRINTING_IDS]
 
 
 async def test_hosted_fetch_set_bypasses_the_cdn_cache_on_every_request(mock_tcgdex: MockTcgdex) -> None:
@@ -99,7 +102,7 @@ async def test_hosted_fetch_set_bypasses_the_cdn_cache_on_every_request(mock_tcg
     # no earlier request used.
     await HostedCatalogClient(retry_delay_seconds=0).fetch_set("mep")
 
-    assert len(mock_tcgdex.requests) == 4  # the set, then each of its 3 committed printings
+    assert len(mock_tcgdex.requests) == 1 + len(_MEP_PRINTING_IDS)  # the set, then each committed printing
     assert all(request.headers.get("Cache-Control") == "no-cache" for request in mock_tcgdex.requests)
     cache_busters = [request.url.params.get("cb") for request in mock_tcgdex.requests]
     assert None not in cache_busters

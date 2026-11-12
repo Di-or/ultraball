@@ -1,0 +1,54 @@
+{
+  "category": "Trainer",
+  "id": "me05-080",
+  "illustrator": "En Morikura",
+  "image": "https://assets.tcgdex.net/en/me/me05/080",
+  "localId": "080",
+  "name": "Misty's Vitality",
+  "rarity": "Uncommon",
+  "set": {
+    "cardCount": {
+      "official": 84,
+      "total": 120
+    },
+    "id": "me05",
+    "logo": "https://assets.tcgdex.net/en/me/me05/logo",
+    "name": "Pitch Black",
+    "symbol": "https://assets.tcgdex.net/univ/me/me05/symbol"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": false,
+    "normal": true,
+    "reverse": true,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "normal",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 895864,
+        "tcgplayer": 704837
+      },
+      "variantId": "endfynwn4n10gzq"
+    },
+    {
+      "type": "reverse",
+      "size": "standard",
+      "thirdParty": {
+        "cardmarket": 895864,
+        "tcgplayer": 704837
+      },
+      "variantId": "cm4kqul3x1bwlz1f"
+    }
+  ],
+  "effect": "Search your deck for up to 4 Basic {W} Energy cards and attach them to 1 of your Pokémon. Then, shuffle your deck. Your turn ends.",
+  "trainerType": "Supporter",
+  "regulationMark": "J",
+  "legal": {
+    "standard": true,
+    "expanded": true
+  },
+  "updated": "2026-08-16T13:41:57+01:00"
+}
