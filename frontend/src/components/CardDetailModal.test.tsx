@@ -108,6 +108,20 @@ describe("CardDetailModal", () => {
     });
   });
 
+  it("shows how many copies of each printing are already in the deck, beside its add control", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(detailResponse(CHARIZARD));
+
+    render(
+      <CardDetailModal printingId="swsh4-1" onClose={vi.fn()} onAddToDeck={vi.fn()} deckCounts={{ "swsh1-1": 2 }} />
+    );
+
+    const printings = await screen.findByRole("list", { name: "Printings" });
+    const secretRare = within(printings).getByText(/Secret Rare/).closest("li")!;
+    const holo = within(printings).getByText(/VIV 25/).closest("li")!;
+    expect(within(secretRare).getByText("In deck: 2")).toBeInTheDocument();
+    expect(within(holo).queryByText(/In deck/)).not.toBeInTheDocument();
+  });
+
   it("offers one 'add this version' control per printing", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(detailResponse(CHARIZARD));
 

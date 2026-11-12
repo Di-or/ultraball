@@ -129,6 +129,7 @@ export function App() {
           matched={selectedCard.matched}
           onClose={() => setSelectedCard(null)}
           onAddToDeck={(card) => deckDispatch({ type: "card-added", card })}
+          deckCounts={Object.fromEntries(deckState.lines.map((line) => [line.printing_id, line.count]))}
         />
       )}
     </div>

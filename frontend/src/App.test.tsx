@@ -379,14 +379,19 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Charizard ex")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: /Charizard ex/ }));
 
-    fireEvent.click(await screen.findByRole("button", { name: "Add this version (OBF 223) to deck" }));
+    const addSir = await screen.findByRole("button", { name: "Add this version (OBF 223) to deck" });
+    fireEvent.click(addSir);
+    const sirRow = addSir.closest("li")!;
+    expect(within(sirRow).getByText("In deck: 1")).toBeInTheDocument();
+    fireEvent.click(addSir);
+    expect(within(sirRow).getByText("In deck: 2")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
 
     const deck = screen.getByRole("complementary", { name: "Deck" });
     expect(within(deck).getByText("OBF 223")).toBeInTheDocument();
     fireEvent.click(within(deck).getByRole("button", { name: "Export to PTCGL" }));
     expect((within(deck).getByLabelText("PTCGL export") as HTMLTextAreaElement).value).toContain(
-      "1 Charizard ex OBF 223"
+      "2 Charizard ex OBF 223"
     );
   });
 });

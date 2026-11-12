@@ -10,6 +10,9 @@ interface CardDetailModalProps {
   matched?: Matched | null;
   onClose: () => void;
   onAddToDeck: (card: DeckCardInput) => void;
+  // Copies already in the deck, by printing id — shown beside each printing's add control so
+  // an add visibly lands while the deck panel sits behind the overlay.
+  deckCounts?: Record<string, number>;
 }
 
 // "Add this version" (issue #122): search adds an entity's representative printing; this adds
@@ -30,7 +33,13 @@ function deckCardFor(detail: CardDetail, printing: Printing): DeckCardInput {
 // Opens as an overlay on top of the still-mounted results grid (docs/archive/mvp-spec.md
 // §12.4, cited by app/catalog/detail_models.py), so the grid's scroll position is untouched
 // by construction — nothing navigates away.
-export function CardDetailModal({ printingId, matched, onClose, onAddToDeck }: CardDetailModalProps) {
+export function CardDetailModal({
+  printingId,
+  matched,
+  onClose,
+  onAddToDeck,
+  deckCounts = {},
+}: CardDetailModalProps) {
   const [detail, setDetail] = useState<CardDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,6 +145,7 @@ export function CardDetailModal({ printingId, matched, onClose, onAddToDeck }: C
               <ul className="printings-list" aria-label="Printings">
                 {detail.printings.map((printing) => {
                   const label = printingLabel(printing.set_code, printing.local_id);
+                  const inDeck = deckCounts[printing.printing_id] ?? 0;
                   return (
                     <li key={printing.printing_id}>
                       <span>
@@ -152,6 +162,7 @@ export function CardDetailModal({ printingId, matched, onClose, onAddToDeck }: C
                       >
                         Add this version
                       </button>
+                      {inDeck > 0 && <span className="in-deck">In deck: {inDeck}</span>}
                     </li>
                   );
                 })}

@@ -350,7 +350,14 @@ header {
 
 .add-version {
   flex-shrink: 0;
+  margin-left: auto;
   font-size: 0.8rem;
+}
+
+.in-deck {
+  flex-shrink: 0;
+  color: #6b7280;
+  font-size: 0.75rem;
 }
 
 .deck-row-printing {
