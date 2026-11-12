@@ -1,0 +1,76 @@
+{
+  "category": "Pokemon",
+  "id": "30th-c-007",
+  "illustrator": "Ken Sugimori",
+  "localId": "007",
+  "name": "Sneasel",
+  "rarity": "None",
+  "set": {
+    "cardCount": {
+      "official": 30,
+      "total": 30
+    },
+    "id": "30th-c",
+    "name": "30th Classic Collection"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 907943,
+        "tcgplayer": 716161
+      },
+      "variantId": "1jz5lzkp5cg8gmrsxmftf0fur0t08j"
+    }
+  ],
+  "dexId": [
+    215
+  ],
+  "hp": 60,
+  "types": [
+    "Darkness"
+  ],
+  "stage": "Basic",
+  "attacks": [
+    {
+      "cost": [
+        "Colorless"
+      ],
+      "name": "Fury Swipes",
+      "effect": "Flip 3 coins. This attack does 10 damage times the number of heads.",
+      "damage": "10×"
+    },
+    {
+      "cost": [
+        "Darkness",
+        "Darkness"
+      ],
+      "name": "Beat Up",
+      "effect": "Flip a coin for each of your Pokémon in play (including this one). This attack does 20 damage times the number of heads.",
+      "damage": "20×"
+    }
+  ],
+  "resistances": [
+    {
+      "type": "Psychic",
+      "value": "-30"
+    }
+  ],
+  "retreat": 0,
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-22T10:07:07+01:00"
+}

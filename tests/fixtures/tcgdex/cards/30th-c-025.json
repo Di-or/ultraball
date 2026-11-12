@@ -1,0 +1,85 @@
+{
+  "category": "Pokemon",
+  "id": "30th-c-025",
+  "illustrator": "Mitsuhiro Arita",
+  "localId": "025",
+  "name": "Scizor ex",
+  "rarity": "None",
+  "set": {
+    "cardCount": {
+      "official": 30,
+      "total": 30
+    },
+    "id": "30th-c",
+    "name": "30th Classic Collection"
+  },
+  "variants": {
+    "firstEdition": false,
+    "holo": true,
+    "normal": false,
+    "reverse": false,
+    "wPromo": false
+  },
+  "variants_detailed": [
+    {
+      "type": "holo",
+      "size": "standard",
+      "stamp": [
+        "30th-anniversary"
+      ],
+      "thirdParty": {
+        "cardmarket": 907948,
+        "tcgplayer": 716206
+      },
+      "variantId": "1jz5lzkp5cg8gmrsxmftf0fur0t08j"
+    }
+  ],
+  "dexId": [
+    212
+  ],
+  "hp": 120,
+  "types": [
+    "Metal"
+  ],
+  "stage": "Basic",
+  "suffix": "ex",
+  "attacks": [
+    {
+      "cost": [
+        "Metal",
+        "Colorless"
+      ],
+      "name": "Steel Wing",
+      "effect": "During your opponent's next turn, any damage done to Scizor <em>ex</em> by attacks is reduced by 20 <em>(after applying Weakness and Resistance)</em>.",
+      "damage": 40
+    },
+    {
+      "cost": [
+        "Colorless",
+        "Colorless",
+        "Colorless"
+      ],
+      "name": "Cross-Cut",
+      "effect": "If the Defending Pokémon is an Evolved Pokémon, this attack does 50 damage plus 30 more damage.",
+      "damage": "50+"
+    }
+  ],
+  "weaknesses": [
+    {
+      "type": "Fire",
+      "value": "×2"
+    }
+  ],
+  "resistances": [
+    {
+      "type": "Grass",
+      "value": "-30"
+    }
+  ],
+  "retreat": 1,
+  "legal": {
+    "standard": false,
+    "expanded": true
+  },
+  "updated": "2026-09-30T09:39:02+01:00"
+}

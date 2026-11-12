@@ -15,11 +15,12 @@ from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_a
 _LINE_RE = re.compile(r"^(?P<count>\d+)\s+(?P<rest>.+)$")
 # `local_id` must contain a digit so a plain "<Type> Energy" name (no trailing set/number)
 # isn't mistaken for a two-token set-code tail (e.g. "Fire Energy" is not "set=Fire, id=Energy").
-# `set_code` must contain a letter but may start with a digit (`30C`) or hold a hyphen
-# (`PR-SV`, the SV promos) (issue #123).
+# The one exception is a single capital letter: the 30th Celebration's RGB Mews are
+# `Mew 30C G` / `R` / `B`. `set_code` must contain a letter but may start with a digit (`30C`)
+# or hold a hyphen (`PR-SV`, the SV promos) (issue #123).
 _SET_TAIL_RE = re.compile(
     r"^(?P<name>.+?)\s+(?P<set_code>(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9][A-Za-z0-9-]{1,5})"
-    r"\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*)$"
+    r"\s+(?P<local_id>[A-Za-z0-9]*\d[A-Za-z0-9]*|[A-Z])$"
 )
 
 

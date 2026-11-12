@@ -209,3 +209,61 @@ async def test_a_30th_celebration_line_from_a_real_ptcgl_export_resolves(
     # Copied from PTCGL. TCGdex also numbers Solgaleo GX `017` (`30th-c-017`), but PTCGL calls it
     # `CC23`, so only Lapras is `30C 17`.
     assert await _import(client, "1 Lapras 30C 17") == [("30th-017", 1)]
+
+
+# Every Classic Collection card PTCGL lists (Misty, CC3, and N, CC18, aside), then the three
+# RGB Mews, whose card numbers are letters. Copied from PTCGL.
+_CLASSIC_COLLECTION_EXPORT = (Path(__file__).parent / "fixtures" / "ptcgl" / "classic_collection_export.txt").read_text(
+    encoding="utf-8"
+)
+
+
+async def test_every_classic_collection_and_rgb_mew_line_from_ptcgl_resolves(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest(db_session)
+
+    entries = await _import(client, _CLASSIC_COLLECTION_EXPORT)
+
+    assert [printing_id for printing_id, _ in entries] == [
+        "30th-c-014",  # CC1 Pikachu
+        "30th-c-001",  # CC2 Charizard
+        "30th-c-015",  # CC4 Erika's Jigglypuff
+        "30th-c-007",  # CC5 Sneasel
+        "30th-c-024",  # CC6 Shining Celebi
+        "30th-c-029",  # CC7 Lugia
+        "30th-c-002",  # CC8 Delcatty
+        "30th-c-006",  # CC9 Dark Tyranitar
+        "30th-c-025",  # CC10 Scizor ex
+        "30th-c-003",  # CC11 Metagross
+        "30th-c-022",  # CC12 Palkia LV.X
+        "30th-c-010",  # CC13 Uxie
+        "30th-c-011",  # CC14 Crobat G
+        "30th-c-018",  # CC15 Gengar
+        "30th-c-019",  # CC16 Darkrai & Cresselia LEGEND, top
+        "30th-c-020",  # CC17 Darkrai & Cresselia LEGEND, bottom
+        "30th-c-016",  # CC19 Rayquaza-EX
+        "30th-c-004",  # CC20 Genesect-EX
+        "30th-c-023",  # CC21 M Gardevoir-EX
+        "30th-c-009",  # CC22 Greninja BREAK
+        "30th-c-017",  # CC23 Solgaleo-GX
+        "30th-c-013",  # CC24 Buzzwole-GX
+        "30th-c-008",  # CC25 Pikachu & Zekrom-GX
+        "30th-c-028",  # CC26 Zacian V
+        "30th-c-012",  # CC27 Raikou
+        "30th-c-026",  # CC28 Mew VMAX
+        "30th-c-027",  # CC29 Arceus VSTAR
+        "30th-c-030",  # CC30 Magikarp
+        "30th-G",
+        "30th-R",
+        "30th-B",
+    ]
+
+
+async def test_palkia_lv_x_is_named_as_printed(client: AsyncClient, db_session: AsyncSession) -> None:
+    await _ingest(db_session)
+
+    # TCGdex names it plain "Palkia"; a catalog override gives it its printed name.
+    response = await client.post("/decks/import", json={"text": "1 Palkia LV.X 30C CC12"})
+
+    assert [entry["name"] for entry in response.json()["entries"]] == ["Palkia LV.X"]

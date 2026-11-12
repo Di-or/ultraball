@@ -50,6 +50,14 @@ FIXTURE_PRINTINGS = {
     "30th-017": "Lapras: PTCGL writes `Lapras 30C 17`, a line taken from a real PTCGL export",
     "30th-c-017": "Solgaleo GX: TCGdex numbers it `017`, PTCGL writes `Solgaleo-GX 30C CC23`",
     "30th-c-024": "Shining Celebi: TCGdex numbers it `024`, PTCGL writes `Shining Celebi 30C CC6`",
+    # The rest of the Classic Collection and the three RGB Mews, for the PTCGL export of
+    # every one of them (`tests/fixtures/ptcgl/classic_collection_export.txt`, issue #123).
+    **{
+        f"30th-c-{n:03}": "Classic Collection: PTCGL numbers it `CC1`-`CC30`, not TCGdex's `001`-`030`"
+        for n in range(1, 31)
+        if n not in (1, 17, 24)
+    },
+    **{f"30th-{letter}": "RGB Mew: its card number is a letter (`Mew 30C G`)" for letter in "GRB"},
     # Every printing in a decklist exported by Limitless's deckbuilder that PTCGL imported cleanly
     # (`tests/fixtures/ptcgl/limitless_export.txt`, issue #123): SV promos are `PR-SV`, Mega
     # promos `MEP`, and Basic Energy is written by name with its set code.
