@@ -22,7 +22,7 @@ async def test_card_detail_returns_the_full_printed_record(
 
     assert response.status_code == 200
     body = response.json()
-    assert body["entity_id"] == "charizard"
+    assert body["dedupe_key"] == "charizard"
     assert body["printing_id"] == "swsh1-1"
     assert body["name"] == "Charizard"
     assert body["hp"] == 170
@@ -102,7 +102,7 @@ async def test_card_detail_opens_a_card_whose_dedupe_key_contains_a_slash(
     response = await client.get("/cards/sv04-266")
 
     assert response.status_code == 200
-    assert response.json()["entity_id"] == dedupe_key
+    assert response.json()["dedupe_key"] == dedupe_key
     assert response.json()["tags"] == ["acceleration"]
 
 

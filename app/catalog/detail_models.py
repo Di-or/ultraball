@@ -40,7 +40,7 @@ class CardDetail(BaseModel):
     mechanical description).
     """
 
-    entity_id: str
+    dedupe_key: str
     printing_id: str
     name: str
     category: str
@@ -74,7 +74,7 @@ class CardDetail(BaseModel):
         matched: Matched | None = None,
     ) -> "CardDetail":
         return cls(
-            entity_id=card.dedupe_key,
+            dedupe_key=card.dedupe_key,
             printing_id=card.id,
             name=card.name,
             category=card.category,
