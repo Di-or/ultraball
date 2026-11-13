@@ -46,6 +46,10 @@ _Avoid_: blank card, empty printing.
 The explicit list of sets the catalog ingests. A set joins only by a deliberate addition, once TCGdex has filled it in well enough that any remaining gaps can be closed with catalog overrides — TCGdex publishes new sets partially filled (missing text and regulation marks) and completes them over the following weeks.
 _Avoid_: set allow-list, supported sets.
 
+**Excluded sets**:
+Sets left out of the catalog for good because they are legal in no format (My First Battle, the 30th Celebration Classic Collection). Never ingested, even if listed among the **Included sets**; any of their printings already stored are removed on the next build, along with the enrichment of card entities left with no printings.
+_Avoid_: blocked sets, deny-list.
+
 **`sub_category`**:
 The `{ex, mega, ace-spec}` array derived at ingest from a printing's name and rarity. Encodes **mega ⊂ ex in the data itself** — a Mega card carries `["ex", "mega"]` — so the gate filters it with plain array overlap (§ Candidate pool) and never needs special-case logic to make "ex" also match Mega cards.
 _Avoid_: subtype, card tier.

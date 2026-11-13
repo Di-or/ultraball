@@ -14,7 +14,6 @@ INCLUDED_SETS: tuple[str, ...] = (
     "sv02",
     "sv03",
     "sv03.5",
-    "mfb",
     "sv04",
     "sv04.5",
     "sv05",
@@ -36,6 +35,13 @@ INCLUDED_SETS: tuple[str, ...] = (
     "me03",
     "me04",
     "me05",
-    "30th-c",
     "30th",
+)
+
+# Sets left out of the catalog for good, because they are legal in no format (issue #146). The
+# runner never ingests them, and removes any of their printings already in a database, along
+# with the enrichment of card entities left with no printings.
+EXCLUDED_SETS: tuple[str, ...] = (
+    "mfb",  # My First Battle starter decks
+    "30th-c",  # 30th Celebration Classic Collection
 )

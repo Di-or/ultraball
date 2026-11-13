@@ -9,12 +9,12 @@ import time
 from collections.abc import Callable, Collection, Sequence
 from dataclasses import dataclass, field
 
-from sqlalchemy import func, select, true
+from sqlalchemy import delete, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.catalog.included_sets import INCLUDED_SETS
+from app.catalog.included_sets import EXCLUDED_SETS, INCLUDED_SETS
 from app.catalog.ingest import run_ingest
-from app.catalog.models import Card
+from app.catalog.models import Card, RawCard
 from app.catalog.overrides import CatalogOverrides, OverrideCheck
 from app.clients.catalog_client import CatalogClient
 from app.clients.embedding_client import EmbeddingClient
@@ -69,14 +69,19 @@ async def run_catalog_build(
 ) -> RunReport:
     """Ingest `set_ids`, tag every entity that is due, wait for the batches, then embed.
 
-    `printing_ids` limits the run to those printings' sets, and tagging and embedding to their
-    card entities. Every printing must belong to one of `set_ids`. `overrides` defaults to the
+    The Excluded sets are never ingested, even if listed in `set_ids`; any of their printings
+    already in the database are removed, and so is the enrichment of every card entity left with
+    no printings. `printing_ids` limits the run to those printings' sets, and tagging and
+    embedding to their card entities. Every printing must belong to one of `set_ids`. `overrides` defaults to the
     hand-kept Catalog overrides file. Progress and a summary of each step go to `say`.
     """
+    set_ids = [set_id for set_id in set_ids if set_id not in EXCLUDED_SETS]
     if printing_ids is not None:
         set_ids = sets_of_printings(printing_ids, set_ids)
 
     say(f"1. Ingest ({len(set_ids)} sets)")
+    if removed := await _remove_printings_of_sets(session, EXCLUDED_SETS):
+        say(f"   Removed {removed} printings of excluded sets ({', '.join(EXCLUDED_SETS)})")
     printings_ingested: dict[str, int] = {}
     override_report: list[OverrideCheck] = []
     for set_id in set_ids:
@@ -106,6 +111,10 @@ async def run_catalog_build(
         batch_statuses |= await _poll_until_done(
             session, enrichment_client, crashed_runs_batches, poll_interval_seconds, say
         )
+
+    # After the crashed run's batches: applying one re-creates the rows of the entities it staked.
+    if orphaned := await _remove_orphaned_enrichment(session):
+        say(f"   Removed the enrichment of {orphaned} card entities with no printings left")
 
     say("2. Submit tagging")
     # New, changed or failed entities first; then the needs_repair ones, which an ordinary
@@ -166,6 +175,23 @@ def sets_of_printings(printing_ids: Collection[str], set_ids: Sequence[str]) -> 
     if unmatched:
         raise ValueError(f"Not in any of the sets being run: {', '.join(sorted(unmatched))}")
     return [set_id for set_id in set_ids if set_id in wanted]
+
+
+async def _remove_printings_of_sets(session: AsyncSession, set_ids: Collection[str]) -> int:
+    """Deletes every printing of `set_ids` from `cards` and `raw_cards`; returns how many."""
+    removed = await session.execute(delete(Card).where(Card.set_id.in_(set_ids)))
+    await session.execute(delete(RawCard).where(RawCard.set_id.in_(set_ids)))
+    await session.commit()
+    return removed.rowcount
+
+
+async def _remove_orphaned_enrichment(session: AsyncSession) -> int:
+    """Deletes the enrichment of every card entity with no printing in `cards`; returns how many."""
+    removed = await session.execute(
+        delete(CardEnrichment).where(CardEnrichment.dedupe_key.not_in(select(Card.dedupe_key)))
+    )
+    await session.commit()
+    return removed.rowcount
 
 
 def _say_override_report(report: list[OverrideCheck], say: Say) -> None:

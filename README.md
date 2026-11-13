@@ -22,7 +22,7 @@ It connects to Postgres on `localhost:5432` (the port `docker compose` publishes
 
 ## Building the catalog
 
-The runner builds the real catalog from TCGdex: it ingests every **Included set** (`app/catalog/included_sets.py`) and prints the Catalog override report, then submits tagging batches for new, changed, failed and `needs_repair` card entities, waits for them and applies them, and finally embeds every card entity that has a normalized description but no vector. It prints a summary of each step as it goes.
+The runner builds the real catalog from TCGdex: it ingests every **Included set** (`app/catalog/included_sets.py`), removes any printings of the **Excluded sets** (and the enrichment of card entities left with no printings), and prints the Catalog override report, then submits tagging batches for new, changed, failed and `needs_repair` card entities, waits for them and applies them, and finally embeds every card entity that has a normalized description but no vector. It prints a summary of each step as it goes.
 
 ```
 uv run python -m scripts.build_catalog

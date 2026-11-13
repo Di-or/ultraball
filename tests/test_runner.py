@@ -2,11 +2,12 @@ from datetime import date
 from typing import Any
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.identity import build_card_identity
 from app.catalog.ingest import run_ingest
+from app.catalog.models import Card, RawCard
 from app.clients.catalog_client import SetSnapshot
 from app.clients.enrichment_client import EnrichmentResult
 from app.enrichment import status
@@ -219,4 +220,68 @@ async def test_the_run_waits_for_a_batch_that_is_still_processing(db_session: As
 
     assert enrichment_client.polls == 3
     assert report.batch_statuses == {"batch-1": status.COMPLETED}
+    assert report.embedding.embedded == 3
+
+
+# My First Battle: Charmander reprinted with the same text, and a card found nowhere else.
+_MFB_CHARMANDER = {**_CHARMANDER, "id": "mfb-001", "localId": "001"}
+_MFB_ONLY = _pokemon("mfb-002", "Pikachu", "Flip a coin.")
+_MFB = SetSnapshot("mfb", date(2024, 1, 1), [_MFB_CHARMANDER, _MFB_ONLY], name="My First Battle")
+
+
+async def _printings(session: AsyncSession, model: type[Card] | type[RawCard], set_id: str) -> int:
+    return await session.scalar(select(func.count()).select_from(model).where(model.set_id == set_id)) or 0
+
+
+async def test_a_run_skips_the_excluded_sets(db_session: AsyncSession) -> None:
+    report = await _run(db_session, StubEnrichmentClient(_ANSWERS), snapshots={**_SNAPSHOTS, "mfb": _MFB})
+
+    assert report.printings_ingested == {"sv01": 2, "sv02": 1}
+    assert await _printings(db_session, Card, "mfb") == 0
+    assert await _printings(db_session, RawCard, "mfb") == 0
+    assert _key(_MFB_ONLY) not in await _enrichments(db_session)
+
+
+async def test_a_run_removes_excluded_sets_already_in_the_catalog_and_their_orphaned_enrichment(
+    db_session: AsyncSession,
+) -> None:
+    # A database from before the exclusion: My First Battle was ingested and tagged.
+    for set_id in (*_SNAPSHOTS, "mfb"):
+        await run_ingest(db_session, StubCatalogClient({**_SNAPSHOTS, "mfb": _MFB}), set_id, overrides={})
+    for raw in (_CHARMANDER, _MFB_ONLY):
+        db_session.add(
+            CardEnrichment(
+                dedupe_key=_key(raw),
+                normalized_description="Does a thing.",
+                taxonomy_version=TAXONOMY_VERSION,
+                prompt_version=PROMPT_VERSION,
+                status=status.COMPLETED,
+            )
+        )
+    await db_session.commit()
+
+    lines: list[str] = []
+    await _run(db_session, StubEnrichmentClient(_ANSWERS), say=lines.append)
+
+    assert await _printings(db_session, Card, "mfb") == 0
+    assert await _printings(db_session, RawCard, "mfb") == 0
+    rows = await _enrichments(db_session)
+    assert _key(_MFB_ONLY) not in rows
+    # Charmander still has its sv01 printing, so its card entity and enrichment stay.
+    assert _key(_CHARMANDER) in rows
+    assert any("Removed 2 printings of excluded sets" in line for line in lines)
+
+
+async def test_an_excluded_entity_staked_by_a_crashed_runs_batch_is_still_removed(db_session: AsyncSession) -> None:
+    enrichment_client = StubEnrichmentClient({**_ANSWERS, _key(_MFB_ONLY): _answer(_MFB_ONLY)})
+    for set_id in (*_SNAPSHOTS, "mfb"):
+        await run_ingest(db_session, StubCatalogClient({**_SNAPSHOTS, "mfb": _MFB}), set_id, overrides={})
+    # The crashed run got as far as submitting, My First Battle included.
+    await submit_enrichment_batch(db_session, enrichment_client)
+
+    report = await _run(db_session, enrichment_client)
+
+    # Applying the old batch re-creates the excluded entity's row; the cleanup comes after it.
+    assert report.batch_statuses == {"batch-1": status.COMPLETED}
+    assert _key(_MFB_ONLY) not in await _enrichments(db_session)
     assert report.embedding.embedded == 3
