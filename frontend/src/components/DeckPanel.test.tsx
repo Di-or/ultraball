@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as api from "../lib/api";
 import type { DeckLine } from "../state/deckState";
@@ -94,6 +94,27 @@ describe("DeckPanel", () => {
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent("2 Not A Real Card XYZ 999")
     );
+  });
+
+  it("shows which printing a row is, so two versions of one card read apart", () => {
+    const secretRare: DeckLine = { ...charmander, printing_id: "sv03.5-168", count: 1, set_code: "MEW", local_id: "168" };
+    render(<DeckPanel lines={[charmander, secretRare]} dispatch={vi.fn()} />);
+
+    const rows = within(screen.getByRole("region", { name: "Pokémon deck rows" })).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent("OBF 10");
+    expect(rows[1]).toHaveTextContent("MEW 168");
+  });
+
+  it("exports a chosen printing with its own set code and number", () => {
+    const secretRare: DeckLine = { ...charmander, printing_id: "sv03.5-168", count: 1, set_code: "MEW", local_id: "168" };
+    render(<DeckPanel lines={[charmander, secretRare]} dispatch={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Export to PTCGL" }));
+
+    const textarea = screen.getByLabelText("PTCGL export") as HTMLTextAreaElement;
+    expect(textarea.value).toContain("4 Charmander OBF 10");
+    expect(textarea.value).toContain("1 Charmander MEW 168");
   });
 
   it("exports the deck to PTCGL text", () => {

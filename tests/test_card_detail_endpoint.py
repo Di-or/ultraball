@@ -68,6 +68,24 @@ async def test_card_detail_lists_all_printings_of_the_entity(
     assert [p["printing_id"] for p in body["printings"]] == ["swsh4-1", "swsh1-1"]
 
 
+async def test_card_detail_printings_carry_the_set_code_and_number_a_deck_line_needs(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            _card(id="sv04-266", dedupe_key="charizard", set_code="PAR", local_id="266", release_date=date(2023, 11, 3)),
+            _card(id="sv03-125", dedupe_key="charizard", set_code="OBF", local_id="125", release_date=date(2023, 8, 11)),
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.get("/cards/sv03-125")
+
+    printings = {p["printing_id"]: p for p in response.json()["printings"]}
+    assert (printings["sv04-266"]["set_code"], printings["sv04-266"]["local_id"]) == ("PAR", "266")
+    assert (printings["sv03-125"]["set_code"], printings["sv03-125"]["local_id"]) == ("OBF", "125")
+
+
 async def test_card_detail_is_the_same_for_any_printing_of_the_entity(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:

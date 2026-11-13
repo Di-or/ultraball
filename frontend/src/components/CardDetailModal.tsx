@@ -1,18 +1,45 @@
 import { useEffect, useState } from "react";
 import { getCardDetail } from "../lib/api";
-import type { CardDetail, Matched } from "../lib/types";
+import { printingLabel } from "../lib/ptcgl";
+import type { CardDetail, Category, Matched, Printing } from "../lib/types";
+import type { DeckCardInput } from "../state/deckState";
 import { MatchedChips } from "./MatchedChips";
 
 interface CardDetailModalProps {
   printingId: string;
   matched?: Matched | null;
   onClose: () => void;
+  onAddToDeck: (card: DeckCardInput) => void;
+  // Copies already in the deck, by printing id — shown beside each printing's add control so
+  // an add visibly lands while the deck panel sits behind the overlay.
+  deckCounts?: Record<string, number>;
+}
+
+// "Add this version" (issue #122): search adds an entity's representative printing; this adds
+// the exact printing chosen, so its rarity/version reaches the deck line and the PTCGL export.
+function deckCardFor(detail: CardDetail, printing: Printing): DeckCardInput {
+  return {
+    printing_id: printing.printing_id,
+    name: detail.name,
+    // The backend serves `category` as a plain string (app/catalog/detail_models.py); detail
+    // opens from search results, which are already constrained to the three deck categories.
+    category: detail.category as Category,
+    set_code: printing.set_code,
+    local_id: printing.local_id,
+    energy_type: detail.energy_type,
+  };
 }
 
 // Opens as an overlay on top of the still-mounted results grid (docs/archive/mvp-spec.md
 // §12.4, cited by app/catalog/detail_models.py), so the grid's scroll position is untouched
 // by construction — nothing navigates away.
-export function CardDetailModal({ printingId, matched, onClose }: CardDetailModalProps) {
+export function CardDetailModal({
+  printingId,
+  matched,
+  onClose,
+  onAddToDeck,
+  deckCounts = {},
+}: CardDetailModalProps) {
   const [detail, setDetail] = useState<CardDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -115,15 +142,30 @@ export function CardDetailModal({ printingId, matched, onClose }: CardDetailModa
 
             <section>
               <h3>Printings</h3>
-              <ul className="printings-list">
-                {detail.printings.map((printing) => (
-                  <li key={printing.printing_id}>
-                    {printing.set_id}
-                    {printing.rarity ? ` · ${printing.rarity}` : ""}
-                    {printing.regulation_mark ? ` · Mark ${printing.regulation_mark}` : ""}
-                    {!printing.is_standard_legal && <span className="illegal-flag"> · not Standard-legal</span>}
-                  </li>
-                ))}
+              <ul className="printings-list" aria-label="Printings">
+                {detail.printings.map((printing) => {
+                  const label = printingLabel(printing.set_code, printing.local_id);
+                  const inDeck = deckCounts[printing.printing_id] ?? 0;
+                  return (
+                    <li key={printing.printing_id}>
+                      <span>
+                        {label}
+                        {printing.rarity ? ` · ${printing.rarity}` : ""}
+                        {printing.regulation_mark ? ` · Mark ${printing.regulation_mark}` : ""}
+                        {!printing.is_standard_legal && <span className="illegal-flag"> · not Standard-legal</span>}
+                      </span>
+                      <button
+                        type="button"
+                        className="add-version"
+                        aria-label={`Add this version (${label}) to deck`}
+                        onClick={() => onAddToDeck(deckCardFor(detail, printing))}
+                      >
+                        Add this version
+                      </button>
+                      {inDeck > 0 && <span className="in-deck">In deck: {inDeck}</span>}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           </>
