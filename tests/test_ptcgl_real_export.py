@@ -131,15 +131,19 @@ async def test_a_name_that_matches_no_printing_with_that_number_still_fails(
 _PTCGL_COMPATIBLE_EXPORT = (Path(__file__).parent / "fixtures" / "ptcgl" / "limitless_export.txt").read_text(
     encoding="utf-8"
 )
+# What the app exports for that deck once imported: the same lines, with Basic Energy as MEE 1-8.
+# frontend/src/lib/ptcgl.test.ts exports the imported deck to exactly this text, so together
+# with the test below it checks import -> export -> import end to end (issue #147).
+_REEXPORTED = (Path(__file__).parent / "fixtures" / "ptcgl" / "limitless_export_reexported.txt").read_text(
+    encoding="utf-8"
+)
 _EXPORT_SETS = ("svp", "sve", "mee", "mep", "me05", "me02.5", "sv06.5", "sv06", "sv05", "me04")
 
 
 async def test_a_ptcgl_compatible_export_imports_every_printing_with_basic_energy_as_mee(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    catalog_client = StubCatalogClient({set_id: fixture_snapshot(set_id) for set_id in _EXPORT_SETS})
-    for set_id in _EXPORT_SETS:
-        await run_ingest(db_session, catalog_client, set_id)
+    await _ingest_export_sets(db_session)
 
     entries = await _import(client, _PTCGL_COMPATIBLE_EXPORT)
 
@@ -167,6 +171,20 @@ async def test_a_ptcgl_compatible_export_imports_every_printing_with_basic_energ
         ("sv05-161", 1),
         ("me04-084", 1),
     ]
+
+
+async def test_the_re_exported_deck_imports_back_to_the_same_deck(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest_export_sets(db_session)
+
+    assert await _import(client, _REEXPORTED) == await _import(client, _PTCGL_COMPATIBLE_EXPORT)
+
+
+async def _ingest_export_sets(db_session: AsyncSession) -> None:
+    catalog_client = StubCatalogClient({set_id: fixture_snapshot(set_id) for set_id in _EXPORT_SETS})
+    for set_id in _EXPORT_SETS:
+        await run_ingest(db_session, catalog_client, set_id)
 
 
 async def test_a_30th_celebration_line_from_a_real_ptcgl_export_resolves(
