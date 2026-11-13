@@ -7,11 +7,11 @@ stopped for low memory inside one):
     uv run python -m scripts.build_catalog --printings sv06.5-047 sv01-196
     uv run python -m scripts.build_catalog --printings-file trial-printings.txt
 
-Steps: (1) ingest every Included set (`app/catalog/included_sets.py`) from TCGdex and print
-the Catalog override report; (2) submit tagging batches for new, changed, failed and
-needs_repair card entities; (3) poll until they end and apply them; (4) run the embedding
-pass. Every step is idempotent, so re-running is safe and resumes after a crash, including
-polling a batch that was still in flight.
+Steps: (1) ingest every Included set (`app/catalog/included_sets.py`) from TCGdex, remove any
+printings of the excluded sets, and print the Catalog override report; (2) submit tagging
+batches for new, changed, failed and needs_repair card entities; (3) poll until they end and
+apply them; (4) run the embedding pass. Every step is idempotent, so re-running is safe and
+resumes after a crash, including polling a batch that was still in flight.
 
 It spends real money and writes to DATABASE_URL (the local Postgres by default): it needs
 ANTHROPIC_API_KEY (or CLAUDE_API_KEY) and VOYAGE_API_KEY. Batches usually end within minutes
