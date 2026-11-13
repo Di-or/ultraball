@@ -17,11 +17,6 @@
 # That one URL is shown at every size. A TCGdex base URL with no file extension
 # (`https://assets.tcgdex.net/en/sv/svp/150`) gets TCGdex's sized renditions instead.
 
-# Palkia LV.X (Classic Collection CC12): TCGdex names it plain "Palkia", which is a different
-# card. PTCGL and the printed card say "Palkia LV.X". Each ingest reports this as "differs".
-["30th-c-022"]
-name = "Palkia LV.X"
-
 # TCGdex has only Portuguese text for this printing. The English text is the same as the
 # other Ultra Ball printings' (e.g. sv01-196, me01-131), so it joins that card entity.
 ["30th-128"]

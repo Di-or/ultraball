@@ -36,9 +36,9 @@ async def get_card_by_set_code_and_local_id(
     """The printing a PTCGL line's `{name} {set_code} {local_id}` identifies (issues #28, #123).
 
     TCGdex zero-pads local ids (`"086"`) and PTCGL doesn't (`SVI 86`), so both sides are
-    compared with leading zeros stripped. A set code can belong to more than one set (`30th`
-    and `30th-c` both derive `30C`), so every matching set is searched; when more than one has
-    that number, the printing whose name matches the line wins.
+    compared with leading zeros stripped. A set code can belong to more than one set, so every
+    matching set is searched; when more than one has that number, the printing whose name
+    matches the line wins.
     """
     stmt = (
         select(Card)
