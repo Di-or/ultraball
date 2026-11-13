@@ -42,7 +42,7 @@ _ME06_RELEASE = date(2026, 11, 6)
 _POKEMON = make_tcgdex_pokemon(id="me01-001")
 
 # Basic Energy has no rules text either, and stays in the tray.
-_FIRE_ENERGY_ID = "sve-002"
+_FIRE_ENERGY_ID = "mee-002"
 
 
 def _ultra_ball_with_text() -> dict:
@@ -56,10 +56,10 @@ async def _ingest(db_session: AsyncSession, *, ultra_ball: dict | None = None, o
             "30th": replace(thirtieth, cards=[ultra_ball or load_printing(_TEXTLESS_TRAINER_ID)]),
             "me06": SetSnapshot("me06", _ME06_RELEASE, [oddish or _TEXTLESS_POKEMON]),
             "me01": SetSnapshot("me01", date(2025, 9, 26), [_POKEMON]),
-            "sve": fixture_snapshot("sve", [_FIRE_ENERGY_ID]),
+            "mee": fixture_snapshot("mee", [_FIRE_ENERGY_ID]),
         }
     )
-    for set_id in ("30th", "me06", "me01", "sve"):
+    for set_id in ("30th", "me06", "me01", "mee"):
         await run_ingest(db_session, catalog_client, set_id, overrides={})
 
 

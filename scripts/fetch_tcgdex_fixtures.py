@@ -47,6 +47,8 @@ FIXTURE_PRINTINGS = {
     "sv03-125": "Charizard ex: PTCGL writes `OBF 125`, part of the real-export import test",
     "30th-017": "Lapras: PTCGL writes `Lapras 30C 17`, a line taken from a real PTCGL export",
     **{f"30th-{letter}": "RGB Mew: its card number is a letter (`Mew 30C G`)" for letter in "GRB"},
+    # The Basic-Energy tray is always `MEE 1`-`8` (issue #147); 4-8 are already in the export below.
+    **{f"mee-00{n}": "Basic Energy: one of the eight `MEE 1`-`8` tray printings" for n in "123"},
     # Every printing in a decklist exported by Limitless's deckbuilder that PTCGL imported cleanly
     # (`tests/fixtures/ptcgl/limitless_export.txt`, issue #123): SV promos are `PR-SV`, Mega
     # promos `MEP`, and Basic Energy is written by name with its set code.

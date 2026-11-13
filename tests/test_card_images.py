@@ -93,12 +93,12 @@ async def test_an_override_can_point_at_a_complete_tcgdex_image(
 
 
 async def test_the_energy_tray_gets_small_tcgdex_art(client: AsyncClient, db_session: AsyncSession) -> None:
-    fire = {**load_printing("sve-002"), "image": "https://assets.tcgdex.net/en/sv/sve/002"}
-    catalog_client = StubCatalogClient({"sve": replace(fixture_snapshot("sve", []), cards=[fire])})
-    await run_ingest(db_session, catalog_client, "sve", overrides={})
+    fire = {**load_printing("mee-002"), "image": "https://assets.tcgdex.net/en/me/mee/002"}
+    catalog_client = StubCatalogClient({"mee": replace(fixture_snapshot("mee", []), cards=[fire])})
+    await run_ingest(db_session, catalog_client, "mee", overrides={})
 
     response = await client.get("/energy/basics")
 
     assert [entry["image"] for entry in response.json()["palette"]] == [
-        "https://assets.tcgdex.net/en/sv/sve/002/low.webp"
+        "https://assets.tcgdex.net/en/me/mee/002/low.webp"
     ]

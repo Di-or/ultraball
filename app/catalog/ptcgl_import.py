@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.catalog.deck_validation import DeckLine
-from app.catalog.energy import basic_energy_type_named, is_basic_energy
+from app.catalog.energy import basic_energy_type_named
 from app.catalog.models import Card
 from app.catalog.queries import get_basic_energy_palette, get_card_by_set_code_and_local_id
 
@@ -92,14 +92,6 @@ def parse_ptcgl(text: str) -> list[ParsedLine]:
     return lines
 
 
-def _is_basic_energy_of_type(card: Card | None, energy_type: str) -> bool:
-    return (
-        card is not None
-        and is_basic_energy(category=card.category, energy_type=card.energy_type)
-        and basic_energy_type_named(card.name) == energy_type
-    )
-
-
 def _palette_match(energy_type: str, palette: list[Card]) -> Card | None:
     return next((card for card in palette if basic_energy_type_named(card.name) == energy_type), None)
 
@@ -107,12 +99,13 @@ def _palette_match(energy_type: str, palette: list[Card]) -> Card | None:
 async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLine]:
     """Resolve PTCGL decklist text into deck lines, all-or-nothing (issue #28).
 
-    A line resolves against the printing its set code + local id identify. A Basic Energy line
-    (`Lightning Energy MEE 12`, `Basic {R} Energy SVE 2`, `Basic Fire Energy`) keeps that exact
-    printing only if it is Basic Energy of the named type; otherwise (no tail, or a tail like
-    older exports' `Energy 2` that names no set, or one naming another card) it resolves against
-    the fixed basic-Energy palette (issue #123). If any line fails to resolve, `DeckImportError` carries every
-    failing line so the whole import can be rejected.
+    A line resolves against the printing its set code + local id identify, except Basic Energy:
+    a line that names Basic Energy (`Lightning Energy MEE 12`, `Basic {R} Energy SVE 2`,
+    `Basic Fire Energy`, `Fire`) always resolves to the palette's `MEE 1`-`8` printing of its
+    type, whatever set or number it names (issue #147). Lines that resolve to the same printing
+    (`Lightning Energy MEE 4` and `MEE 12`) merge into one deck line, at the first one's place.
+    If any line fails to resolve, `DeckImportError` carries every failing line so the whole
+    import can be rejected.
 
     Returns the resolved `Card` alongside each count (not just the printing id) so the
     caller can render the imported deck without a second round trip (issue #31).
@@ -120,23 +113,26 @@ async def resolve_ptcgl_import(session: AsyncSession, text: str) -> list[DeckLin
     parsed = parse_ptcgl(text)
     palette = await get_basic_energy_palette(session)
 
-    lines: list[DeckLine] = []
+    counts: dict[str, int] = {}
+    cards: dict[str, Card] = {}
     unresolved: list[str] = []
 
     for line in parsed:
         energy_type = basic_energy_type_named(line.name)
-        card = None
-        if line.set_code and line.local_id:
-            card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id, name=line.name)
-        if energy_type is not None and not _is_basic_energy_of_type(card, energy_type):
+        if energy_type is not None:
             card = _palette_match(energy_type, palette)
+        elif line.set_code and line.local_id:
+            card = await get_card_by_set_code_and_local_id(session, line.set_code, line.local_id, name=line.name)
+        else:
+            card = None
 
         if card is None:
             unresolved.append(line.raw)
         else:
-            lines.append(DeckLine(card=card, count=line.count))
+            cards[card.id] = card
+            counts[card.id] = counts.get(card.id, 0) + line.count
 
     if unresolved:
         raise DeckImportError(unresolved)
 
-    return lines
+    return [DeckLine(card=cards[printing_id], count=count) for printing_id, count in counts.items()]

@@ -44,9 +44,10 @@ async def _ingest(db_session: AsyncSession) -> None:
             "me02": fixture_snapshot("me02", ["me02-124"]),  # Ignition Energy, Special but `"Normal"`
             "sv04": fixture_snapshot("sv04", ["sv04-266"]),  # Reversal Energy, Special but `"Normal"`
             "me01": SetSnapshot("me01", date(2025, 9, 26), [_POKEMON, _TEXTLESS_SPECIAL]),
+            "mee": fixture_snapshot("mee"),  # the real `MEE 1`-`8`, plus MEE 12 "Basic Lightning Energy"
         }
     )
-    for set_id in ("sve", "me02", "sv04", "me01"):
+    for set_id in ("sve", "me02", "sv04", "me01", "mee"):
         await run_ingest(db_session, catalog_client, set_id)
 
 
@@ -66,8 +67,8 @@ async def test_the_basic_energy_tray_returns_the_real_normal_labelled_basic_ener
     response = await client.get("/energy/basics")
 
     assert response.status_code == 200
-    printing_ids = {item["printing_id"] for item in response.json()["palette"]}
-    assert printing_ids == {"sve-001", "sve-002", "sve-003"}
+    printing_ids = [item["printing_id"] for item in response.json()["palette"]]
+    assert printing_ids == [f"mee-00{n}" for n in range(1, 9)]
 
 
 async def test_a_deck_with_56_basic_fire_energy_is_not_flagged(client: AsyncClient, db_session: AsyncSession) -> None:
@@ -145,7 +146,7 @@ async def test_a_ptcgl_basic_energy_line_imports_against_the_real_basic_energy(
     response = await client.post("/decks/import", json={"text": "8 Basic Fire Energy"})
 
     assert response.status_code == 200
-    assert [entry["printing_id"] for entry in response.json()["entries"]] == ["sve-002"]
+    assert [entry["printing_id"] for entry in response.json()["entries"]] == ["mee-002"]
 
 
 async def test_basic_energy_never_appears_in_search(client: AsyncClient, db_session: AsyncSession) -> None:

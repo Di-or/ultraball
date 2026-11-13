@@ -10,10 +10,10 @@ import type { DeckLine } from "../state/deckState";
 //   2 Yanmega PR-SV 187
 //
 //   Energy: 13
-//   1 Lightning Energy MEE 12
+//   1 Lightning Energy MEE 4
 //
-// Every line carries its set code + local id, including Basic Energy, so a round trip through
-// `/decks/import` resolves exactly. Lines keep the deck's order.
+// Every line carries its set code + local id, including Basic Energy (always `MEE 1`-`8`,
+// issue #147), so a round trip through `/decks/import` resolves exactly. Lines keep the deck's order.
 
 const SECTION_HEADINGS: Record<Category, string> = {
   Pokemon: "Pokémon",

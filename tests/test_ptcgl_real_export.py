@@ -1,7 +1,8 @@
 """A real PTCGL export imports through `POST /decks/import` (issue #123).
 
 The catalog is ingested from real TCGdex JSON, which zero-pads card numbers (`localId: "086"`)
-while PTCGL writes them bare (`SVI 86`). Basic Energy lines come as `Basic {R} Energy SVE 2` or a bare `Basic Fire Energy`.
+while PTCGL writes them bare (`SVI 86`). Basic Energy lines come as `Basic {R} Energy SVE 2` or a bare `Basic Fire Energy`;
+whatever they name, they resolve to the `MEE 1`-`8` printing of their type (issue #147).
 """
 
 from pathlib import Path
@@ -13,7 +14,7 @@ from app.catalog.ingest import run_ingest
 from tests.stubs import StubCatalogClient
 from tests.tcgdex_fixtures import fixture_snapshot
 
-_SETS = ("sv01", "sv02", "sv03", "sv04", "sve", "me02", "30th")
+_SETS = ("sv01", "sv02", "sv03", "sv04", "sve", "mee", "me02", "30th")
 
 # As PTCGL's "Export" button writes it, section headers and total included.
 _REAL_EXPORT = """\
@@ -63,7 +64,7 @@ async def test_every_line_of_a_real_export_resolves_to_its_zero_padded_printing(
             ("30th-128", 1),
             ("me02-124", 2),
             ("sv04-266", 1),
-            ("sve-002", 8),
+            ("mee-002", 8),
         ]
     )
 
@@ -76,31 +77,31 @@ async def test_a_zero_padded_number_in_the_export_also_resolves(
     assert await _import(client, "4 Ultra Ball SVI 0196") == [("sv01-196", 4)]
 
 
-async def test_bare_basic_energy_lines_resolve_to_the_basic_energy_palette(
+async def test_bare_basic_energy_lines_resolve_to_the_mee_printing_of_their_type(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _ingest(db_session)
 
     for line in ("8 Basic Fire Energy", "8 Basic {R} Energy", "8 Fire Energy"):
-        assert await _import(client, line) == [("sve-002", 8)], line
+        assert await _import(client, line) == [("mee-002", 8)], line
 
 
-async def test_a_basic_energy_line_with_an_unknown_set_tail_falls_back_to_the_palette(
+async def test_a_basic_energy_line_with_an_unknown_set_tail_resolves_to_mee(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _ingest(db_session)
 
     # Older PTCGL exports wrote the set code for Basic Energy as "Energy".
-    assert await _import(client, "8 Basic {R} Energy Energy 2") == [("sve-002", 8)]
+    assert await _import(client, "8 Basic {R} Energy Energy 2") == [("mee-002", 8)]
 
 
-async def test_a_basic_energy_line_resolves_to_the_palette_whatever_its_set_tail_names(
+async def test_a_basic_energy_line_resolves_to_mee_whatever_its_set_tail_names(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _ingest(db_session)
 
     # `SVI 196` is Ultra Ball: the Basic Energy name wins over the tail.
-    assert await _import(client, "8 Basic {R} Energy SVI 196") == [("sve-002", 8)]
+    assert await _import(client, "8 Basic {R} Energy SVI 196") == [("mee-002", 8)]
 
 
 async def test_a_line_whose_set_tail_names_no_printing_fails_even_if_its_name_is_energy_like(
@@ -125,14 +126,15 @@ async def test_a_name_that_matches_no_printing_with_that_number_still_fails(
 
 
 # A decklist exported by Limitless's deckbuilder that PTCGL imported cleanly: SV promos as
-# `PR-SV`, Basic Energy by name with its set code, from both the SV and Mega Energy sets.
+# `PR-SV`, Basic Energy by name with its set code, from both the SV and Mega Energy sets. Every
+# Basic Energy line resolves to `MEE 1`-`8`, whatever printing it names (issue #147).
 _PTCGL_COMPATIBLE_EXPORT = (Path(__file__).parent / "fixtures" / "ptcgl" / "limitless_export.txt").read_text(
     encoding="utf-8"
 )
 _EXPORT_SETS = ("svp", "sve", "mee", "mep", "me05", "me02.5", "sv06.5", "sv06", "sv05", "me04")
 
 
-async def test_a_ptcgl_compatible_export_imports_every_printing_exactly(
+async def test_a_ptcgl_compatible_export_imports_every_printing_with_basic_energy_as_mee(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     catalog_client = StubCatalogClient({set_id: fixture_snapshot(set_id) for set_id in _EXPORT_SETS})
@@ -154,15 +156,14 @@ async def test_a_ptcgl_compatible_export_imports_every_printing_exactly(
         ("sv06.5-054", 1),
         ("sv06.5-060", 1),
         ("sv06-145", 1),
-        ("sve-001", 1),
-        ("sve-002", 2),
-        ("sve-003", 2),
-        ("mee-004", 1),
+        ("mee-001", 1),
+        ("mee-002", 2),
+        ("mee-003", 2),
+        ("mee-004", 2),  # `MEE 4` and `MEE 12`: both Lightning, merged into one MEE 4 line
         ("mee-005", 1),
         ("mee-006", 1),
         ("mee-007", 1),
         ("mee-008", 1),
-        ("mee-012", 1),  # a second Lightning printing: the exact one, not the palette's
         ("sv05-161", 1),
         ("me04-084", 1),
     ]
