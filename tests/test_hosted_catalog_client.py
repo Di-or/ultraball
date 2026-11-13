@@ -114,10 +114,12 @@ async def test_hosted_fetch_set_bypasses_the_cdn_cache_on_every_request(mock_tcg
     # no earlier request used.
     await HostedCatalogClient(retry_delay_seconds=0).fetch_set("mep")
 
+    # That includes checks of the image server for art the API doesn't list (issue #145).
     api_requests = [request for request in mock_tcgdex.requests if request.url.host != _ASSETS_HOST]
     assert len(api_requests) == 1 + len(_MEP_PRINTING_IDS)  # the set, then each committed printing
-    assert all(request.headers.get("Cache-Control") == "no-cache" for request in api_requests)
-    cache_busters = [request.url.params.get("cb") for request in api_requests]
+    assert _image_server_requests(mock_tcgdex)  # mep's committed printings have no API image
+    assert all(request.headers.get("Cache-Control") == "no-cache" for request in mock_tcgdex.requests)
+    cache_busters = [request.url.params.get("cb") for request in mock_tcgdex.requests]
     assert None not in cache_busters
     assert len(set(cache_busters)) == len(cache_busters)
 
@@ -247,6 +249,10 @@ async def test_hosted_fetch_set_raises_a_missing_card_without_retrying(mock_tcgd
     assert len(mock_tcgdex.requests) == 2
 
 
+def _image_server_requests(mock: MockTcgdex) -> list[httpx.Request]:
+    return [request for request in mock.requests if request.url.host == _ASSETS_HOST]
+
+
 def _image_server_with_art(*base_paths: str) -> Callable[[httpx.Request], httpx.Response]:
     """The fixtures' TCGdex, with art on the image server at each of `base_paths`
     (e.g. `/en/sv/svp/224`). It answers a request for any rendition of that art."""
@@ -262,16 +268,22 @@ def _image_server_with_art(*base_paths: str) -> Callable[[httpx.Request], httpx.
     return handler
 
 
-async def test_hosted_fetch_set_finds_art_the_api_does_not_list_on_the_image_server(mock_tcgdex: MockTcgdex) -> None:
-    # TCGdex's API lags its image server: on 2026-11-12, svp-202 and svp-224 had art at the
-    # usual address but no `image` in their JSON (issue #145).
-    mock_tcgdex.handler = _image_server_with_art("/en/sv/svp/202", "/en/sv/svp/224")
+@pytest.mark.parametrize(
+    ("set_id", "art_paths"),
+    [("svp", ["/en/sv/svp/202", "/en/sv/svp/224"]), ("mep", ["/en/me/mep/007", "/en/me/mep/023"])],
+)
+async def test_hosted_fetch_set_finds_art_the_api_does_not_list_on_the_image_server(
+    mock_tcgdex: MockTcgdex, set_id: str, art_paths: list[str]
+) -> None:
+    # TCGdex's API lags its image server: on 2026-11-12, these printings had art at the usual
+    # address (`<lang>/<series>/<set>/<localId>`) but no `image` in their JSON (issue #145).
+    mock_tcgdex.handler = _image_server_with_art(*art_paths)
 
-    snapshot = await HostedCatalogClient(retry_delay_seconds=0).fetch_set("svp")
+    snapshot = await HostedCatalogClient(retry_delay_seconds=0).fetch_set(set_id)
 
-    images = {card["id"]: card.get("image") for card in snapshot.cards}
-    assert images["svp-202"] == "https://assets.tcgdex.net/en/sv/svp/202"
-    assert images["svp-224"] == "https://assets.tcgdex.net/en/sv/svp/224"
+    images = {card["localId"]: card.get("image") for card in snapshot.cards}
+    for art_path in art_paths:
+        assert images[art_path.rsplit("/", 1)[1]] == f"https://{_ASSETS_HOST}{art_path}"
 
 
 async def test_hosted_fetch_set_leaves_a_printing_with_no_art_anywhere_without_an_image(
@@ -290,14 +302,14 @@ async def test_hosted_fetch_set_only_checks_the_image_server_for_printings_the_a
 ) -> None:
     await HostedCatalogClient(retry_delay_seconds=0).fetch_set("svp")
 
-    checked = sorted(request.url.path for request in mock_tcgdex.requests if request.url.host == _ASSETS_HOST)
+    checked = sorted(request.url.path for request in _image_server_requests(mock_tcgdex))
     svp_printings = [card for card in map(load_printing, FIXTURE_PRINTING_IDS) if card["set"]["id"] == "svp"]
     expected = sorted(
         f"/en/sv/svp/{card['localId']}/low.webp" for card in svp_printings if not card.get("image")
     )
     assert expected  # the svp fixtures include printings without an image
     assert checked == expected
-    assert all(request.method == "HEAD" for request in mock_tcgdex.requests if request.url.host == _ASSETS_HOST)
+    assert all(request.method == "HEAD" for request in _image_server_requests(mock_tcgdex))
 
 
 @pytest.mark.parametrize(
