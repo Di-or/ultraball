@@ -23,7 +23,8 @@ async def get_printings(session: AsyncSession, dedupe_key: str) -> list[Card]:
 
 
 async def get_printings_by_entity(session: AsyncSession, dedupe_keys: Collection[str]) -> dict[str, list[Card]]:
-    """`get_printings` for many card entities in one query, keyed by `dedupe_key`."""
+    """`get_printings` for many card entities in one query, keyed by `dedupe_key`: each list is
+    representative first (CONTEXT.md: Representative printing)."""
     if not dedupe_keys:
         return {}
     stmt = select(Card).where(Card.dedupe_key.in_(dedupe_keys)).order_by(*representative_order(Card))

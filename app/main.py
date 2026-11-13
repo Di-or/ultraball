@@ -15,7 +15,6 @@ from app.catalog.deck_models import (
 from app.catalog.deck_validation import DeckLine, UnresolvedEntry, validate_deck
 from app.catalog.detail_models import CardDetail
 from app.catalog.energy_models import EnergyBasic, EnergyBasicsResponse
-from app.catalog.images import entity_image_url
 from app.catalog.models import Card
 from app.catalog.ptcgl_import import DeckImportError, resolve_ptcgl_import
 from app.catalog.queries import (
@@ -130,9 +129,7 @@ def create_app(
         # A tile shows its entity's art, as card detail does (issue #144).
         printings = await get_printings_by_entity(session, {card.dedupe_key for card, _ in page})
         results = [
-            SearchResult.from_card(
-                card, image=entity_image_url(printings[card.dedupe_key], "low"), matched=matched
-            )
+            SearchResult.from_card(card, printings=printings[card.dedupe_key], matched=matched)
             for card, matched in page
         ]
 
