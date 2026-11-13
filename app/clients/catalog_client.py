@@ -7,10 +7,13 @@ from email.utils import parsedate_to_datetime
 
 import httpx
 
-_TCGDEX_API_URL = "https://api.tcgdex.net/v2/en"
+_TCGDEX_LANGUAGE = "en"
+_TCGDEX_API_URL = f"https://api.tcgdex.net/v2/{_TCGDEX_LANGUAGE}"
+_TCGDEX_ASSETS_URL = f"https://assets.tcgdex.net/{_TCGDEX_LANGUAGE}"
 _ATTEMPTS = 4
 _TIMEOUT_SECONDS = 30
 _MAX_RETRY_AFTER_SECONDS = 60.0
+_IMAGE_CHECK_TIMEOUT_SECONDS = 10
 
 
 @dataclass(frozen=True)
@@ -45,7 +48,8 @@ class HostedCatalogClient(CatalogClient):
     async def fetch_set(self, set_id: str) -> SetSnapshot:
         async with httpx.AsyncClient(timeout=_TIMEOUT_SECONDS) as client:
             set_json = await self._get_json(client, f"sets/{set_id}")
-            cards = await self._get_cards(client, [card["id"] for card in set_json["cards"]])
+            set_assets_url = f"{_TCGDEX_ASSETS_URL}/{set_json['serie']['id']}/{set_json['id']}"
+            cards = await self._get_cards(client, [card["id"] for card in set_json["cards"]], set_assets_url)
 
         return SetSnapshot(
             set_id=set_json["id"],
@@ -55,17 +59,26 @@ class HostedCatalogClient(CatalogClient):
             name=set_json["name"],
         )
 
-    async def _get_cards(self, client: httpx.AsyncClient, printing_ids: list[str]) -> list[dict]:
+    async def _get_cards(self, client: httpx.AsyncClient, printing_ids: list[str], set_assets_url: str) -> list[dict]:
         """Each printing's full JSON, in the order given, a bounded number in flight at once.
 
         Uncached requests reach TCGdex's origin, which answers 503 under load, so the
         crawl stays gentle. If any card fails, the rest are cancelled and its error raised.
+
+        A printing whose JSON lists no `image` gets one if its art is on TCGdex's image
+        server at the usual address under `set_assets_url`: the API's metadata lags the image
+        server (issue #145).
         """
         semaphore = asyncio.Semaphore(self._max_concurrent_requests)
 
         async def get_card(printing_id: str) -> dict:
             async with semaphore:
-                return await self._get_json(client, f"cards/{printing_id}")
+                card = await self._get_json(client, f"cards/{printing_id}")
+                if not card.get("image"):
+                    art_base_url = f"{set_assets_url}/{card['localId']}"
+                    if await _has_art(client, art_base_url):
+                        card["image"] = art_base_url
+                return card
 
         try:
             async with asyncio.TaskGroup() as task_group:
@@ -102,6 +115,25 @@ class HostedCatalogClient(CatalogClient):
                     wait_seconds = asked_seconds
             await asyncio.sleep(wait_seconds)
         raise AssertionError("unreachable")
+
+
+async def _has_art(client: httpx.AsyncClient, art_base_url: str) -> bool:
+    """Whether TCGdex's image server has art at `art_base_url`, judged by its small rendition.
+
+    A check that fails or times out counts as no art, so the printing ingests without an
+    image and a later ingest tries again. Like the API requests, the check bypasses the CDN
+    cache, so a stale "not found" can't hide art TCGdex has since added.
+    """
+    try:
+        response = await client.head(
+            f"{art_base_url}/low.webp",
+            params={"cb": uuid.uuid4().hex},
+            headers={"Cache-Control": "no-cache"},
+            timeout=_IMAGE_CHECK_TIMEOUT_SECONDS,
+        )
+    except httpx.HTTPError:
+        return False
+    return response.is_success
 
 
 def _is_transient(response: httpx.Response) -> bool:
