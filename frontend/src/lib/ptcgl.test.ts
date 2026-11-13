@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
-// A decklist exported by Limitless's deckbuilder that PTCGL imported cleanly (issue #123).
-// The backend imports the same file (tests/test_ptcgl_real_export.py), so the two together
-// check the round trip.
-import ptcglCompatibleExport from "../../../tests/fixtures/ptcgl/limitless_export.txt?raw";
+// A decklist exported by Limitless's deckbuilder that PTCGL imported cleanly (issue #123), as
+// the app re-exports it once imported: Basic Energy as MEE 1-8 (issue #147). The backend imports
+// both files to the same deck (tests/test_ptcgl_real_export.py), so the two together check the
+// round trip.
+import reexportedDeck from "../../../tests/fixtures/ptcgl/limitless_export_reexported.txt?raw";
 import type { DeckLine } from "../state/deckState";
 import { exportToPtcgl } from "./ptcgl";
 
-// That deck as the app holds it: TCGdex's names and zero-padded local ids, set codes as the
-// catalog derives them (`svp` is `PR-SV`), in the order the cards were added.
+// That deck as `/decks/import` returns it: TCGdex's names and zero-padded local ids, set codes as
+// the catalog derives them (`svp` is `PR-SV`), and every Basic Energy line as its MEE 1-8 printing,
+// with `MEE 4` and `MEE 12` merged into one Lightning line.
 const pokemon = (printing_id: string, count: number, name: string, set_code: string, local_id: string): DeckLine => ({
   printing_id,
   count,
@@ -48,23 +50,27 @@ const DECK: DeckLine[] = [
   trainer("sv06.5-054", "Academy at Night", "SFA", "054"),
   trainer("sv06.5-060", "Neutralization Zone", "SFA", "060"),
   trainer("sv06-145", "Carmine", "TWM", "145"),
-  energy("sve-001", 1, "Grass Energy", "SVE", "001", "Basic"),
-  energy("sve-002", 2, "Fire Energy", "SVE", "002", "Basic"),
-  energy("sve-003", 2, "Water Energy", "SVE", "003", "Basic"),
-  energy("mee-004", 1, "Lightning Energy", "MEE", "004", "Basic"),
+  energy("mee-001", 1, "Grass Energy", "MEE", "001", "Basic"),
+  energy("mee-002", 2, "Fire Energy", "MEE", "002", "Basic"),
+  energy("mee-003", 2, "Water Energy", "MEE", "003", "Basic"),
+  energy("mee-004", 2, "Lightning Energy", "MEE", "004", "Basic"),
   energy("mee-005", 1, "Psychic Energy", "MEE", "005", "Basic"),
   energy("mee-006", 1, "Fighting Energy", "MEE", "006", "Basic"),
   energy("mee-007", 1, "Darkness Energy", "MEE", "007", "Basic"),
   energy("mee-008", 1, "Metal Energy", "MEE", "008", "Basic"),
-  // TCGdex names this printing "Basic Lightning Energy"; PTCGL writes "Lightning Energy".
-  energy("mee-012", 1, "Basic Lightning Energy", "MEE", "012", "Basic"),
   energy("sv05-161", 1, "Mist Energy", "TEF", "161", "Special"),
   energy("me04-084", 1, "Bubbly Water Energy", "CRI", "084", "Special"),
 ];
 
 describe("exportToPtcgl", () => {
-  it("writes a deck exactly as a PTCGL-compatible export does", () => {
-    expect(exportToPtcgl(DECK)).toBe(ptcglCompatibleExport.replace(/\r\n/g, "\n").trimEnd());
+  it("writes the imported deck with Basic Energy as MEE 1-8", () => {
+    expect(exportToPtcgl(DECK)).toBe(reexportedDeck.replace(/\r\n/g, "\n").trimEnd());
+  });
+
+  it("drops the Basic prefix TCGdex gives some Basic Energy names, as PTCGL does", () => {
+    const text = exportToPtcgl([energy("mee-012", 1, "Basic Lightning Energy", "MEE", "012", "Basic")]);
+
+    expect(text).toBe("Energy: 1\n1 Lightning Energy MEE 12");
   });
 
   it("omits empty sections", () => {

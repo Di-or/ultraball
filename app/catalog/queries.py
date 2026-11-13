@@ -52,21 +52,27 @@ async def get_card_by_set_code_and_local_id(
     return await session.scalar(stmt)
 
 
+# The Basic-Energy tray's eight printings, `MEE 1`-`8`, numbered in tray order (Grass, Fire,
+# Water, Lightning, Psychic, Fighting, Darkness, Metal). PTCGL writes Basic Energy this way
+# (`Lightning Energy MEE 4`) (issue #147; CONTEXT.md: Basic-Energy tray).
+_BASIC_ENERGY_SET_CODE = "MEE"
+_BASIC_ENERGY_LOCAL_IDS = tuple(str(n) for n in range(1, 9))
+
+
 async def get_basic_energy_palette(session: AsyncSession) -> list[Card]:
-    """The fixed basic-Energy palette for the tray, one representative printing per type
+    """The fixed basic-Energy palette for the tray: the `MEE 1`-`8` printings, in tray order
     (CONTEXT.md: Basic-Energy tray)."""
+    local_id = func.ltrim(Card.local_id, "0")
     stmt = (
         select(Card)
-        .where(basic_energy_clause(Card.category, Card.energy_type))
-        .order_by(*representative_order(Card))
+        .where(
+            basic_energy_clause(Card.category, Card.energy_type),
+            Card.set_code == _BASIC_ENERGY_SET_CODE,
+            local_id.in_(_BASIC_ENERGY_LOCAL_IDS),
+        )
+        .order_by(local_id)
     )
-    seen: set[str] = set()
-    palette: list[Card] = []
-    for card in await session.scalars(stmt):
-        if card.dedupe_key not in seen:
-            seen.add(card.dedupe_key)
-            palette.append(card)
-    return palette
+    return list(await session.scalars(stmt))
 
 
 async def get_sets(session: AsyncSession) -> list[SetSummary]:

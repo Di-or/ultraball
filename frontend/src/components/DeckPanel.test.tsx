@@ -18,7 +18,7 @@ describe("DeckPanel", () => {
   beforeEach(() => {
     vi.spyOn(api, "getEnergyBasics").mockResolvedValue({
       palette: [
-        { printing_id: "base4-98", name: "Fire Energy", energy_type: "Basic", types: ["Fire"], image: null, set_code: "BASE4", local_id: "98" },
+        { printing_id: "mee-002", name: "Fire Energy", energy_type: "Basic", types: ["Fire"], image: null, set_code: "MEE", local_id: "002" },
       ],
     });
     vi.spyOn(api, "validateDeck").mockResolvedValue({
@@ -58,7 +58,7 @@ describe("DeckPanel", () => {
     fireEvent.click(screen.getByText("Fire Energy"));
 
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "card-added", card: expect.objectContaining({ printing_id: "base4-98" }) })
+      expect.objectContaining({ type: "card-added", card: expect.objectContaining({ printing_id: "mee-002" }) })
     );
   });
 

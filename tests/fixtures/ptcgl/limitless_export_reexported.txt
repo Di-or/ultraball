@@ -1,0 +1,27 @@
+Pokémon: 9
+2 Psyduck MEP 7
+2 Sneasel MEP 20
+2 Yanmega PR-SV 187
+1 Kangaskhan PR-SV 202
+1 Riolu MEP 10
+1 Mega Meganium ex MEP 34
+
+Trainer: 6
+1 Misty's Vitality PBL 80
+1 Air Balloon ASC 181
+1 Binding Mochi SFA 55
+1 Academy at Night SFA 54
+1 Neutralization Zone SFA 60
+1 Carmine TWM 145
+
+Energy: 13
+1 Grass Energy MEE 1
+2 Fire Energy MEE 2
+2 Water Energy MEE 3
+2 Lightning Energy MEE 4
+1 Psychic Energy MEE 5
+1 Fighting Energy MEE 6
+1 Darkness Energy MEE 7
+1 Metal Energy MEE 8
+1 Mist Energy TEF 161
+1 Bubbly Water Energy CRI 84

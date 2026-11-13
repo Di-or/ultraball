@@ -169,5 +169,5 @@ The always-visible live decklist (grouped Pokémon / Trainer / Energy rows with 
 _Avoid_: deck sidebar, cart.
 
 **Basic-Energy tray**:
-The fixed, uncapped, always-legal basic-Energy palette of 8 types (Grass, Fire, Water, Lightning, Psychic, Fighting, Darkness, Metal; Dragon and Colorless never had a Basic Energy, and Fairy is out of rotation) docked near the deck panel, outside the searchable enriched corpus. Click to add; never flagged. Distinct from Special Energy, which lives in the normal corpus.
+The fixed, uncapped, always-legal basic-Energy palette of 8 types (Grass, Fire, Water, Lightning, Psychic, Fighting, Darkness, Metal; Dragon and Colorless never had a Basic Energy, and Fairy is out of rotation) docked near the deck panel, outside the searchable enriched corpus. Each type is always one fixed printing, `MEE 1`–`MEE 8` (Mega Evolution Energy, in that type order), as PTCGL writes it (`Lightning Energy MEE 4`); import maps any Basic Energy line to the MEE printing of its type, so export writes only these. Click to add; never flagged. Distinct from Special Energy, which lives in the normal corpus.
 _Avoid_: energy picker, energy list.
