@@ -122,7 +122,30 @@ async def test_search_returns_the_gated_output_contract(client: AsyncClient, db_
         "set_code",
         "local_id",
         "is_standard_legal",
+        "image",
         "matched",
+    }
+
+
+async def test_search_tiles_carry_the_entity_art_falling_back_to_a_printing_that_has_some(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    db_session.add_all(
+        [
+            # Representative (newest mark) has no art; the older printing of the same text does.
+            _card(id="sv1-1", dedupe_key="charizard", name="Charizard", regulation_mark="I", image=None),
+            _card(id="swsh1-1", dedupe_key="charizard", name="Charizard", regulation_mark="H"),
+            _card(id="sv1-2", dedupe_key="blastoise", name="Blastoise", image=None),
+        ]
+    )
+    await db_session.commit()
+
+    response = await client.post("/search", json={})
+
+    images = {r["printing_id"]: r["image"] for r in response.json()["results"]}
+    assert images == {
+        "sv1-1": "https://assets.tcgdex.net/en/swsh/swsh1/1/low.webp",
+        "sv1-2": None,
     }
 
 

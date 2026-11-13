@@ -76,10 +76,13 @@ class SearchResult(BaseModel):
     set_code: str
     local_id: str
     is_standard_legal: bool
+    image: str | None = None  # the entity's art at `low` size (`entity_image_url`)
     matched: Matched | None = None
 
     @classmethod
-    def from_card(cls, card: Card, *, matched: Matched | None = None) -> "SearchResult":
+    def from_card(
+        cls, card: Card, *, image: str | None = None, matched: Matched | None = None
+    ) -> "SearchResult":
         return cls(
             printing_id=card.id,
             name=card.name,
@@ -94,6 +97,7 @@ class SearchResult(BaseModel):
             set_code=card.set_code,
             local_id=card.local_id,
             is_standard_legal=card.is_standard_legal,
+            image=image,
             matched=matched,
         )
 
