@@ -3,6 +3,7 @@ import { getCardDetail } from "../lib/api";
 import { printingLabel } from "../lib/ptcgl";
 import type { CardDetail, Category, Matched, Printing } from "../lib/types";
 import type { DeckCardInput } from "../state/deckState";
+import { CardPlaceholder } from "./CardPlaceholder";
 import { MatchedChips } from "./MatchedChips";
 
 interface CardDetailModalProps {
@@ -86,7 +87,13 @@ export function CardDetailModal({
         {detail && (
           <>
             <div className="modal-header">
-              {detail.image && <img src={detail.image} alt={detail.name} className="modal-image" />}
+              {detail.image ? (
+                <img src={detail.image} alt={detail.name} className="modal-image" />
+              ) : (
+                <div className="modal-image">
+                  <CardPlaceholder name={detail.name} />
+                </div>
+              )}
               <div>
                 <h2>{detail.name}</h2>
                 <p className="card-meta">

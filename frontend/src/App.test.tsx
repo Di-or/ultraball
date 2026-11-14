@@ -303,9 +303,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Charizard")).toBeInTheDocument());
-
-    fireEvent.click(screen.getByRole("button", { name: /Charizard/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Charizard/ }));
 
     await waitFor(() => expect(screen.getByRole("dialog")).toBeInTheDocument());
     const detailUrls = fetchMock.mock.calls
@@ -379,8 +377,7 @@ describe("App", () => {
     );
 
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Charizard ex")).toBeInTheDocument());
-    fireEvent.click(screen.getByRole("button", { name: /Charizard ex/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Charizard ex/ }));
 
     const addSir = await screen.findByRole("button", { name: "Add this version (OBF 223) to deck" });
     fireEvent.click(addSir);

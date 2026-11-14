@@ -44,10 +44,11 @@ describe("ResultsGrid", () => {
     );
   });
 
-  it("shows no image when the card has no art", () => {
+  it("shows a placeholder with the card name, and no set line, when no printing has art", () => {
     renderGrid([{ ...CHARIZARD, image: null }]);
 
-    expect(screen.queryByRole("img")).not.toBeInTheDocument();
-    expect(screen.getByText("Charizard")).toBeInTheDocument();
+    // A tile is the whole card (all its printings), so no one set code and number is meant.
+    expect(screen.getByRole("img", { name: "Charizard (no image)" })).toHaveTextContent(/^Charizard$/);
+    expect(screen.queryByRole("img", { name: "Charizard" })).not.toBeInTheDocument();
   });
 });
