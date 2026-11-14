@@ -18,7 +18,7 @@ describe("DeckPanel", () => {
   beforeEach(() => {
     vi.spyOn(api, "getEnergyBasics").mockResolvedValue({
       palette: [
-        { printing_id: "mee-002", name: "Fire Energy", energy_type: "Basic", types: ["Fire"], image: null, set_code: "MEE", local_id: "002" },
+        { printing_id: "mee-002", name: "Fire Energy", energy_type: "Basic", types: [], image: null, set_code: "MEE", local_id: "002" },
       ],
     });
     vi.spyOn(api, "validateDeck").mockResolvedValue({

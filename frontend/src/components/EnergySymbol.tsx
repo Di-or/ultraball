@@ -1,39 +1,25 @@
+import type { ReactNode } from "react";
+import type { BasicEnergyType } from "../lib/basicEnergy";
+
 // Our own drawing of each Basic Energy type: a coloured disc with a plain mark (issue #148).
 // TCGdex has no art for any Basic Energy printing, so this stands in for it. It is drawn by us,
 // not copied from card art. Swap the drawing here to change it everywhere it is shown.
 
-// The eight Basic Energy types in play; mirrors `_BASIC_ENERGY_TYPES` in app/catalog/energy.py.
-export const BASIC_ENERGY_TYPES = [
-  "Grass",
-  "Fire",
-  "Water",
-  "Lightning",
-  "Psychic",
-  "Fighting",
-  "Darkness",
-  "Metal",
-] as const;
-
-export type BasicEnergyType = (typeof BASIC_ENERGY_TYPES)[number];
-
-export function isBasicEnergyType(value: string): value is BasicEnergyType {
-  return (BASIC_ENERGY_TYPES as readonly string[]).includes(value);
-}
-
 const MARK = "#fff";
+const PSYCHIC = "#8e4dbf";
 
 // Each type's disc colour and mark, on a 24×24 canvas with the disc at the centre.
-const SYMBOLS: Record<BasicEnergyType, { disc: string; mark: JSX.Element }> = {
+const SYMBOLS: Record<BasicEnergyType, { disc: string; mark: ReactNode }> = {
   Grass: { disc: "#3f9b3a", mark: <path d="M12 5c-4 3-5 8-1 14 4-6 3-11 1-14z" fill={MARK} /> },
   Fire: { disc: "#d9442b", mark: <path d="M12 4c1 4 5 6 5 10a5 5 0 0 1-10 0c0-3 3-4 5-10z" fill={MARK} /> },
   Water: { disc: "#2f7fd1", mark: <path d="M12 4l5 9a5 5 0 1 1-10 0z" fill={MARK} /> },
   Lightning: { disc: "#e8b923", mark: <path d="M13 3l-6 11h4l-1 7 7-12h-4z" fill={MARK} /> },
   Psychic: {
-    disc: "#8e4dbf",
+    disc: PSYCHIC,
     mark: (
       <>
         <ellipse cx="12" cy="12" rx="7" ry="4" fill={MARK} />
-        <circle cx="12" cy="12" r="2" fill="#8e4dbf" />
+        <circle cx="12" cy="12" r="2" fill={PSYCHIC} />
       </>
     ),
   },
@@ -42,17 +28,14 @@ const SYMBOLS: Record<BasicEnergyType, { disc: string; mark: JSX.Element }> = {
   Metal: { disc: "#8a949e", mark: <path d="M12 5l6 3.5v7L12 19l-6-3.5v-7z" fill={MARK} /> },
 };
 
-export function EnergySymbol({ type, size = 24 }: { type: BasicEnergyType; size?: number }) {
+interface EnergySymbolProps {
+  type: BasicEnergyType;
+}
+
+export function EnergySymbol({ type }: EnergySymbolProps) {
   const { disc, mark } = SYMBOLS[type];
   return (
-    <svg
-      className="energy-symbol"
-      role="img"
-      aria-label={`${type} Energy`}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-    >
+    <svg className="energy-symbol" role="img" aria-label={`${type} Energy`} width={24} height={24} viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="11" fill={disc} />
       {mark}
     </svg>

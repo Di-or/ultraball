@@ -3,7 +3,8 @@ import { DeckImportRejected, getEnergyBasics, importDeck, validateDeck } from ".
 import { DECK_CATEGORY_ORDER } from "../lib/deckCategories";
 import { exportToPtcgl, printingLabel } from "../lib/ptcgl";
 import type { Category, Counts, EnergyBasic, Violation } from "../lib/types";
-import { EnergySymbol, isBasicEnergyType } from "./EnergySymbol";
+import { basicEnergyTypeNamed } from "../lib/basicEnergy";
+import { EnergySymbol } from "./EnergySymbol";
 import type { DeckAction, DeckLine } from "../state/deckState";
 
 const REQUIRED_DECK_SIZE = 60;
@@ -175,7 +176,7 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
         <h3>Basic Energy</h3>
         <div className="energy-tray-items">
           {palette.map((energy) => {
-            const type = energy.types.find(isBasicEnergyType);
+            const type = basicEnergyTypeNamed(energy.name);
             return (
               <button
                 key={energy.printing_id}
