@@ -3,6 +3,8 @@ import { DeckImportRejected, getEnergyBasics, importDeck, validateDeck } from ".
 import { DECK_CATEGORY_ORDER } from "../lib/deckCategories";
 import { exportToPtcgl, printingLabel } from "../lib/ptcgl";
 import type { Category, Counts, EnergyBasic, Violation } from "../lib/types";
+import { basicEnergyTypeNamed } from "../lib/basicEnergy";
+import { EnergySymbol } from "./EnergySymbol";
 import type { DeckAction, DeckLine } from "../state/deckState";
 
 const REQUIRED_DECK_SIZE = 60;
@@ -173,11 +175,27 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
       <section className="energy-tray" aria-label="Basic Energy tray">
         <h3>Basic Energy</h3>
         <div className="energy-tray-items">
-          {palette.map((energy) => (
-            <button key={energy.printing_id} type="button" onClick={() => addEnergy(energy)}>
-              {energy.name}
-            </button>
-          ))}
+          {palette.map((energy) => {
+            const type = basicEnergyTypeNamed(energy.name);
+            return (
+              <button
+                key={energy.printing_id}
+                type="button"
+                className="energy-tray-button"
+                aria-label={type ? `${type} Energy` : energy.name}
+                onClick={() => addEnergy(energy)}
+              >
+                {type ? (
+                  <>
+                    <EnergySymbol type={type} />
+                    {type}
+                  </>
+                ) : (
+                  energy.name
+                )}
+              </button>
+            );
+          })}
         </div>
       </section>
 
