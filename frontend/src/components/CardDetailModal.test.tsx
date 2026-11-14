@@ -69,6 +69,16 @@ describe("CardDetailModal", () => {
     expect(await screen.findByRole("img", { name: "Charizard" })).toHaveAttribute("src", art);
   });
 
+  it("shows a placeholder with the card name in the header when no printing has art", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(detailResponse({ ...CHARIZARD, image: null }));
+
+    render(<CardDetailModal printingId="swsh4-1" onClose={vi.fn()} onAddToDeck={vi.fn()} />);
+
+    // The header art is the card's (borrowed from any printing), so no one set code is meant.
+    expect(await screen.findByRole("img", { name: "Charizard (no image)" })).toHaveTextContent(/^Charizard$/);
+    expect(screen.queryByRole("img", { name: "Charizard" })).not.toBeInTheDocument();
+  });
+
   it("passes matched provenance through as query params", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(detailResponse(CHARIZARD));
 

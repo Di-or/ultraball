@@ -1,3 +1,4 @@
+import { CardPlaceholder } from "./CardPlaceholder";
 import { MatchedChips } from "./MatchedChips";
 import type { SearchResult } from "../lib/types";
 
@@ -37,7 +38,11 @@ export function ResultsGrid({
         {results.map((card) => (
           <li key={card.printing_id}>
             <button type="button" className="card-tile" onClick={() => onSelectCard(card)}>
-              {card.image && <img src={card.image} alt={card.name} className="card-image" loading="lazy" />}
+              {card.image ? (
+                <img src={card.image} alt={card.name} className="card-image" loading="lazy" />
+              ) : (
+                <CardPlaceholder name={card.name} />
+              )}
               <div className="card-name">{card.name}</div>
               <div className="card-meta">
                 {card.category}
