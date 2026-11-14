@@ -54,12 +54,20 @@ describe("DeckPanel", () => {
     const dispatch = vi.fn();
     render(<DeckPanel lines={[]} dispatch={dispatch} />);
 
-    await waitFor(() => expect(screen.getByText("Fire Energy")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Fire Energy"));
+    const button = await screen.findByRole("button", { name: "Fire Energy" });
+    fireEvent.click(button);
 
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: "card-added", card: expect.objectContaining({ printing_id: "mee-002" }) })
     );
+  });
+
+  it("shows each tray button as its Energy symbol plus the type name", async () => {
+    render(<DeckPanel lines={[]} dispatch={vi.fn()} />);
+
+    const button = await screen.findByRole("button", { name: "Fire Energy" });
+    expect(within(button).getByRole("img", { name: "Fire Energy" })).toBeInTheDocument();
+    expect(within(button).getByText("Fire")).toBeInTheDocument();
   });
 
   it("imports a decklist and replaces the deck", async () => {

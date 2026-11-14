@@ -407,6 +407,12 @@ header {
   gap: 0.35rem;
 }
 
+.energy-tray-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
 .deck-import textarea,
 .deck-export textarea {
   width: 100%;
