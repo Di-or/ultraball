@@ -100,7 +100,8 @@ export interface Printing {
   local_id: string;
   regulation_mark: string | null;
   rarity: string | null;
-  image: string | null;
+  image: string | null; // this printing's own art, high size
+  deck_image: string | null; // its deck tile's art, low size, same-text art when it has none (#149)
   is_standard_legal: boolean;
 }
 
@@ -169,6 +170,7 @@ export interface DeckImportEntry {
   set_code: string;
   local_id: string;
   energy_type: string | null;
+  image: string | null; // tile art, same-text art when this printing has none (#149)
 }
 
 export interface DeckImportResponse {

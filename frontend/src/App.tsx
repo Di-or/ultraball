@@ -79,6 +79,8 @@ export function App() {
         set_code: card.set_code,
         local_id: card.local_id,
         energy_type: null,
+        // The representative's art, or a same-text printing's: the backend's entity art (#144).
+        image: card.image,
       },
     });
   }
@@ -87,23 +89,27 @@ export function App() {
     <div className="app-shell">
       <header>
         <h1>Ultraball</h1>
-        <SearchBox onSubmit={handleNlSubmit} disabled={loading} />
-        {state.conceptActive && (
-          <ConceptIndicator
-            query={state.lastQuery}
-            onRemove={() => dispatch({ type: "concept-removed" })}
-          />
-        )}
       </header>
+      {/* Two columns (issue #149): search box and filters across the top of the main column with
+          the results below, and the deck beside it, always in view while searching. */}
       <main className="split-view">
-        <FilterPanel
-          filters={state.filters}
-          facets={state.facets}
-          sets={sets}
-          onFilterChange={(patch) => dispatch({ type: "filter-changed", patch })}
-          onFacetChange={(patch) => dispatch({ type: "facet-changed", patch })}
-        />
-        <section className="results-pane">
+        <section className="main-column" aria-label="Search">
+          <div className="search-controls">
+            <SearchBox onSubmit={handleNlSubmit} disabled={loading} />
+            {state.conceptActive && (
+              <ConceptIndicator
+                query={state.lastQuery}
+                onRemove={() => dispatch({ type: "concept-removed" })}
+              />
+            )}
+            <FilterPanel
+              filters={state.filters}
+              facets={state.facets}
+              sets={sets}
+              onFilterChange={(patch) => dispatch({ type: "filter-changed", patch })}
+              onFacetChange={(patch) => dispatch({ type: "facet-changed", patch })}
+            />
+          </div>
           <ResultsGrid
             results={response?.results ?? []}
             total={response?.total ?? 0}

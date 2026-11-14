@@ -102,3 +102,57 @@ async def test_the_energy_tray_gets_small_tcgdex_art(client: AsyncClient, db_ses
     assert [entry["image"] for entry in response.json()["palette"]] == [
         "https://assets.tcgdex.net/en/me/mee/002/low.webp"
     ]
+
+
+_SVP_150_TILE = "https://assets.tcgdex.net/en/sv/svp/150/low.webp"
+_SVP_045_TILE = "https://assets.tcgdex.net/en/sv/svp/045/low.webp"
+
+
+async def test_each_printing_offers_a_deck_tile_image_borrowing_same_text_art_when_it_has_none(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # A deck line is one exact printing; its tile shows that printing's own art, or, when it
+    # has none, the art of the best-ranked printing with the same text (issue #149).
+    await _ingest_paradise_resort(db_session)
+
+    detail = await _detail(client, _J_NO_IMAGE)
+
+    assert [(p["printing_id"], p["deck_image"]) for p in detail["printings"]] == [
+        (_J_NO_IMAGE, _SVP_150_TILE),
+        (_I_NO_IMAGE, _SVP_150_TILE),
+        (_H_WITH_IMAGE, _SVP_150_TILE),
+        (_G_WITH_IMAGE, _SVP_045_TILE),
+    ]
+
+
+async def test_an_imported_line_carries_its_tile_image_with_the_same_text_fallback(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _ingest_paradise_resort(db_session)
+    printings = {p["printing_id"]: p for p in (await _detail(client, _J_NO_IMAGE))["printings"]}
+    lines = "\n".join(
+        f"1 Paradise Resort {printings[p]['set_code']} {printings[p]['local_id']}" for p in (_I_NO_IMAGE, _G_WITH_IMAGE)
+    )
+
+    response = await client.post("/decks/import", json={"text": lines})
+
+    assert response.status_code == 200
+    assert [(entry["printing_id"], entry["image"]) for entry in response.json()["entries"]] == [
+        (_I_NO_IMAGE, _SVP_150_TILE),
+        (_G_WITH_IMAGE, _SVP_045_TILE),
+    ]
+
+
+async def test_an_imported_line_has_no_image_when_no_printing_of_the_card_has_art(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    catalog_client = StubCatalogClient({"mep": fixture_snapshot("mep", [_J_NO_IMAGE])})
+    await run_ingest(db_session, catalog_client, "mep", overrides={})
+    printing = (await _detail(client, _J_NO_IMAGE))["printings"][0]
+
+    response = await client.post(
+        "/decks/import", json={"text": f"1 Paradise Resort {printing['set_code']} {printing['local_id']}"}
+    )
+
+    assert response.status_code == 200
+    assert [entry["image"] for entry in response.json()["entries"]] == [None]

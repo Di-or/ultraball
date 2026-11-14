@@ -368,8 +368,8 @@ describe("App", () => {
           is_standard_legal: true,
           tags: [],
           printings: [
-            { printing_id: "sv03-125", set_id: "sv03", set_code: "OBF", local_id: "125", regulation_mark: "G", rarity: "Double Rare", image: null, is_standard_legal: true },
-            { printing_id: "sv03-223", set_id: "sv03", set_code: "OBF", local_id: "223", regulation_mark: "G", rarity: "Special Illustration Rare", image: null, is_standard_legal: true },
+            { printing_id: "sv03-125", set_id: "sv03", set_code: "OBF", local_id: "125", regulation_mark: "G", rarity: "Double Rare", image: null, deck_image: "https://assets.tcgdex.net/en/sv/sv03/125/low.webp", is_standard_legal: true },
+            { printing_id: "sv03-223", set_id: "sv03", set_code: "OBF", local_id: "223", regulation_mark: "G", rarity: "Special Illustration Rare", image: null, deck_image: "https://assets.tcgdex.net/en/sv/sv03/223/low.webp", is_standard_legal: true },
           ],
           matched: null,
         },
@@ -389,9 +389,70 @@ describe("App", () => {
 
     const deck = screen.getByRole("complementary", { name: "Deck" });
     expect(within(deck).getByText("OBF 223")).toBeInTheDocument();
+    expect(within(deck).getByRole("img", { name: "Charizard ex OBF 223" })).toHaveAttribute(
+      "src",
+      "https://assets.tcgdex.net/en/sv/sv03/223/low.webp"
+    );
+    expect(within(deck).getByLabelText("2 copies")).toBeInTheDocument();
     fireEvent.click(within(deck).getByRole("button", { name: "Export to PTCGL" }));
     expect((within(deck).getByLabelText("PTCGL export") as HTMLTextAreaElement).value).toContain(
       "2 Charizard ex OBF 223"
     );
+  });
+
+  it("lays out search and filters on top of the main column, results below, and the deck beside them", async () => {
+    stubFetch([]);
+    render(<App />);
+    await screen.findByText("No cards match.");
+
+    const mainColumn = screen.getByRole("region", { name: "Search" });
+    const searchBox = within(mainColumn).getByLabelText("Search query");
+    const filters = within(mainColumn).getByRole("region", { name: "Filters" });
+    const results = within(mainColumn).getByText("No cards match.");
+    expect(searchBox.compareDocumentPosition(filters) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(filters.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    const deck = screen.getByRole("complementary", { name: "Deck" });
+    expect(mainColumn.contains(deck)).toBe(false);
+  });
+
+  it("adds a search result to the deck as a tile showing the result's art", async () => {
+    stubFetch([
+      {
+        results: [
+          {
+            printing_id: "sv03-125",
+            name: "Charizard ex",
+            category: "Pokemon",
+            hp: 330,
+            types: ["Darkness"],
+            stage: "Stage 2",
+            sub_category: ["ex"],
+            regulation_mark: "G",
+            rarity: "Double Rare",
+            set_id: "sv03",
+            set_code: "OBF",
+            local_id: "125",
+            is_standard_legal: true,
+            image: "https://assets.tcgdex.net/en/sv/sv03/125/low.webp",
+            matched: null,
+          },
+        ],
+        total: 1,
+        limit: 30,
+        offset: 0,
+        filters: { format: "standard" },
+      },
+    ]);
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "Add to deck" }));
+
+    const deck = screen.getByRole("complementary", { name: "Deck" });
+    expect(within(deck).getByRole("img", { name: "Charizard ex OBF 125" })).toHaveAttribute(
+      "src",
+      "https://assets.tcgdex.net/en/sv/sv03/125/low.webp"
+    );
+    expect(within(deck).getByLabelText("1 copy")).toHaveTextContent("×1");
   });
 });

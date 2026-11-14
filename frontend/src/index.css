@@ -24,7 +24,6 @@ header {
 .search-box {
   display: flex;
   gap: 0.5rem;
-  margin-top: 0.5rem;
 }
 
 .search-box input {
@@ -36,7 +35,8 @@ header {
 .split-view {
   flex: 1;
   display: grid;
-  grid-template-columns: 220px 1fr 260px;
+  /* Main column (search, filters, results) and the deck beside it (issue #149). */
+  grid-template-columns: minmax(0, 1fr) 420px;
   gap: 1rem;
   padding: 1rem;
   overflow: hidden;
@@ -49,12 +49,33 @@ header {
   }
 }
 
+.main-column {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .filter-panel,
 .deck-panel {
   background: #fff;
   border-radius: 8px;
   padding: 1rem;
   overflow-y: auto;
+}
+
+/* Across the top of the main column: filter groups wrap side by side. */
+.filter-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
+  overflow-y: visible;
 }
 
 .format-toggle {
@@ -119,10 +140,6 @@ header {
   color: #555;
   font-size: 0.8rem;
   margin: 0.25rem 0 0;
-}
-
-.results-pane {
-  overflow-y: auto;
 }
 
 .results-count {
@@ -396,38 +413,77 @@ header {
   font-size: 0.75rem;
 }
 
-.deck-row-printing {
-  color: #6b7280;
-  font-size: 0.75rem;
-}
-
 .illegal-flag {
   color: #b45309;
 }
 
-.deck-section ul {
+/* Five small tiles per row (issue #149). */
+.deck-grid {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.4rem;
 }
 
-.deck-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem 0;
-  font-size: 0.85rem;
-}
-
-.deck-stepper {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.deck-stepper input {
-  width: 2.5rem;
+.deck-tile {
+  font-size: 0.7rem;
   text-align: center;
+}
+
+.deck-tile-art {
+  position: relative;
+}
+
+.deck-tile-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.deck-tile-art .card-placeholder {
+  margin-bottom: 0;
+  padding: 0.2rem;
+  font-size: 0.6rem;
+}
+
+.deck-tile-energy {
+  aspect-ratio: 63 / 88;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f4f4;
+  border-radius: 6px;
+}
+
+.deck-tile-count {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  border-radius: 4px;
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.deck-tile-printing {
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-tile-stepper {
+  display: flex;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.deck-tile-stepper button {
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
 }
 
 .energy-tray-items {

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.catalog.images import entity_image_url, image_url
+from app.catalog.images import entity_image_url, image_url, printing_image_url
 from app.catalog.models import Card
 from app.search.models import Matched
 
@@ -9,7 +9,9 @@ class Printing(BaseModel):
     """One printing of the card entity (CONTEXT.md: Printing) — for the reprint list.
 
     Carries `set_code` + `local_id` so "add this version" can put this exact printing in a
-    deck line, and the PTCGL export can write it (issue #122).
+    deck line, and the PTCGL export can write it (issue #122). `image` is this printing's own
+    art; `deck_image` is what its deck tile shows, borrowing same-text art when it has none
+    (issue #149).
     """
 
     model_config = {"from_attributes": True}
@@ -21,10 +23,11 @@ class Printing(BaseModel):
     regulation_mark: str | None
     rarity: str | None
     image: str | None
+    deck_image: str | None
     is_standard_legal: bool
 
     @classmethod
-    def from_card(cls, card: Card) -> "Printing":
+    def from_card(cls, card: Card, printings: list[Card]) -> "Printing":
         return cls(
             printing_id=card.id,
             set_id=card.set_id,
@@ -33,6 +36,7 @@ class Printing(BaseModel):
             regulation_mark=card.regulation_mark,
             rarity=card.rarity,
             image=image_url(card.image, "high"),
+            deck_image=printing_image_url(card, printings, "low"),
             is_standard_legal=card.is_standard_legal,
         )
 
@@ -103,6 +107,6 @@ class CardDetail(BaseModel):
             image=entity_image_url(printings, "high"),
             is_standard_legal=card.is_standard_legal,
             tags=tags,
-            printings=[Printing.from_card(printing) for printing in printings],
+            printings=[Printing.from_card(printing, printings) for printing in printings],
             matched=matched,
         )

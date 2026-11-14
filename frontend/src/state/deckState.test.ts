@@ -8,6 +8,7 @@ const charmander: DeckCardInput = {
   set_code: "OBF",
   local_id: "10",
   energy_type: null,
+  image: null,
 };
 
 describe("deckStateReducer", () => {
