@@ -63,6 +63,7 @@ export interface SearchResult {
   set_code: string;
   local_id: string;
   is_standard_legal: boolean;
+  image: string | null; // the entity's art, low size
   matched: Matched | null;
 }
 

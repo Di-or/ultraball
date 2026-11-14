@@ -135,8 +135,15 @@ header {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.card-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.5rem;
 }
 
 .card-tile {

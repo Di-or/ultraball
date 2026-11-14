@@ -22,6 +22,18 @@ async def get_printings(session: AsyncSession, dedupe_key: str) -> list[Card]:
     return list(await session.scalars(stmt))
 
 
+async def get_printings_by_entity(session: AsyncSession, dedupe_keys: Collection[str]) -> dict[str, list[Card]]:
+    """`get_printings` for many card entities in one query, keyed by `dedupe_key`: each list is
+    representative first (CONTEXT.md: Representative printing)."""
+    if not dedupe_keys:
+        return {}
+    stmt = select(Card).where(Card.dedupe_key.in_(dedupe_keys)).order_by(*representative_order(Card))
+    printings: dict[str, list[Card]] = {}
+    for card in await session.scalars(stmt):
+        printings.setdefault(card.dedupe_key, []).append(card)
+    return printings
+
+
 async def get_cards_by_ids(session: AsyncSession, printing_ids: Collection[str]) -> list[Card]:
     """Printings by id, for resolving a deck's `printing_id` entries (`POST /decks/validate`)."""
     if not printing_ids:

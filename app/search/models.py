@@ -1,7 +1,9 @@
+from collections.abc import Sequence
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.catalog.images import entity_image_url
 from app.catalog.models import Card
 
 _MAX_LIMIT = 100
@@ -76,10 +78,14 @@ class SearchResult(BaseModel):
     set_code: str
     local_id: str
     is_standard_legal: bool
+    image: str | None  # the entity's art at `low` size
     matched: Matched | None = None
 
     @classmethod
-    def from_card(cls, card: Card, *, matched: Matched | None = None) -> "SearchResult":
+    def from_card(
+        cls, card: Card, *, printings: Sequence[Card], matched: Matched | None = None
+    ) -> "SearchResult":
+        """`printings` is the card's whole entity in representative order, for its art."""
         return cls(
             printing_id=card.id,
             name=card.name,
@@ -94,6 +100,7 @@ class SearchResult(BaseModel):
             set_code=card.set_code,
             local_id=card.local_id,
             is_standard_legal=card.is_standard_legal,
+            image=entity_image_url(printings, "low"),
             matched=matched,
         )
 

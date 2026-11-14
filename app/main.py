@@ -21,6 +21,7 @@ from app.catalog.queries import (
     get_basic_energy_palette,
     get_cards_by_ids,
     get_printings,
+    get_printings_by_entity,
     get_set_list,
     get_sets,
 )
@@ -79,6 +80,7 @@ def create_app(
             session, parse_client, embedding_client, request.query, request.filters, app.state.set_list
         )
 
+        page: list[tuple[Card, Matched | None]]
         if gate.tags and gate.query_vector is not None:
             ranked, total = await run_rrf_search(
                 session,
@@ -89,8 +91,8 @@ def create_app(
                 limit=request.limit,
                 offset=request.offset,
             )
-            results = [
-                SearchResult.from_card(card, matched=Matched(tags=matched_tags, semantic=matched_semantic))
+            page = [
+                (card, Matched(tags=matched_tags, semantic=matched_semantic))
                 for card, matched_tags, matched_semantic in ranked
             ]
         elif gate.tags:
@@ -102,10 +104,7 @@ def create_app(
                 limit=request.limit,
                 offset=request.offset,
             )
-            results = [
-                SearchResult.from_card(card, matched=Matched(tags=matched_tags))
-                for card, matched_tags in ranked
-            ]
+            page = [(card, Matched(tags=matched_tags)) for card, matched_tags in ranked]
         elif gate.query_vector is not None:
             cards, total = await run_semantic_search(
                 session,
@@ -115,7 +114,7 @@ def create_app(
                 limit=request.limit,
                 offset=request.offset,
             )
-            results = [SearchResult.from_card(card, matched=Matched(semantic=True)) for card in cards]
+            page = [(card, Matched(semantic=True)) for card in cards]
         else:
             cards, total = await run_search(
                 session,
@@ -125,7 +124,14 @@ def create_app(
                 offset=request.offset,
                 keyword=gate.keyword,
             )
-            results = [SearchResult.from_card(card) for card in cards]
+            page = [(card, None) for card in cards]
+
+        # A tile shows its entity's art, as card detail does (issue #144).
+        printings = await get_printings_by_entity(session, {card.dedupe_key for card, _ in page})
+        results = [
+            SearchResult.from_card(card, printings=printings[card.dedupe_key], matched=matched)
+            for card, matched in page
+        ]
 
         return SearchResponse(
             results=results,
