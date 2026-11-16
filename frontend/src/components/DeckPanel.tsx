@@ -4,6 +4,7 @@ import { DECK_CATEGORY_ORDER } from "../lib/deckCategories";
 import { exportToPtcgl, printingLabel } from "../lib/ptcgl";
 import type { Category, Counts, EnergyBasic, Violation } from "../lib/types";
 import { basicEnergyTypeNamed } from "../lib/basicEnergy";
+import { CardPlaceholder } from "./CardPlaceholder";
 import { EnergySymbol } from "./EnergySymbol";
 import type { DeckAction, DeckLine } from "../state/deckState";
 
@@ -76,6 +77,7 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
         set_code: energy.set_code,
         local_id: energy.local_id,
         energy_type: energy.energy_type,
+        image: energy.image,
       },
     });
   }
@@ -100,6 +102,7 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
           set_code: entry.set_code,
           local_id: entry.local_id,
           energy_type: entry.energy_type,
+          image: entry.image,
         })),
       });
       setImportText("");
@@ -150,22 +153,15 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
         if (sectionLines.length === 0) return null;
         const heading = SECTION_HEADINGS[category];
         return (
-          <section key={category} className="deck-section" aria-label={`${heading} deck rows`}>
+          <section key={category} className="deck-section" aria-label={`${heading} deck cards`}>
             <h3>{heading}</h3>
-            <ul>
+            <ul className="deck-grid">
               {sectionLines.map((line) => (
-                <li key={line.printing_id} className="deck-row">
-                  <span className="deck-row-name">
-                    {line.name}{" "}
-                    <span className="deck-row-printing">
-                      {printingLabel(line.set_code, line.local_id)}
-                    </span>
-                  </span>
-                  <DeckStepper
-                    count={line.count}
-                    onChange={(count) => changeCount(line.printing_id, count)}
-                  />
-                </li>
+                <DeckTile
+                  key={line.printing_id}
+                  line={line}
+                  onChange={(count) => changeCount(line.printing_id, count)}
+                />
               ))}
             </ul>
           </section>
@@ -231,26 +227,52 @@ export function DeckPanel({ lines, dispatch }: DeckPanelProps) {
   );
 }
 
-interface DeckStepperProps {
-  count: number;
+interface DeckTileProps {
+  line: DeckLine;
   onChange: (count: number) => void;
 }
 
-function DeckStepper({ count, onChange }: DeckStepperProps) {
+// One deck line, one exact printing (issue #149). The art is whatever the backend resolved for
+// the line; the set code and number underneath say which printing it is even when that art is
+// borrowed from another one. Basic Energy has no art anywhere, so it shows its symbol (#148).
+// The steppers never block a count (CONTEXT.md: Deck panel): legality is only reported.
+function DeckTile({ line, onChange }: DeckTileProps) {
+  const label = printingLabel(line.set_code, line.local_id);
+  // By name, as the tray and the backend read it: TCGdex's `energy_type` labels Special Energy
+  // "Basic" too (CONTEXT.md: Basic Energy exception).
+  const energyType = line.category === "Energy" ? basicEnergyTypeNamed(line.name) : null;
+  const title = `${line.name} ${label}`;
+
+  let art;
+  if (energyType) {
+    art = (
+      <div className="deck-tile-energy">
+        <EnergySymbol type={energyType} />
+      </div>
+    );
+  } else if (line.image) {
+    art = <img src={line.image} alt={title} className="deck-tile-image" loading="lazy" />;
+  } else {
+    art = <CardPlaceholder name={line.name} printing={line} />;
+  }
+
   return (
-    <div className="deck-stepper">
-      <button type="button" aria-label="Decrease count" onClick={() => onChange(count - 1)}>
-        −
-      </button>
-      <input
-        type="number"
-        aria-label="Card count"
-        value={count}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
-      <button type="button" aria-label="Increase count" onClick={() => onChange(count + 1)}>
-        +
-      </button>
-    </div>
+    <li className="deck-tile" title={title}>
+      <div className="deck-tile-art">
+        {art}
+        <span className="deck-tile-count" aria-label={`${line.count} ${line.count === 1 ? "copy" : "copies"}`}>
+          ×{line.count}
+        </span>
+      </div>
+      <div className="deck-tile-printing">{label}</div>
+      <div className="deck-tile-stepper">
+        <button type="button" aria-label={`Remove one ${title}`} onClick={() => onChange(line.count - 1)}>
+          −
+        </button>
+        <button type="button" aria-label={`Add one ${title}`} onClick={() => onChange(line.count + 1)}>
+          +
+        </button>
+      </div>
+    </li>
   );
 }

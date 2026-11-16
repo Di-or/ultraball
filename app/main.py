@@ -197,7 +197,11 @@ def create_app(
                 status_code=422,
                 detail={"message": "some lines did not resolve to a catalog printing", "lines": error.unresolved_lines},
             ) from error
-        return DeckImportResponse(entries=[DeckImportEntry.from_line(line) for line in lines])
+        # A deck tile borrows same-text art when its printing has none (issue #149).
+        printings = await get_printings_by_entity(session, {line.card.dedupe_key for line in lines})
+        return DeckImportResponse(
+            entries=[DeckImportEntry.from_line(line, printings[line.card.dedupe_key]) for line in lines]
+        )
 
     @app.get("/energy/basics")
     async def energy_basics_endpoint(session: AsyncSession = Depends(get_session)) -> EnergyBasicsResponse:

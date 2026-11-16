@@ -3,6 +3,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.catalog.deck_validation import DeckLine, LegalityReport
+from app.catalog.images import printing_image_url
+from app.catalog.models import Card
 
 
 class DeckEntry(BaseModel):
@@ -27,7 +29,8 @@ class DeckImportRequest(BaseModel):
 
 class DeckImportEntry(BaseModel):
     """One resolved import line, with enough display data to render the deck panel
-    without a follow-up fetch (CONTEXT.md: Deck panel; issue #31)."""
+    without a follow-up fetch (CONTEXT.md: Deck panel; issue #31). `image` is the line's tile
+    art, borrowing same-text art when the printing has none (issue #149)."""
 
     printing_id: str
     count: int
@@ -36,9 +39,11 @@ class DeckImportEntry(BaseModel):
     set_code: str
     local_id: str
     energy_type: str | None
+    image: str | None
 
     @classmethod
-    def from_line(cls, line: DeckLine) -> "DeckImportEntry":
+    def from_line(cls, line: DeckLine, printings: list[Card]) -> "DeckImportEntry":
+        """`printings` is the line's card entity in representative order."""
         return cls(
             printing_id=line.card.id,
             count=line.count,
@@ -47,6 +52,7 @@ class DeckImportEntry(BaseModel):
             set_code=line.card.set_code,
             local_id=line.card.local_id,
             energy_type=line.card.energy_type,
+            image=printing_image_url(line.card, printings, "low"),
         )
 
 

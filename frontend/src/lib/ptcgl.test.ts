@@ -18,6 +18,7 @@ const pokemon = (printing_id: string, count: number, name: string, set_code: str
   set_code,
   local_id,
   energy_type: null,
+  image: null,
 });
 const trainer = (printing_id: string, name: string, set_code: string, local_id: string): DeckLine => ({
   printing_id,
@@ -27,6 +28,7 @@ const trainer = (printing_id: string, name: string, set_code: string, local_id: 
   set_code,
   local_id,
   energy_type: null,
+  image: null,
 });
 const energy = (
   printing_id: string,
@@ -35,7 +37,7 @@ const energy = (
   set_code: string,
   local_id: string,
   energy_type: "Basic" | "Special",
-): DeckLine => ({ printing_id, count, name, category: "Energy", set_code, local_id, energy_type });
+): DeckLine => ({ printing_id, count, name, category: "Energy", set_code, local_id, energy_type, image: null });
 
 const DECK: DeckLine[] = [
   pokemon("mep-007", 2, "Psyduck", "MEP", "007"),

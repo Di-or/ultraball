@@ -34,3 +34,12 @@ def entity_image_url(printings: Iterable[Card], size: ImageSize) -> str | None:
     `printings` is in representative order (`representative_order`).
     """
     return next((url for card in printings if (url := image_url(card.image, size))), None)
+
+
+def printing_image_url(card: Card, printings: Iterable[Card], size: ImageSize) -> str | None:
+    """The art for one exact printing, such as a deck line: its own, or, when it has none, its
+    card entity's (`entity_image_url`), which may be another rarity's (issue #149).
+
+    `printings` is `card`'s entity in representative order (`representative_order`).
+    """
+    return image_url(card.image, size) or entity_image_url(printings, size)

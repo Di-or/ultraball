@@ -41,7 +41,7 @@ export function FilterPanel({ filters, facets, sets = [], onFilterChange, onFace
   const aceSpecActive = (filters.sub_category ?? []).includes("ace-spec");
 
   return (
-    <aside className="filter-panel" aria-label="Filters">
+    <section className="filter-panel" aria-label="Filters">
       <label className="format-toggle">
         <input
           type="checkbox"
@@ -267,6 +267,6 @@ export function FilterPanel({ filters, facets, sets = [], onFilterChange, onFace
           })}
         </div>
       </section>
-    </aside>
+    </section>
   );
 }

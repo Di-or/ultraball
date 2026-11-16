@@ -157,7 +157,7 @@ _Avoid_: browse mode, filter-only search.
 ### Frontend
 
 **Filter panel**:
-The standing, always-usable structured-filter controls: an "Include non-Standard cards" checkbox (unchecked = Standard-only), a single-select category pill row (Any, Pokémon, Trainer, Special Energy — Special Energy is folded in, setting `category: "Energy"` and `energy_type: "Special"`; a lit pill goes back to Any), per-category chip rows (Pokémon stage and ex/Mega; Trainer type and ACE SPEC), Type, HP / retreat / attack-cost ranges, set, plus UI-only `regulation_mark`/`rarity` facets. One shared filter state that the natural-language query writes into (parse ticks the controls on) and the user can also edit directly; changing category clears any filter that can't apply to the new category.
+The standing, always-usable structured-filter controls, across the top of the main column under the search box: an "Include non-Standard cards" checkbox (unchecked = Standard-only), a single-select category pill row (Any, Pokémon, Trainer, Special Energy — Special Energy is folded in, setting `category: "Energy"` and `energy_type: "Special"`; a lit pill goes back to Any), per-category chip rows (Pokémon stage and ex/Mega; Trainer type and ACE SPEC), Type, HP / retreat / attack-cost ranges, set, plus UI-only `regulation_mark`/`rarity` facets. One shared filter state that the natural-language query writes into (parse ticks the controls on) and the user can also edit directly; changing category clears any filter that can't apply to the new category.
 _Avoid_: sidebar, facets panel.
 
 **Concept indicator**:
@@ -165,7 +165,7 @@ The distinct, removable UI element for the semantic/tag component of a query —
 _Avoid_: search chip, concept tag.
 
 **Deck panel**:
-The always-visible live decklist (grouped Pokémon / Trainer / Energy rows with steppers) plus a readout header (count `n/60`, P·T·E tallies, legality light, violations) driven entirely by the debounced server-side `validate` report — no rules logic on the client.
+The always-visible live decklist, a column beside the search results: grouped Pokémon / Trainer / Energy sections of image tiles, one per deck line (one exact printing), with a count badge and steppers. A tile shows that printing's art, else a same-text printing's (resolved by the backend for every add path), else the placeholder; Basic Energy shows its Energy symbol. Plus a readout header (count `n/60`, P·T·E tallies, legality light, violations) driven entirely by the debounced server-side `validate` report — no rules logic on the client.
 _Avoid_: deck sidebar, cart.
 
 **Basic-Energy tray**:

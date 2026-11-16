@@ -30,8 +30,8 @@ const CHARIZARD: CardDetail = {
   is_standard_legal: false,
   tags: ["acceleration"],
   printings: [
-    { printing_id: "swsh4-1", set_id: "swsh4", set_code: "VIV", local_id: "025", regulation_mark: "F", rarity: "Rare Holo", image: null, is_standard_legal: false },
-    { printing_id: "swsh1-1", set_id: "swsh1", set_code: "SSH", local_id: "1", regulation_mark: "D", rarity: "Secret Rare", image: null, is_standard_legal: false },
+    { printing_id: "swsh4-1", set_id: "swsh4", set_code: "VIV", local_id: "025", regulation_mark: "F", rarity: "Rare Holo", image: null, deck_image: "https://assets.tcgdex.net/en/swsh/swsh4/1/low.webp", is_standard_legal: false },
+    { printing_id: "swsh1-1", set_id: "swsh1", set_code: "SSH", local_id: "1", regulation_mark: "D", rarity: "Secret Rare", image: null, deck_image: "https://assets.tcgdex.net/en/swsh/swsh4/1/low.webp", is_standard_legal: false },
   ],
   matched: { tags: ["acceleration"], semantic: true },
 };
@@ -115,6 +115,8 @@ describe("CardDetailModal", () => {
       set_code: "SSH",
       local_id: "1",
       energy_type: null,
+      // The backend resolves the tile art, borrowing same-text art when this printing has none.
+      image: "https://assets.tcgdex.net/en/swsh/swsh4/1/low.webp",
     });
   });
 

@@ -11,6 +11,9 @@ export interface DeckLine {
   set_code: string;
   local_id: string;
   energy_type: string | null;
+  // The tile's art, low size, resolved by the backend: this printing's own, else a same-text
+  // printing's, else null for the placeholder (issue #149). Every add path supplies it.
+  image: string | null;
 }
 
 export type DeckCardInput = Omit<DeckLine, "count">;

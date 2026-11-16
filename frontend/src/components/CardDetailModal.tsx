@@ -28,6 +28,7 @@ function deckCardFor(detail: CardDetail, printing: Printing): DeckCardInput {
     set_code: printing.set_code,
     local_id: printing.local_id,
     energy_type: detail.energy_type,
+    image: printing.deck_image,
   };
 }
 
